@@ -35,6 +35,10 @@ class MarketRegimeHMM:
         self._plot_price_with_states()
         self._plot_price_path_with_states()  # New addition
 
+    def compounded_return(self, series, window):
+        daily_returns = series.pct_change().fillna(0) + 1
+        return daily_returns.rolling(window).apply(lambda x: x.prod() - 1, raw=True)
+
     def _load_data(self):
         adj_close = yf.download(
             tickers=self.ticker,
@@ -61,25 +65,39 @@ class MarketRegimeHMM:
                 return
             series = adj_close["Adj Close"].dropna()
 
-        ret_1m = series.pct_change(21)
-        ret_3m = series.pct_change(63)
-        ret_6m = series.pct_change(126)
-        ret_9m = series.pct_change(189)
-        ret_12m = series.pct_change(252)
+        ret_1m = self.compounded_return(series, 21)
+        ret_3m = self.compounded_return(series, 63)
+        ret_6m = self.compounded_return(series, 126)
+        ret_9m = self.compounded_return(series, 189)
+        ret_12m = self.compounded_return(series, 252)
+
         momentum = (ret_3m + ret_6m + ret_9m + ret_12m) / 4
 
-        rolling_vol = series.pct_change().rolling(window=63).std()
+        rolling_vol_1m = series.pct_change().rolling(window=21).std()
+        rolling_vol_3m = series.pct_change().rolling(window=63).std()
+        vol_concat = pd.concat([rolling_vol_1m, rolling_vol_3m], axis=1)
 
-        features = pd.concat([momentum, rolling_vol], axis=1).dropna()
+        # Find the global min and max across both windows
+        min_vol = vol_concat.min().min()
+        max_vol = vol_concat.max().max()
+
+        # Apply inverted Min-Max scaling to both volatility windows
+        scaled_vol_1m = 1 - (rolling_vol_1m - min_vol) / (max_vol - min_vol)
+        scaled_vol_3m = 1 - (rolling_vol_3m - min_vol) / (max_vol - min_vol)
+
+        # Average the two scaled volatilities to get a mean score where higher is better (lower volatility)
+        mean_scaled_vol = (scaled_vol_1m + scaled_vol_3m) / 2
+
+        features = pd.concat([momentum, mean_scaled_vol], axis=1).dropna()
         features.columns = ['Momentum', 'Volatility']
 
-        split_index = int(len(features) * 0.8)
+        split_index = int(len(features) * 0.7)
         self.train_data = features.iloc[:split_index]
         self.test_data = features.iloc[split_index:]
         self.data = features
 
     def _fit_model(self):
-        model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=1, n_iter=4000)
+        model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=1, n_iter=10000)
         model.fit(self.train_data[['Momentum', 'Volatility']].values)
         self.train_states = self._smooth_states(model.predict(self.train_data[['Momentum', 'Volatility']].values))
         self.test_states = self._smooth_states(model.predict(self.test_data[['Momentum', 'Volatility']].values))

@@ -121,7 +121,7 @@ class MarketRegimeHMM:
 
             summary_stats.append({'state': state, 'score': score})
 
-        sorted_states = sorted(summary_stats, key=lambda x: x['score'], reverse=True)
+        sorted_states = sorted(summary_stats, key=lambda x: x['score'], reverse=False)
 
         self.bullish_state = sorted_states[0]['state']
         self.bearish_state = sorted_states[-1]['state']
@@ -129,13 +129,16 @@ class MarketRegimeHMM:
         print(f"Bullish State: {self.bullish_state}, Bearish State: {self.bearish_state}")
 
     def forecast_state_distribution(self, n_steps=21):
-        state_dist = np.zeros(self.n_states)
-        state_dist[self.latest_state] = 1.0
+        self.state_probs = self.model.predict_proba(self.test_data)
+        current_state_prob = self.state_probs[-1]
+        state_dist = current_state_prob.copy()
+
+        # Step forward n_steps using the transition matrix
         for _ in range(n_steps):
             state_dist = state_dist @ self.model.transmat_
-        print(f"Forecasted state distribution from state {self.latest_state}: {state_dist}")
-        return state_dist
 
+        print(f"Forecasted state distribution for {self.ticker}: {self.latest_state}: {state_dist}")
+        return state_dist
 
     def _save_plot(self, filename, plot_type):
         directory = os.path.join("artifacts", plot_type)

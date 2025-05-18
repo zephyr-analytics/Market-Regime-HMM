@@ -1,8 +1,11 @@
+"""
+"""
 import argparse
 import json
 import os
 
 from models_training_processor import ModelsTrainingProcessor
+from models_inferencing_processor import ModelsInferenceProcessor
 
 def load_config():
     config_path = os.path.join(os.getcwd(), "config.json")
@@ -13,31 +16,26 @@ def load_config():
 
 def main():
     parser = argparse.ArgumentParser(description="Run Market Regime HMM Model using JSON Config")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--train", action="store_true", help="Train the model")
+    group.add_argument("--infer", action="store_true", help="Run inference using the model")
     args = parser.parse_args()
 
     config = load_config()
-    tickers=config["tickers"]
-    start_date=config["start_date"]
-    end_date=config["end_date"]
-
-    allocations = []
+    tickers = config["tickers"]
+    start_date = config["start_date"]
+    end_date = config["end_date"]
 
     for ticker in tickers:
-        model = ModelsTrainingProcessor(ticker=ticker, start_date=start_date, end_date=end_date)
-        model.process()
-        # forecast_probs = model.forecast_state_distribution(n_steps=21)
-        # total_bullish_prob = forecast_probs[model.bullish_state]
-
-        # starting_weight = 0.09
-        # if total_bullish_prob >= 0.95:
-        #     final_weight = starting_weight
-        # elif 0.7 <= total_bullish_prob < 0.95:
-        #     final_weight = starting_weight / 2
-        # else:
-        #     final_weight = 0.0
-
-        # allocations[ticker] = final_weight
-
+        if args.train:
+            print(f"Training model for {ticker}...")
+            model = ModelsTrainingProcessor(ticker=ticker, start_date=start_date, end_date=end_date)
+            model.process()
+        elif args.infer:
+            print(f"Running inference for {ticker}...")
+            model = ModelsInferenceProcessor(ticker=ticker, start_date=start_date, end_date=end_date)
+            model.process()
+            pass
 
 if __name__ == "__main__":
     main()

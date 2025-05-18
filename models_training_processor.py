@@ -1,6 +1,9 @@
+"""
+"""
 import yfinance as yf
 import numpy as np
 import pandas as pd
+import joblib
 import matplotlib.pyplot as plt
 from hmmlearn.hmm import GaussianHMM
 import os
@@ -15,7 +18,7 @@ class ModelsTrainingProcessor:
         self.ticker = ticker
         self.start_date = start_date
         self.end_date = end_date
-        self.n_states = 2
+        self.n_states = 3
         self.train_states = None
         self.test_states = None
         self.latest_state = None
@@ -26,10 +29,11 @@ class ModelsTrainingProcessor:
         data = self._load_data()
         features, train_data, test_data = self.prepare_data(training_data=data)
         model = self._fit_model(train_data=train_data)
-        self._label_states()
-        self.latest_state = self.test_states[-1]
-        results = ResultsProcessor()
-        results.process()
+        self._save_model(model=model)
+        # results = ResultsProcessor(
+        #     ticker=self.ticker, model=model, training_data=train_data, start_date=self.start_date, end_date=self.end_date
+        # )
+        # results.process()
 
     def _load_data(self):
         """
@@ -73,16 +77,10 @@ class ModelsTrainingProcessor:
         rolling_vol_1m = training_data.pct_change().rolling(window=21).std()
         rolling_vol_3m = training_data.pct_change().rolling(window=63).std()
         vol_concat = pd.concat([rolling_vol_1m, rolling_vol_3m], axis=1)
-
-        # Find the global min and max across both windows
         min_vol = vol_concat.min().min()
         max_vol = vol_concat.max().max()
-
-        # Apply inverted Min-Max scaling to both volatility windows
         scaled_vol_1m = 1 - (rolling_vol_1m - min_vol) / (max_vol - min_vol)
         scaled_vol_3m = 1 - (rolling_vol_3m - min_vol) / (max_vol - min_vol)
-
-        # Average the two scaled volatilities to get a mean score where higher is better (lower volatility)
         mean_scaled_vol = (scaled_vol_1m + scaled_vol_3m) / 2
 
         features = pd.concat([momentum, mean_scaled_vol], axis=1).dropna()
@@ -100,36 +98,15 @@ class ModelsTrainingProcessor:
         """
         model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=0.0001, n_iter=10000)
         model.fit(train_data[['Momentum', 'Volatility']].values)
-        # self.train_states = self._smooth_states(model.predict(self.train_data[['Momentum', 'Volatility']].values))
-        # self.test_states = self._smooth_states(model.predict(self.test_data[['Momentum', 'Volatility']].values))
-
+        train_states = utilities.smooth_states(model.predict(train_data[['Momentum', 'Volatility']].values))
+        print(train_states)
         return model
 
-    def _smooth_states(self, states, window=5):
+    def _save_model(self, model):
         """
         """
-        return pd.Series(states).rolling(window, center=True, min_periods=1).apply(
-            lambda x: stats.mode(x)[0][0], raw=False
-        ).astype(int).values
-
-    def _label_states(self):
-        """
-        """
-        summary_stats = []
-        for state in range(self.n_states):
-            idx = self.train_states == state
-            mean_momentum = self.train_data['Momentum'].iloc[idx].mean()
-            mean_volatility = self.train_data['Volatility'].iloc[idx].mean()
-
-            score = 0
-            score += 1 if mean_momentum > 0 else -1
-            score += 1 if mean_volatility < self.train_data['Volatility'].mean() else -1
-
-            summary_stats.append({'state': state, 'score': score})
-
-        sorted_states = sorted(summary_stats, key=lambda x: x['score'], reverse=False)
-
-        self.bullish_state = sorted_states[0]['state']
-        self.bearish_state = sorted_states[-1]['state']
-
-        print(f"Bullish State: {self.bullish_state}, Bearish State: {self.bearish_state}")
+        models_path = os.path.join(os.getcwd(), "artifacts", "models")
+        os.makedirs(models_path, exist_ok=True)
+        model_path = os.path.join(models_path, f"{self.ticker}_model.pkl")
+        joblib.dump(model, model_path)
+        print(f"Model saved to {model_path}")

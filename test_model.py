@@ -6,6 +6,7 @@ from hmmlearn.hmm import GaussianHMM
 import os
 import scipy.stats as stats
 
+import utilities_general as utilities
 
 class MarketRegimeHMM:
     def __init__(self, ticker, start_date, end_date):
@@ -35,10 +36,6 @@ class MarketRegimeHMM:
         self._plot_price_with_states()
         self._plot_price_path_with_states()  # New addition
 
-    def compounded_return(self, series, window):
-        daily_returns = series.pct_change().fillna(0) + 1
-        return daily_returns.rolling(window).apply(lambda x: x.prod() - 1, raw=True)
-
     def _load_data(self):
         adj_close = yf.download(
             tickers=self.ticker,
@@ -65,11 +62,10 @@ class MarketRegimeHMM:
                 return
             series = adj_close["Adj Close"].dropna()
 
-        ret_1m = self.compounded_return(series, 21)
-        ret_3m = self.compounded_return(series, 63)
-        ret_6m = self.compounded_return(series, 126)
-        ret_9m = self.compounded_return(series, 189)
-        ret_12m = self.compounded_return(series, 252)
+        ret_3m = utilities.compounded_return(series, 63)
+        ret_6m = utilities.compounded_return(series, 126)
+        ret_9m = utilities.compounded_return(series, 189)
+        ret_12m = utilities.compounded_return(series, 252)
 
         momentum = (ret_3m + ret_6m + ret_9m + ret_12m) / 4
 
@@ -97,11 +93,12 @@ class MarketRegimeHMM:
         self.data = features
 
     def _fit_model(self):
-        model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=1, n_iter=10000)
+        model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=0.0001, n_iter=10000)
         model.fit(self.train_data[['Momentum', 'Volatility']].values)
         self.train_states = self._smooth_states(model.predict(self.train_data[['Momentum', 'Volatility']].values))
         self.test_states = self._smooth_states(model.predict(self.test_data[['Momentum', 'Volatility']].values))
         self.model = model
+        print(model.__dict__)
 
     def _smooth_states(self, states, window=5):
         return pd.Series(states).rolling(window, center=True, min_periods=1).apply(

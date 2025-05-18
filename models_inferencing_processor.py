@@ -58,9 +58,3 @@ class ModelsInferenceProcessor:
         plt.savefig("artifacts/final_portfolio_pie_chart.png")
         plt.close()
         print("\nSaved portfolio pie chart to artifacts/final_portfolio_pie_chart.png")
-
-
-if __name__ == "__main__":
-    tickers = ["IUSG", "IUSV", "EFG", "EFV", "VWO", "BND", "BNDX", "EMB", "TLT", "IAU", "DBC"]
-    allocator = PortfolioAllocator(tickers=tickers, start_date='2008-01-01', end_date='2025-05-01')
-    allocator.build_portfolio()

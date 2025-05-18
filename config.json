@@ -1,0 +1,5 @@
+{
+    "tickers": ["IUSG", "IUSV", "EFG", "EFV", "VWO", "BND", "BNDX", "EMB", "TLT", "IAU", "DBC"],
+    "start_date": "2008-01-01", 
+    "end_date": "2025-05-01"
+}

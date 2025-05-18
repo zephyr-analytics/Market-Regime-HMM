@@ -16,10 +16,6 @@ class ModelsTrainingProcessor:
         self.start_date = start_date
         self.end_date = end_date
         self.n_states = 2
-        self.data = None
-        self.train_data = None
-        self.test_data = None
-        self.model = None
         self.train_states = None
         self.test_states = None
         self.latest_state = None
@@ -27,17 +23,17 @@ class ModelsTrainingProcessor:
         self.bearish_state = None
 
     def process(self):
-        self._load_data()
-        if self.data is None or self.data.empty:
-            print(f"[{self.ticker}] Skipping due to empty data.")
-            return
-        self._fit_model()
+        data = self._load_data()
+        features, train_data, test_data = self.prepare_data(training_data=data)
+        model = self._fit_model(train_data=train_data)
         self._label_states()
         self.latest_state = self.test_states[-1]
         results = ResultsProcessor()
         results.process()
 
     def _load_data(self):
+        """
+        """
         adj_close = yf.download(
             tickers=self.ticker,
             start=self.start_date,
@@ -46,7 +42,6 @@ class ModelsTrainingProcessor:
             auto_adjust=False,
             progress=False,
             threads=True,
-            interval="1d"
         )
 
         if adj_close is None or adj_close.empty:
@@ -63,15 +58,20 @@ class ModelsTrainingProcessor:
                 return
             series = adj_close["Adj Close"].dropna()
 
-        ret_3m = utilities.compounded_return(series, 63)
-        ret_6m = utilities.compounded_return(series, 126)
-        ret_9m = utilities.compounded_return(series, 189)
-        ret_12m = utilities.compounded_return(series, 252)
+        return series
+
+    def prepare_data(self, training_data):
+        """
+        """
+        ret_3m = utilities.compounded_return(training_data, 63)
+        ret_6m = utilities.compounded_return(training_data, 126)
+        ret_9m = utilities.compounded_return(training_data, 189)
+        ret_12m = utilities.compounded_return(training_data, 252)
 
         momentum = (ret_3m + ret_6m + ret_9m + ret_12m) / 4
 
-        rolling_vol_1m = series.pct_change().rolling(window=21).std()
-        rolling_vol_3m = series.pct_change().rolling(window=63).std()
+        rolling_vol_1m = training_data.pct_change().rolling(window=21).std()
+        rolling_vol_3m = training_data.pct_change().rolling(window=63).std()
         vol_concat = pd.concat([rolling_vol_1m, rolling_vol_3m], axis=1)
 
         # Find the global min and max across both windows
@@ -89,24 +89,32 @@ class ModelsTrainingProcessor:
         features.columns = ['Momentum', 'Volatility']
 
         split_index = int(len(features) * 0.7)
-        self.train_data = features.iloc[:split_index]
-        self.test_data = features.iloc[split_index:]
-        self.data = features
 
-    def _fit_model(self):
+        train_data = features.iloc[:split_index]
+        test_data = features.iloc[split_index:]
+
+        return features, train_data, test_data
+
+    def _fit_model(self, train_data):
+        """
+        """
         model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=0.0001, n_iter=10000)
-        model.fit(self.train_data[['Momentum', 'Volatility']].values)
-        self.train_states = self._smooth_states(model.predict(self.train_data[['Momentum', 'Volatility']].values))
-        self.test_states = self._smooth_states(model.predict(self.test_data[['Momentum', 'Volatility']].values))
-        self.model = model
-        print(model.__dict__)
+        model.fit(train_data[['Momentum', 'Volatility']].values)
+        # self.train_states = self._smooth_states(model.predict(self.train_data[['Momentum', 'Volatility']].values))
+        # self.test_states = self._smooth_states(model.predict(self.test_data[['Momentum', 'Volatility']].values))
+
+        return model
 
     def _smooth_states(self, states, window=5):
+        """
+        """
         return pd.Series(states).rolling(window, center=True, min_periods=1).apply(
             lambda x: stats.mode(x)[0][0], raw=False
         ).astype(int).values
 
     def _label_states(self):
+        """
+        """
         summary_stats = []
         for state in range(self.n_states):
             idx = self.train_states == state
@@ -125,16 +133,3 @@ class ModelsTrainingProcessor:
         self.bearish_state = sorted_states[-1]['state']
 
         print(f"Bullish State: {self.bullish_state}, Bearish State: {self.bearish_state}")
-
-    def forecast_state_distribution(self, n_steps=21):
-        self.state_probs = self.model.predict_proba(self.test_data)
-        current_state_prob = self.state_probs[-1]
-        state_dist = current_state_prob.copy()
-
-        # Step forward n_steps using the transition matrix
-        for _ in range(n_steps):
-            state_dist = state_dist @ self.model.transmat_
-
-        print(f"Forecasted state distribution for {self.ticker}: {self.latest_state}: {state_dist}")
-        return state_dist
-

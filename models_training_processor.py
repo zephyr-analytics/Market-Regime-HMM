@@ -1,13 +1,12 @@
 """
 """
-import yfinance as yf
-import numpy as np
-import pandas as pd
 import joblib
-import matplotlib.pyplot as plt
-from hmmlearn.hmm import GaussianHMM
 import os
-import scipy.stats as stats
+
+import pandas as pd
+import yfinance as yf
+from hmmlearn.hmm import GaussianHMM
+
 
 import utilities_general as utilities
 from results_processor import ResultsProcessor
@@ -28,12 +27,12 @@ class ModelsTrainingProcessor:
     def process(self):
         data = self._load_data()
         features, train_data, test_data = self.prepare_data(training_data=data)
-        model = self._fit_model(train_data=train_data)
+        model, train_states = self._fit_model(train_data=train_data)
         self._save_model(model=model)
-        # results = ResultsProcessor(
-        #     ticker=self.ticker, model=model, training_data=train_data, start_date=self.start_date, end_date=self.end_date
-        # )
-        # results.process()
+        results = ResultsProcessor(
+            ticker=self.ticker, model=model, train_states=train_states, training_data=train_data, start_date=self.start_date, end_date=self.end_date
+        )
+        results.process()
 
     def _load_data(self):
         """
@@ -99,8 +98,8 @@ class ModelsTrainingProcessor:
         model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=0.0001, n_iter=10000)
         model.fit(train_data[['Momentum', 'Volatility']].values)
         train_states = utilities.smooth_states(model.predict(train_data[['Momentum', 'Volatility']].values))
-        print(train_states)
-        return model
+
+        return model, train_states
 
     def _save_model(self, model):
         """

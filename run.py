@@ -4,8 +4,8 @@ import argparse
 import json
 import os
 
-from models_training_processor import ModelsTrainingProcessor
-from models_inferencing_processor import ModelsInferenceProcessor
+from hmm.train.models_training_processor import ModelsTrainingProcessor
+from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
 
 def load_config():
     config_path = os.path.join(os.getcwd(), "config.json")

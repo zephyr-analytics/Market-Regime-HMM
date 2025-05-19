@@ -9,8 +9,8 @@ import os
 import joblib
 import scipy.stats as stats
 
-import utilities_general as utilities
-from models_training_processor import ModelsTrainingProcessor
+import hmm.utilities.utilities_general as utilities
+from hmm.train.models_training_processor import ModelsTrainingProcessor
 
 
 class ModelsInferenceProcessor:

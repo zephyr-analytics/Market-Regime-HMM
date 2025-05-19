@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-import utilities
+import hmm.utilities as utilities
 
 
 class ResultsProcessor:

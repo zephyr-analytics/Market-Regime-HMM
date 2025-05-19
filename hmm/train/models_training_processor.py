@@ -8,7 +8,7 @@ import yfinance as yf
 from hmmlearn.hmm import GaussianHMM
 
 
-import utilities
+import hmm.utilities as utilities
 from hmm.results.results_processor import ResultsProcessor
 
 

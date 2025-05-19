@@ -7,7 +7,6 @@ import pandas as pd
 import yfinance as yf
 from hmmlearn.hmm import GaussianHMM
 
-
 import hmm.utilities as utilities
 from hmm.train.models_training import ModelsTraining
 from hmm.results.results_processor import ResultsProcessor
@@ -19,11 +18,6 @@ class ModelsTrainingProcessor:
         self.start_date = start_date
         self.end_date = end_date
         self.n_states = 3
-        self.train_states = None
-        self.test_states = None
-        self.latest_state = None
-        self.bullish_state = None
-        self.bearish_state = None
 
     def process(self):
         data = self._load_data()

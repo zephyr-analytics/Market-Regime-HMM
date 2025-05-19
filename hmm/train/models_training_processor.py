@@ -9,6 +9,7 @@ from hmmlearn.hmm import GaussianHMM
 
 
 import hmm.utilities as utilities
+from hmm.train.models_training import ModelsTraining
 from hmm.results.results_processor import ResultsProcessor
 
 
@@ -26,13 +27,17 @@ class ModelsTrainingProcessor:
 
     def process(self):
         data = self._load_data()
-        features, train_data, test_data = self.prepare_data(training_data=data)
-        model, train_states = self._fit_model(train_data=train_data)
-        self._save_model(model=model)
+        training = self.initialize_models_training(training_data=data)
+        self.prepare_data(training=training)
+        self._fit_model(training=training)
+        self._save_model(training=training)
         results = ResultsProcessor(
-            ticker=self.ticker, model=model, train_states=train_states, training_data=train_data, start_date=self.start_date, end_date=self.end_date
+            ticker=self.ticker, model=training.model, train_states=training.train_states,
+            training_data=training.train_data, start_date=self.start_date, end_date=self.end_date
         )
         results.process()
+
+        return training
 
     def _load_data(self):
         """
@@ -62,10 +67,17 @@ class ModelsTrainingProcessor:
             series = adj_close["Adj Close"].dropna()
 
         return series
+    
+    def initialize_models_training(self, training_data):
+        training = ModelsTraining()
+        training.training_data = training_data
 
-    def prepare_data(self, training_data):
+        return training
+
+    def prepare_data(self, training):
         """
         """
+        training_data = training.training_data.copy()
         ret_3m = utilities.compounded_return(training_data, 63)
         ret_6m = utilities.compounded_return(training_data, 126)
         ret_9m = utilities.compounded_return(training_data, 189)
@@ -90,22 +102,27 @@ class ModelsTrainingProcessor:
         train_data = features.iloc[:split_index]
         test_data = features.iloc[split_index:]
 
-        return features, train_data, test_data
+        training.train_data = train_data
+        training.test_data = test_data
+        training.features = features
 
-    def _fit_model(self, train_data):
+
+    def _fit_model(self, training):
         """
         """
+
         model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=0.0001, n_iter=10000)
-        model.fit(train_data[['Momentum', 'Volatility']].values)
-        train_states = utilities.smooth_states(model.predict(train_data[['Momentum', 'Volatility']].values))
+        model.fit(training.train_data[['Momentum', 'Volatility']].values)
+        train_states = utilities.smooth_states(model.predict(training.train_data[['Momentum', 'Volatility']].values))
 
-        return model, train_states
+        training.model = model
+        training.train_states = train_states
 
-    def _save_model(self, model):
+    def _save_model(self, training):
         """
         """
         models_path = os.path.join(os.getcwd(), "artifacts", "models")
         os.makedirs(models_path, exist_ok=True)
         model_path = os.path.join(models_path, f"{self.ticker}_model.pkl")
-        joblib.dump(model, model_path)
+        joblib.dump(training.model, model_path)
         print(f"Model saved to {model_path}")

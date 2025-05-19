@@ -1,16 +1,9 @@
 """
 """
-import yfinance as yf
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from hmmlearn.hmm import GaussianHMM
-import os
 import joblib
-import scipy.stats as stats
+import os
 
-import hmm.utilities.utilities_general as utilities
-from hmm.train.models_training_processor import ModelsTrainingProcessor
+import hmm.utilities as utilities
 
 
 class ModelsInferenceProcessor:
@@ -24,6 +17,7 @@ class ModelsInferenceProcessor:
         """
         model = self.load_model()
         self.infer_states(model=model)
+        self.label_states()
 
     def load_model(self):
         """
@@ -43,3 +37,6 @@ class ModelsInferenceProcessor:
         """
         self.train_states = utilities.smooth_states(model.predict(self.train_data[['Momentum', 'Volatility']].values))
         self.test_states = utilities.smooth_states(model.predict(self.test_data[['Momentum', 'Volatility']].values))
+
+    def label_states(self):
+        pass

@@ -1,6 +1,7 @@
 """
 """
 import os
+import pickle
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -30,3 +31,19 @@ def save_plot(filename, plot_type):
     filepath = os.path.join(directory, filename)
     plt.savefig(filepath)
     plt.close()
+
+
+def persist_to_pickle(file, file_path: str):
+    """
+    Pickle the ModelsTraining instance to a file.
+    """
+    with open(file_path, 'wb') as f:
+        pickle.dump(file, f)
+
+
+def load_from_pickle(file_path: str):
+    """
+    Load the ModelsTraining instance from a pickle file.
+    """
+    with open(file_path, 'rb') as f:
+        return pickle.load(f)

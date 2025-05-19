@@ -30,7 +30,8 @@ def main():
         if args.train:
             print(f"Training model for {ticker}...")
             model = ModelsTrainingProcessor(ticker=ticker, start_date=start_date, end_date=end_date)
-            model.process()
+            training = model.process()
+
         elif args.infer:
             print(f"Running inference for {ticker}...")
             model = ModelsInferenceProcessor(ticker=ticker, start_date=start_date, end_date=end_date)

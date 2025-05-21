@@ -5,8 +5,10 @@ class ModelsTraining:
         self._training_data = None
         self._train_data = None
         self._test_data = None
+        self._train_states = None
         self._features = None
         self._model = None
+        self._state_labels = None
 
     @property
     def train_data(self) -> pd.Series:
@@ -82,3 +84,18 @@ class ModelsTraining:
         Set the training data with type enforcement.
         """
         self._train_states = value
+
+    @property
+    def state_labels(self) -> dict:
+        """
+        Get the training data.
+        """
+
+        return self._state_labels
+
+    @state_labels.setter
+    def state_labels(self, value: dict):
+        """
+        Set the training data with type enforcement.
+        """
+        self._state_labels = value

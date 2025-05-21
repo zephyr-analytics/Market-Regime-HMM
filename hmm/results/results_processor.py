@@ -10,47 +10,43 @@ import hmm.utilities as utilities
 
 class ResultsProcessor:
 
-    def __init__(self, ticker, model, train_states, training_data, start_date, end_date):
+    def __init__(self, training, ticker, start_date, end_date):
         self.ticker = ticker
-        self.model = model
-        self.train_states = train_states
-        self.train_data = training_data
+        self.model = training.model
+        self.train_states = training.train_states
+        self.train_data = training.train_data
         self.start_date = start_date
         self.end_date = end_date
+        self.label_dict = training.state_labels
 
     def process(self):
-        """
-        """
         self._plot_regimes()
         self._plot_price_with_states(train_states=self.train_states)
         self._plot_price_path_with_states(train_states=self.train_states)
 
+    def _get_label(self, state):
+        return self.label_dict.get(state, f'State {state}')
+
     def _plot_regimes(self):
-        """
-        """
         plt.figure(figsize=(15, 5))
         train_idx = self.train_data.index
         for state in np.unique(self.train_states):
             idx = self.train_states == state
-            plt.plot(train_idx[idx], self.train_data['Momentum'].iloc[idx], '.', label=f'Train State {state}')
+            label = self._get_label(state)
+            plt.plot(train_idx[idx], self.train_data['Momentum'].iloc[idx], '.', label=label)
 
         plt.legend()
         plt.title(f"Market Regimes for {self.ticker} Training")
         utilities.save_plot(f"{self.ticker}_regime_plot.png", plot_type="regime_plots")
 
     def _plot_price_with_states(self, train_states):
-        """
-
-        Parameters
-        ----------
-
-        """
         plt.figure(figsize=(15, 5))
         train_index = self.train_data.index
 
         for state in np.unique(train_states):
             idx = train_states == state
-            plt.plot(train_index[idx], np.arange(len(train_index[idx])), '.', label=f'State {state}')
+            label = self._get_label(state)
+            plt.plot(train_index[idx], np.arange(len(train_index[idx])), '.', label=label)
 
         plt.title(f"Regime States for {self.ticker}")
         plt.ylabel("State Index")
@@ -59,12 +55,6 @@ class ResultsProcessor:
         utilities.save_plot(f"{self.ticker}_states_plot.png", plot_type="state_index_plots")
 
     def _plot_price_path_with_states(self, train_states):
-        """
-
-        Parameters
-        ----------
-        
-        """
         adj_close = yf.download(
             tickers=self.ticker,
             start=self.start_date,
@@ -87,7 +77,8 @@ class ResultsProcessor:
             idx = train_states == state
             dates = train_index[idx]
             prices = price_series.loc[dates]
-            plt.plot(prices.index, prices.values, '.', label=f'State {state}')
+            label = self._get_label(state)
+            plt.plot(prices.index, prices.values, '.', label=label)
 
         plt.title(f"Price Path with Regimes for {self.ticker}")
         plt.ylabel("Price")

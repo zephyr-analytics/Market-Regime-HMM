@@ -24,10 +24,10 @@ class ModelsTrainingProcessor:
         training = self.initialize_models_training(training_data=data)
         self.prepare_data(training=training)
         self._fit_model(training=training)
+        self._label_training_states(training=training)
         self._save_model(training=training)
         results = ResultsProcessor(
-            ticker=self.ticker, model=training.model, train_states=training.train_states,
-            training_data=training.train_data, start_date=self.start_date, end_date=self.end_date
+            training=training, ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
         results.process()
 
@@ -111,6 +111,13 @@ class ModelsTrainingProcessor:
 
         training.model = model
         training.train_states = train_states
+
+    def _label_training_states(self, training):
+        """
+        """
+        state_label_dict = utilities.label_states(training=training)
+        training.state_labels = state_label_dict
+        print(f"{self.ticker}: {state_label_dict}")
 
     def _save_model(self, training):
         """

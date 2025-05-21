@@ -31,6 +31,7 @@ def main():
             print(f"Training model for {ticker}...")
             model = ModelsTrainingProcessor(ticker=ticker, start_date=start_date, end_date=end_date)
             training = model.process()
+            # print(training.__dict__)
 
         elif args.infer:
             print(f"Running inference for {ticker}...")

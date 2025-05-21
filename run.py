@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import pickle
 
 from hmm.train.models_training_processor import ModelsTrainingProcessor
 from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
@@ -31,7 +32,11 @@ def main():
             print(f"Training model for {ticker}...")
             model = ModelsTrainingProcessor(ticker=ticker, start_date=start_date, end_date=end_date)
             training = model.process()
-            # print(training.__dict__)
+
+            file_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}_training.pkl")
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'wb') as f:
+                pickle.dump(training, f)
 
         elif args.infer:
             print(f"Running inference for {ticker}...")

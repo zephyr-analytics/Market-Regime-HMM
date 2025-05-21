@@ -122,7 +122,7 @@ class ModelsTrainingProcessor:
     def _save_model(self, training):
         """
         """
-        models_path = os.path.join(os.getcwd(), "artifacts", "models")
+        models_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "models")
         os.makedirs(models_path, exist_ok=True)
         model_path = os.path.join(models_path, f"{self.ticker}_model.pkl")
         joblib.dump(training.model, model_path)

@@ -1,5 +1,8 @@
 {
-    "tickers": ["IUSG", "IUSV", "EFG", "EFV", "VWO", "BND", "BNDX", "EMB", "TLT", "IAU", "DBC"],
+    "tickers": [
+        "IUSG", "IUSV", "EFG", "EFV", "VWO", "BND", 
+        "BNDX", "EMB", "TLT", "IAU", "DBC", "VNQ", "VNQI"
+    ],
     "start_date": "2008-01-01", 
-    "end_date": "2025-05-01"
+    "end_date": "2025-05-21"
 }

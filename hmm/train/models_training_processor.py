@@ -11,6 +11,12 @@ import hmm.utilities as utilities
 from hmm.train.models_training import ModelsTraining
 from hmm.results.results_processor import ResultsProcessor
 
+# full_list = [
+#         "IUSG", "IUSV", "EFG", "EFV", "VWO", "BND", 
+#         "BNDX", "EMB", "TLT", "IAU", "DBC", "VNQ", "VNQI",
+#         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC",
+#         "IXJ", "KXI", "JXI"
+# ]
 
 class ModelsTrainingProcessor:
     def __init__(self, ticker, start_date, end_date):

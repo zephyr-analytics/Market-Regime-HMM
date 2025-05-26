@@ -40,7 +40,7 @@ def main():
 
         elif args.infer:
             print(f"Running inference for {ticker}...")
-            model = ModelsInferenceProcessor(ticker=ticker, start_date=start_date, end_date=end_date)
+            model = ModelsInferenceProcessor(config=config, ticker=ticker, start_date=start_date, end_date=end_date)
             model.process()
             pass
 

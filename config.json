@@ -1,8 +1,35 @@
 {
     "tickers": [
         "IUSG", "IUSV", "EFG", "EFV", "VWO", "BND", 
-        "BNDX", "EMB", "TLT", "IAU", "DBC", "VNQ", "VNQI"
+        "BNDX", "EMB", "TLT", "IAU", "DBC", "VNQ", "VNQI",
+        "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC",
+        "IXJ", "KXI", "JXI"
     ],
+    "weights": {
+            "IUSG": 0.05,
+            "IUSV": 0.05,
+            "EFG": 0.05,
+            "EFV": 0.05,
+            "VWO": 0.05,
+            "BND": 0.05,
+            "BNDX": 0.05,
+            "EMB": 0.05,
+            "TLT": 0.05,
+            "IAU": 0.05,
+            "DBC": 0.05,
+            "VNQ": 0.05,
+            "VNQI": 0.05,
+            "IXN": 0.03,
+            "RXI": 0.03,
+            "IXP": 0.03,
+            "IXG": 0.03,
+            "EXI": 0.03,
+            "MXI": 0.03,
+            "IXC": 0.03,
+            "IXJ": 0.03,
+            "KXI": 0.03,
+            "JXI": 0.03
+    },
     "start_date": "2008-01-01", 
-    "end_date": "2025-05-21"
+    "end_date": "2025-05-24"
 }

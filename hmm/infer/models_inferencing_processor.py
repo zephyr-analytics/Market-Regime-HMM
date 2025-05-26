@@ -9,7 +9,8 @@ import hmm.utilities as utilities
 
 
 class ModelsInferenceProcessor:
-    def __init__(self, ticker, start_date, end_date):
+    def __init__(self, config, ticker, start_date, end_date):
+        self.config=config
         self.ticker = ticker
         self.start_date = start_date
         self.end_date = end_date
@@ -24,7 +25,7 @@ class ModelsInferenceProcessor:
         training = self.load_training(ticker=self.ticker)
         self.infer_states(model=model, training=training)
         self.label_states(training=training)
-        self.compute_weight()  # <- New method to compute weight based on forecast
+        self.compute_weight(initial_weight=self.config["weights"][self.ticker])
 
     def load_model(self, ticker):
         """
@@ -94,8 +95,10 @@ class ModelsInferenceProcessor:
 
         return final_probs
 
-    def compute_weight(self, initial_weight=1/13):
+    def compute_weight(self, initial_weight):
         """
+        Computes a weight based on the forecasted probability distribution.
+        Adjusts the base weight depending on market sentiment probabilities.
         """
         probs = self.forecast_distribution
         bullish = probs.get('Bullish', 0)
@@ -103,17 +106,32 @@ class ModelsInferenceProcessor:
         bearish = probs.get('Bearish', 0)
         top = max(probs, key=probs.get)
 
+        # Immediate override: too much bearish risk
         if bearish > 0.15:
             raw_weight = 0
-        elif bullish > 0.7:
+
+        elif bullish > 0.9:
             raw_weight = 1.5 * initial_weight
-        elif bullish > 0.4:
+
+        elif 0.9 >= bullish > 0.75:
+            raw_weight = 1.25 * initial_weight
+
+        elif 0.75 >= bullish > 0.55:
+            raw_weight = 1.1 * initial_weight
+        # NOTE this is not correct logic.
+        elif 0.55 >= bullish > 0.5:
             raw_weight = 1.0 * initial_weight
-        elif bullish > 0.2:
-            raw_weight = 0.5 * initial_weight
-        elif neutral > 0.5 and top == 'Neutral':
-            raw_weight = 0.25 * initial_weight
+
+        elif top == 'Neutral':
+            if bullish >= 0.05:
+                raw_weight = initial_weight
+            elif bullish <= bearish:
+                raw_weight = 0.5 * initial_weight
+            else:
+                raw_weight = 0.25 * initial_weight
+
         else:
+            # Default fallback — low exposure
             raw_weight = 0.1 * initial_weight
 
-        self.raw_weight = raw_weight
+        print(f"Weight for: {self.ticker}: {raw_weight}\n")

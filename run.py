@@ -42,7 +42,7 @@ def main():
             print(f"Running inference for {ticker}...")
             model = ModelsInferenceProcessor(config=config, ticker=ticker, start_date=start_date, end_date=end_date)
             model.process()
-            pass
+            
 
 if __name__ == "__main__":
     main()

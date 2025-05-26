@@ -6,6 +6,7 @@ import os
 import numpy as np
 
 import hmm.utilities as utilities
+from hmm.results.results_processor import ResultsProcessor
 
 
 class ModelsInferenceProcessor:
@@ -23,9 +24,14 @@ class ModelsInferenceProcessor:
         """
         model = self.load_model(ticker=self.ticker)
         training = self.load_training(ticker=self.ticker)
-        self.infer_states(model=model, training=training)
+        test_states, test_data = self.infer_states(model=model, training=training)
         self.label_states(training=training)
         self.compute_weight(initial_weight=self.config["weights"][self.ticker])
+        results = ResultsProcessor(
+            training=training, ticker=self.ticker, start_date=self.start_date,
+            end_date=self.end_date, test_states=test_states, test_data=test_data
+        )
+        results.process()
 
     def load_model(self, ticker):
         """
@@ -75,6 +81,8 @@ class ModelsInferenceProcessor:
         print(f"\nTicker: {self.ticker} — Forecast at step {n_steps}:")
         for label, prob in final_prob_dist.items():
             print(f"  {label}: {prob}")
+
+        return test_states, test_data
 
     def forecast_final_state_distribution(self, model, last_state_index, n_steps, state_labels):
         """

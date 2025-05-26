@@ -1,5 +1,3 @@
-"""
-"""
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -10,7 +8,7 @@ import hmm.utilities as utilities
 
 class ResultsProcessor:
 
-    def __init__(self, training, ticker, start_date, end_date):
+    def __init__(self, training, ticker, start_date, end_date, test_data=None, test_states=None):
         self.ticker = ticker
         self.model = training.model
         self.train_states = training.train_states
@@ -18,11 +16,17 @@ class ResultsProcessor:
         self.start_date = start_date
         self.end_date = end_date
         self.label_dict = training.state_labels
+        self.test_data = training.test_data
+        self.test_states = test_states
 
     def process(self):
         self._plot_regimes()
         self._plot_price_with_states(train_states=self.train_states)
-        self._plot_price_path_with_states(train_states=self.train_states)
+        self._plot_price_path_with_states(
+            train_states=self.train_states,
+            test_data=self.test_data,
+            test_states=self.test_states if self.test_data is not None and self.test_states is not None else None
+        )
 
     def _get_label(self, state):
         return self.label_dict.get(state, f'State {state}')
@@ -54,7 +58,7 @@ class ResultsProcessor:
         plt.legend()
         utilities.save_plot(f"{self.ticker}_states_plot.png", plot_type="state_index_plots")
 
-    def _plot_price_path_with_states(self, train_states):
+    def _plot_price_path_with_states(self, train_states, test_data=None, test_states=None):
         adj_close = yf.download(
             tickers=self.ticker,
             start=self.start_date,
@@ -71,58 +75,28 @@ class ResultsProcessor:
             price_series = adj_close["Adj Close"].dropna()
 
         plt.figure(figsize=(15, 5))
-        train_index = self.train_data.index
 
+        # Plot training data
+        train_index = self.train_data.index
         for state in np.unique(train_states):
             idx = train_states == state
             dates = train_index[idx]
-            prices = price_series.loc[dates]
-            label = self._get_label(state)
+            prices = price_series.loc[dates.intersection(price_series.index)]
+            label = self._get_label(state) + " (Train)"
             plt.plot(prices.index, prices.values, '.', label=label)
+
+        # Plot test data if available
+        if test_data is not None and test_states is not None:
+            test_index = test_data.index
+            for state in np.unique(test_states):
+                idx = test_states == state
+                dates = test_index[idx]
+                prices = price_series.loc[dates.intersection(price_series.index)]
+                label = self._get_label(state) + " (Test)"
+                plt.plot(prices.index, prices.values, 'o', label=label)  # Different marker
 
         plt.title(f"Price Path with Regimes for {self.ticker}")
         plt.ylabel("Price")
         plt.xlabel("Date")
         plt.legend()
         utilities.save_plot(f"{self.ticker}_price_path.png", plot_type="price_path_plots")
-
-    # def build_portfolio(self):
-    #     for ticker in self.tickers:
-    #         model = ModelsTrainingProcessor(ticker=ticker, start_date=self.start_date, end_date=self.end_date)
-    #         model.process()
-    #         forecast_probs = model.forecast_state_distribution(n_steps=21)
-    #         total_bullish_prob = forecast_probs[model.bullish_state]
-
-    #         starting_weight = 0.09
-    #         if total_bullish_prob >= 0.95:
-    #             final_weight = starting_weight
-    #         elif 0.7 <= total_bullish_prob < 0.95:
-    #             final_weight = starting_weight / 2
-    #         else:
-    #             final_weight = 0.0
-
-    #         self.allocations[ticker] = final_weight
-
-    #     self._finalize_allocations()
-    #     self._plot_portfolio()
-
-    # def _finalize_allocations(self):
-    #     total_allocated = sum(self.allocations.values())
-    #     self.cash_weight = max(0.0, 1.0 - total_allocated)
-    #     self.allocations['CASH'] = self.cash_weight
-
-    #     print("\nFinal Portfolio Allocation:")
-    #     for ticker, weight in self.allocations.items():
-    #         print(f"  {ticker}: {weight:.2%}")
-
-    # def _plot_portfolio(self):
-    #     labels = list(self.allocations.keys())
-    #     sizes = list(self.allocations.values())
-
-    #     plt.figure(figsize=(8, 8))
-    #     plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-    #     plt.title("Final Portfolio Allocation")
-    #     os.makedirs("artifacts", exist_ok=True)
-    #     plt.savefig("artifacts/final_portfolio_pie_chart.png")
-    #     plt.close()
-    #     print("\nSaved portfolio pie chart to artifacts/final_portfolio_pie_chart.png")

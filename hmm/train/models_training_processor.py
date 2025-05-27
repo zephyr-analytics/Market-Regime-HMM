@@ -18,7 +18,6 @@ class ModelsTrainingProcessor:
         self.ticker = ticker
         self.start_date = config["start_date"]
         self.end_date = config["end_date"]
-        self.n_states = 3
 
     def process(self, max_retries=5):
         """
@@ -37,7 +36,7 @@ class ModelsTrainingProcessor:
         for attempt in range(1, max_retries + 1):
             print(f"\n[{self.ticker}] Training attempt {attempt}...")
             self.prepare_data(training=training)
-            self._fit_model(training=training)
+            self._fit_model(n_states=3, training=training)
             self._label_states(training=training)
 
             is_stable = self._evaluate_model_quality(training=training)
@@ -56,8 +55,19 @@ class ModelsTrainingProcessor:
 
         return training
 
-    def initialize_models_training(self, ticker, start_date, end_date) -> ModelsTraining:
+    @staticmethod
+    def initialize_models_training(ticker: str, start_date: str, end_date: str) -> ModelsTraining:
         """
+        Method to initalize ModelsTraining.
+
+        Parameters
+        ----------
+        ticker : str
+            String representing ticker symbol for training.
+        start_date : str
+            String representing start date for data retrival.
+        end_data : str
+            String representing end date for data retrival.
         """
         training = ModelsTraining()
         training.ticker = ticker
@@ -66,8 +76,15 @@ class ModelsTrainingProcessor:
 
         return training
 
-    def _load_data(self, training):
+    @staticmethod
+    def _load_data(training: ModelsTraining):
         """
+        Method to load data for preparation.
+
+        Parameters
+        ----------
+        training : ModelsTraining
+            ModelsTraining instance.
         """
         ticker = training.ticker
         adj_close = yf.download(
@@ -80,23 +97,15 @@ class ModelsTrainingProcessor:
             threads=True,
         )
 
-        if adj_close is None or adj_close.empty:
-            print(f"[{ticker}] No data downloaded.")
-            self.data = None
-            return
-
         if isinstance(adj_close.columns, pd.MultiIndex):
             series = adj_close[ticker]["Adj Close"].dropna()
         else:
-            if "Adj Close" not in adj_close:
-                print(f"[{ticker}] Missing 'Adj Close' in data.")
-                self.data = None
-                return
             series = adj_close["Adj Close"].dropna()
 
         training.data = series
 
-    def prepare_data(self, training: ModelsTraining):
+    @staticmethod
+    def prepare_data(training: ModelsTraining):
         """
         Prepare data for model fitting/trianing.
 
@@ -134,24 +143,27 @@ class ModelsTrainingProcessor:
         training.test_data = test_data
         training.features = features
 
-
-    def _fit_model(self, training: ModelsTraining):
+    @staticmethod
+    def _fit_model(n_states: int, training: ModelsTraining):
         """
         Method to fit the data to the model.
 
         Parameters
         ----------
+        n_states : int
+            Integer representing the number of expected states.
         training : ModelsTraining
             ModelsTraining instance.
         """
-        model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=0.0001, n_iter=10000)
+        model = GaussianHMM(n_components=n_states, covariance_type="diag", tol=0.0001, n_iter=10000)
         model.fit(training.train_data[['Momentum', 'Volatility']].values)
         train_states = utilities.smooth_states(model.predict(training.train_data[['Momentum', 'Volatility']].values))
 
         training.model = model
         training.train_states = train_states
 
-    def _label_states(self, training: ModelsTraining):
+    @staticmethod
+    def _label_states(training: ModelsTraining):
         """
         Method to label states based on training.
 
@@ -162,9 +174,10 @@ class ModelsTrainingProcessor:
         """
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
-        print(f"{self.ticker}: {state_label_dict}")
+        print(f"{training.ticker}: {state_label_dict}")
     
-    def _evaluate_model_quality(self, training: ModelsTraining):
+    @staticmethod
+    def _evaluate_model_quality(training: ModelsTraining):
         """
         Method to evaluate quality of the model.
 
@@ -174,7 +187,7 @@ class ModelsTrainingProcessor:
             ModelsTraining instance.
         """
         result = utilities.evaluate_state_stability(training.train_states)
-        print(f"[{self.ticker}] Model stability evaluation:")
+        print(f"[{training.ticker}] Model stability evaluation:")
         print(f"  - Transition rate: {result['transition_rate']}")
         print(f"  - Transition windows: {result['transitions']}")
 
@@ -185,7 +198,8 @@ class ModelsTrainingProcessor:
             print("  - Model is stable.")
             return True
 
-    def _save_model(self, training: ModelsTraining):
+    @staticmethod
+    def _save_model(training: ModelsTraining):
         """
         Method to persist model for inferencing.
 
@@ -196,5 +210,5 @@ class ModelsTrainingProcessor:
         """
         models_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "models")
         os.makedirs(models_path, exist_ok=True)
-        model_path = os.path.join(models_path, f"{self.ticker}_model.pkl")
+        model_path = os.path.join(models_path, f"{training.ticker}_model.pkl")
         joblib.dump(training.model, model_path)

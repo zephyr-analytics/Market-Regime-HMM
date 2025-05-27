@@ -29,14 +29,13 @@ class ModelsTrainingProcessor:
         max_retries : int
             Number of attempts to ensure proper state transition.
         """
-        data = self._load_data(ticker=self.ticker)
-        if data is None:
-            print(f"[{self.ticker}] Data loading failed. Skipping.")
-            return None
+        training = self.initialize_models_training(
+            ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
+        )
+        self._load_data(training=training)
 
         for attempt in range(1, max_retries + 1):
             print(f"\n[{self.ticker}] Training attempt {attempt}...")
-            training = self.initialize_models_training(training_data=data)
             self.prepare_data(training=training)
             self._fit_model(training=training)
             self._label_states(training=training)
@@ -57,13 +56,24 @@ class ModelsTrainingProcessor:
 
         return training
 
-    def _load_data(self, ticker):
+    def initialize_models_training(self, ticker, start_date, end_date) -> ModelsTraining:
         """
         """
+        training = ModelsTraining()
+        training.ticker = ticker
+        training.start_date = start_date
+        training.end_date = end_date
+
+        return training
+
+    def _load_data(self, training):
+        """
+        """
+        ticker = training.ticker
         adj_close = yf.download(
             tickers=ticker,
-            start=self.start_date,
-            end=self.end_date,
+            start=training.start_date,
+            end=training.end_date,
             group_by='ticker',
             auto_adjust=False,
             progress=False,
@@ -84,13 +94,7 @@ class ModelsTrainingProcessor:
                 return
             series = adj_close["Adj Close"].dropna()
 
-        return series
-    
-    def initialize_models_training(self, training_data) -> ModelsTraining:
-        training = ModelsTraining()
-        training.training_data = training_data
-
-        return training
+        training.data = series
 
     def prepare_data(self, training: ModelsTraining):
         """
@@ -101,7 +105,7 @@ class ModelsTrainingProcessor:
         training : ModelsTraining
             ModelsTraining instance.
         """
-        training_data = training.training_data.copy()
+        training_data = training.data.copy()
         ret_3m = utilities.compounded_return(training_data, 63)
         ret_6m = utilities.compounded_return(training_data, 126)
         ret_9m = utilities.compounded_return(training_data, 189)

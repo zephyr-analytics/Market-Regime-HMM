@@ -2,7 +2,10 @@ import pandas as pd
 
 class ModelsTraining:
     def __init__(self):
-        self._training_data = None
+        self._ticker = None
+        self._start_date = None
+        self._end_date = None
+        self._data = None
         self._train_data = None
         self._test_data = None
         self._train_states = None
@@ -11,12 +14,42 @@ class ModelsTraining:
         self._state_labels = None
 
     @property
-    def train_data(self) -> pd.Series:
+    def ticker(self) -> str:
+        """Get the train data."""
+        return self._ticker
+
+    @ticker.setter
+    def ticker(self, value: str):
+        """Set the train data with type enforcement."""
+        self._ticker = value
+
+    @property
+    def start_date(self) -> str:
+        """Get the train data."""
+        return self._start_date
+
+    @start_date.setter
+    def start_date(self, value: str):
+        """Set the train data with type enforcement."""
+        self._start_date = value
+
+    @property
+    def end_date(self) -> str:
+        """Get the train data."""
+        return self._end_date
+
+    @end_date.setter
+    def end_date(self, value: str):
+        """Set the train data with type enforcement."""
+        self._end_date = value
+
+    @property
+    def train_data(self) -> str:
         """Get the train data."""
         return self._train_data
 
     @train_data.setter
-    def train_data(self, value: pd.Series):
+    def train_data(self, value: str):
         """Set the train data with type enforcement."""
         self._train_data = value
 
@@ -41,19 +74,19 @@ class ModelsTraining:
         self._features = value
 
     @property
-    def training_data(self) -> pd.Series:
+    def data(self) -> pd.Series:
         """
         Get the training data.
         """
 
-        return self._training_data
+        return self._data
 
-    @training_data.setter
-    def training_data(self, value: pd.Series):
+    @data.setter
+    def data(self, value: pd.Series):
         """
         Set the training data with type enforcement.
         """
-        self._training_data = value
+        self._data = value
 
     @property
     def model(self) -> dict:

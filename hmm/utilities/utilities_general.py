@@ -16,6 +16,55 @@ def compounded_return(series, window):
     return daily_returns.rolling(window).apply(lambda x: x.prod() - 1, raw=True)
 
 
+def evaluate_state_stability(states, overall_threshold=0.2, window_size=20, flip_threshold=5, flip_window_limit=5):
+    """
+    Evaluate the stability of HMM-predicted states by:
+    1. Calculating the overall transition rate.
+    2. Detecting localized flip-flopping behavior in sliding windows.
+
+    Args:
+        states (List[int] or np.ndarray): Sequence of predicted HMM states.
+        overall_threshold (float): Max allowed global transition rate.
+        window_size (int): Length of window for localized flip detection.
+        flip_threshold (int): Max allowed state changes in one window.
+        flip_window_limit (int): Max number of windows allowed to exceed the flip threshold.
+
+    Returns:
+        dict: Dictionary with evaluation metrics and flags.
+    """
+    if len(states) < window_size + 1:
+        return {
+            "transition_rate": None,
+            "flip_flop_windows": None,
+            "is_unstable": True,
+            "reason": "Not enough data to evaluate stability."
+        }
+
+    num_transitions = sum(states[i] != states[i + 1] for i in range(len(states) - 1))
+    transition_rate = num_transitions / (len(states) - 1)
+
+    flip_flop_windows = 0
+    for i in range(len(states) - window_size):
+        window = states[i:i + window_size]
+        changes = sum(window[j] != window[j + 1] for j in range(len(window) - 1))
+        if changes >= flip_threshold:
+            flip_flop_windows += 1
+
+    is_unstable = (transition_rate > overall_threshold) or (flip_flop_windows > flip_window_limit)
+    reason = []
+    if transition_rate > overall_threshold:
+        reason.append(f"High transition rate ({transition_rate:.2f})")
+    if flip_flop_windows > flip_window_limit:
+        reason.append(f"Flip-flopping in {flip_flop_windows} windows")
+
+    return {
+        "transition_rate": transition_rate,
+        "transitions": flip_flop_windows,
+        "is_unstable": is_unstable,
+        "reason": "; ".join(reason) if reason else "Stable"
+    }
+
+
 def label_states(training):
     """
     Labels HMM states based on mean returns.

@@ -19,12 +19,25 @@ class ModelsInferenceProcessor:
         self.raw_weight = 0
         self.weight = 0
 
-    def process(self):
+    def process(self, max_retries=5):
         """
+        Inference process with retry logic if model evaluation is unstable.
         """
         model = self.load_model(ticker=self.ticker)
         training = self.load_training(ticker=self.ticker)
-        test_states, test_data = self.infer_states(model=model, training=training)
+
+        for attempt in range(1, max_retries + 1):
+            print(f"\n[{self.ticker}] Inference attempt {attempt}...")
+            test_states, test_data = self.infer_states(model=model, training=training)
+
+            is_stable = self._evaluate_model_quality(test_states=test_states)
+            if is_stable:
+                break
+            elif attempt < max_retries:
+                print(f"[{self.ticker}] Retrying inference due to instability...")
+            else:
+                print(f"[{self.ticker}] Maximum retries reached. Proceeding with last inference.")
+
         self.label_states(training=training)
         self.compute_weight(initial_weight=self.config["weights"][self.ticker])
         results = ResultsProcessor(
@@ -32,6 +45,7 @@ class ModelsInferenceProcessor:
             end_date=self.end_date, test_states=test_states, test_data=test_data
         )
         results.process()
+
 
     def load_model(self, ticker):
         """
@@ -41,7 +55,6 @@ class ModelsInferenceProcessor:
             raise FileNotFoundError(f"Saved model not found for {ticker}: {model_path}")
 
         model = joblib.load(model_path)
-        print(f"Loaded model from {model_path}")
 
         return model
 
@@ -83,6 +96,19 @@ class ModelsInferenceProcessor:
             print(f"  {label}: {prob}")
 
         return test_states, test_data
+    
+    def _evaluate_model_quality(self, test_states):
+        result = utilities.evaluate_state_stability(test_states)
+        print(f"[{self.ticker}] Model stability evaluation:")
+        print(f"  - Transition rate: {result['transition_rate']}")
+        print(f"  - Transition windows: {result['transitions']}")
+
+        if result["is_unstable"]:
+            print(f"  - WARNING: Model is unstable. Reason: {result['reason']}")
+            return False
+        else:
+            print("  - Model is stable.")
+            return True
 
     def forecast_final_state_distribution(self, model, last_state_index, n_steps, state_labels):
         """

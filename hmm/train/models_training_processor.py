@@ -11,12 +11,6 @@ import hmm.utilities as utilities
 from hmm.train.models_training import ModelsTraining
 from hmm.results.results_processor import ResultsProcessor
 
-# full_list = [
-#         "IUSG", "IUSV", "EFG", "EFV", "VWO", "BND", 
-#         "BNDX", "EMB", "TLT", "IAU", "DBC", "VNQ", "VNQI",
-#         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC",
-#         "IXJ", "KXI", "JXI"
-# ]
 
 class ModelsTrainingProcessor:
     def __init__(self, ticker, start_date, end_date):
@@ -25,12 +19,27 @@ class ModelsTrainingProcessor:
         self.end_date = end_date
         self.n_states = 3
 
-    def process(self):
+    def process(self, max_retries=5):
         data = self._load_data()
-        training = self.initialize_models_training(training_data=data)
-        self.prepare_data(training=training)
-        self._fit_model(training=training)
-        self._label_training_states(training=training)
+        if data is None:
+            print(f"[{self.ticker}] Data loading failed. Skipping.")
+            return None
+
+        for attempt in range(1, max_retries + 1):
+            print(f"\n[{self.ticker}] Training attempt {attempt}...")
+            training = self.initialize_models_training(training_data=data)
+            self.prepare_data(training=training)
+            self._fit_model(training=training)
+            self._label_states(training=training)
+
+            is_stable = self._evaluate_model_quality(training=training)
+            if is_stable:
+                break
+            elif attempt < max_retries:
+                print(f"[{self.ticker}] Retrying model training due to instability...")
+            else:
+                print(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
+
         self._save_model(training=training)
         results = ResultsProcessor(
             training=training, ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
@@ -118,12 +127,25 @@ class ModelsTrainingProcessor:
         training.model = model
         training.train_states = train_states
 
-    def _label_training_states(self, training):
+    def _label_states(self, training):
         """
         """
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
         print(f"{self.ticker}: {state_label_dict}")
+    
+    def _evaluate_model_quality(self, training):
+        result = utilities.evaluate_state_stability(training.train_states)
+        print(f"[{self.ticker}] Model stability evaluation:")
+        print(f"  - Transition rate: {result['transition_rate']}")
+        print(f"  - Transition windows: {result['transitions']}")
+
+        if result["is_unstable"]:
+            print(f"  - WARNING: Model is unstable. Reason: {result['reason']}")
+            return False
+        else:
+            print("  - Model is stable.")
+            return True
 
     def _save_model(self, training):
         """
@@ -132,4 +154,3 @@ class ModelsTrainingProcessor:
         os.makedirs(models_path, exist_ok=True)
         model_path = os.path.join(models_path, f"{self.ticker}_model.pkl")
         joblib.dump(training.model, model_path)
-        print(f"Model saved to {model_path}")

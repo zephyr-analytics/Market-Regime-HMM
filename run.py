@@ -24,13 +24,11 @@ def main():
 
     config = load_config()
     tickers = config["tickers"]
-    start_date = config["start_date"]
-    end_date = config["end_date"]
 
     for ticker in tickers:
         if args.train:
             print(f"Training model for {ticker}...")
-            model = ModelsTrainingProcessor(ticker=ticker, start_date=start_date, end_date=end_date)
+            model = ModelsTrainingProcessor(config=config, ticker=ticker)
             training = model.process()
 
             file_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}_training.pkl")
@@ -40,7 +38,7 @@ def main():
 
         elif args.infer:
             print(f"Running inference for {ticker}...")
-            model = ModelsInferenceProcessor(config=config, ticker=ticker, start_date=start_date, end_date=end_date)
+            model = ModelsInferenceProcessor(config=config, ticker=ticker)
             model.process()
             
 

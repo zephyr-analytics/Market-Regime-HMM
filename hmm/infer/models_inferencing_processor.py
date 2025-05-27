@@ -1,4 +1,5 @@
 """
+Module for inferencing models.
 """
 import joblib
 import os
@@ -10,19 +11,27 @@ from hmm.results.results_processor import ResultsProcessor
 
 
 class ModelsInferenceProcessor:
-    def __init__(self, config, ticker, start_date, end_date):
+    def __init__(self, config, ticker):
         self.config=config
         self.ticker = ticker
-        self.start_date = start_date
-        self.end_date = end_date
+        self.start_date = config["start_date"]
+        self.end_date = config["end_date"]
         self.forecast_distribution = {}
         self.raw_weight = 0
         self.weight = 0
 
     def process(self, max_retries=5):
         """
-        Inference process with retry logic if model evaluation is unstable.
+        Method to process through inferencing.
+
+        Parameters
+        ----------
+        max_retries : int
+            Number of attempts to ensure proper state transition.
         """
+
+        # TODO create models inferencing.
+
         model = self.load_model(ticker=self.ticker)
         training = self.load_training(ticker=self.ticker)
 

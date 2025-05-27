@@ -1,4 +1,5 @@
 """
+Module for training models.
 """
 import joblib
 import os
@@ -13,14 +14,22 @@ from hmm.results.results_processor import ResultsProcessor
 
 
 class ModelsTrainingProcessor:
-    def __init__(self, ticker, start_date, end_date):
+    def __init__(self, config, ticker):
         self.ticker = ticker
-        self.start_date = start_date
-        self.end_date = end_date
+        self.start_date = config["start_date"]
+        self.end_date = config["end_date"]
         self.n_states = 3
 
     def process(self, max_retries=5):
-        data = self._load_data()
+        """
+        Method to process through training.
+
+        Parameters
+        ----------
+        max_retries : int
+            Number of attempts to ensure proper state transition.
+        """
+        data = self._load_data(ticker=self.ticker)
         if data is None:
             print(f"[{self.ticker}] Data loading failed. Skipping.")
             return None
@@ -48,11 +57,11 @@ class ModelsTrainingProcessor:
 
         return training
 
-    def _load_data(self):
+    def _load_data(self, ticker):
         """
         """
         adj_close = yf.download(
-            tickers=self.ticker,
+            tickers=ticker,
             start=self.start_date,
             end=self.end_date,
             group_by='ticker',
@@ -62,29 +71,35 @@ class ModelsTrainingProcessor:
         )
 
         if adj_close is None or adj_close.empty:
-            print(f"[{self.ticker}] No data downloaded.")
+            print(f"[{ticker}] No data downloaded.")
             self.data = None
             return
 
         if isinstance(adj_close.columns, pd.MultiIndex):
-            series = adj_close[self.ticker]["Adj Close"].dropna()
+            series = adj_close[ticker]["Adj Close"].dropna()
         else:
             if "Adj Close" not in adj_close:
-                print(f"[{self.ticker}] Missing 'Adj Close' in data.")
+                print(f"[{ticker}] Missing 'Adj Close' in data.")
                 self.data = None
                 return
             series = adj_close["Adj Close"].dropna()
 
         return series
     
-    def initialize_models_training(self, training_data):
+    def initialize_models_training(self, training_data) -> ModelsTraining:
         training = ModelsTraining()
         training.training_data = training_data
 
         return training
 
-    def prepare_data(self, training):
+    def prepare_data(self, training: ModelsTraining):
         """
+        Prepare data for model fitting/trianing.
+
+        Parameters
+        ----------
+        training : ModelsTraining
+            ModelsTraining instance.
         """
         training_data = training.training_data.copy()
         ret_3m = utilities.compounded_return(training_data, 63)
@@ -116,10 +131,15 @@ class ModelsTrainingProcessor:
         training.features = features
 
 
-    def _fit_model(self, training):
+    def _fit_model(self, training: ModelsTraining):
         """
-        """
+        Method to fit the data to the model.
 
+        Parameters
+        ----------
+        training : ModelsTraining
+            ModelsTraining instance.
+        """
         model = GaussianHMM(n_components=self.n_states, covariance_type="diag", tol=0.0001, n_iter=10000)
         model.fit(training.train_data[['Momentum', 'Volatility']].values)
         train_states = utilities.smooth_states(model.predict(training.train_data[['Momentum', 'Volatility']].values))
@@ -127,14 +147,28 @@ class ModelsTrainingProcessor:
         training.model = model
         training.train_states = train_states
 
-    def _label_states(self, training):
+    def _label_states(self, training: ModelsTraining):
         """
+        Method to label states based on training.
+
+        Parameters
+        ----------
+        training : ModelsTraining
+            ModelsTraining instance.
         """
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
         print(f"{self.ticker}: {state_label_dict}")
     
-    def _evaluate_model_quality(self, training):
+    def _evaluate_model_quality(self, training: ModelsTraining):
+        """
+        Method to evaluate quality of the model.
+
+        Parameters
+        ----------
+        training : ModelsTraining
+            ModelsTraining instance.
+        """
         result = utilities.evaluate_state_stability(training.train_states)
         print(f"[{self.ticker}] Model stability evaluation:")
         print(f"  - Transition rate: {result['transition_rate']}")
@@ -147,8 +181,14 @@ class ModelsTrainingProcessor:
             print("  - Model is stable.")
             return True
 
-    def _save_model(self, training):
+    def _save_model(self, training: ModelsTraining):
         """
+        Method to persist model for inferencing.
+
+        Parameters
+        ----------
+        training : ModelsTraining
+            ModelsTraining instance.
         """
         models_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "models")
         os.makedirs(models_path, exist_ok=True)

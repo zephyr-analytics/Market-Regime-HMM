@@ -16,6 +16,7 @@ class ModelsInferencing:
         self._train_states = None
         self._test_states = None
         self._state_labels = None
+        self._forecast_distribution = None
 
 
     @property
@@ -188,3 +189,22 @@ class ModelsInferencing:
             Dictionary mapping state indices or codes to descriptive labels.
         """
         self._state_labels = value
+
+    @property
+    def forecast_distribution(self) -> dict:
+        """
+        dict: A dictionary mapping states to labels or interpretations.
+        """
+        return self._forecast_distribution
+
+    @forecast_distribution.setter
+    def forecast_distribution(self, value: dict):
+        """
+        Set the state labels.
+
+        Parameters
+        ----------
+        value : dict
+            Dictionary mapping state indices or codes to descriptive labels.
+        """
+        self._forecast_distribution = value

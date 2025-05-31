@@ -18,8 +18,6 @@ class ModelsInferenceProcessor:
         self.start_date = config["start_date"]
         self.end_date = config["end_date"]
         self.forecast_distribution = {}
-        self.raw_weight = 0
-        self.weight = 0
 
     def process(self, max_retries=5):
         """
@@ -50,7 +48,7 @@ class ModelsInferenceProcessor:
                 print(f"[{self.ticker}] Maximum retries reached. Proceeding with last inference.")
 
         self.label_states(inferencing=inferencing)
-        self.preditct_future_state(inferencing=inferencing)
+        self.predict_future_state(inferencing=inferencing)
         results = ResultsProcessor(inferencing=inferencing)
         results.process()
 
@@ -136,42 +134,30 @@ class ModelsInferenceProcessor:
             print("  - Model is stable.")
             return True
 
-
-    def preditct_future_state(self, inferencing, n_steps=21):
+    @staticmethod
+    def predict_future_state(inferencing, n_steps=21):
         """
+        Predicts the future state distribution after `n_steps` transitions 
+        from the last known state, returning a dictionary of labeled states 
+        and their corresponding probabilities.
         """
         last_state = inferencing.test_states[-1]
         state_labels = inferencing.state_labels.copy()
-        final_prob_dist = self.forecast_final_state_distribution(
-            model=inferencing.model,
-            last_state_index=last_state,
-            n_steps=n_steps,
-            state_labels=state_labels
-        )
+        A = inferencing.model.transmat_
+        n_states = inferencing.model.n_components
 
-        self.forecast_distribution = final_prob_dist
-
-        print(f"\nTicker: {inferencing.ticker} — Forecast at step {n_steps}:")
-        for label, prob in final_prob_dist.items():
-            print(f"  {label}: {prob}")
-
-    @staticmethod
-    def forecast_final_state_distribution(model, last_state_index, n_steps, state_labels):
-        """
-        Forecast the probability distribution over states after `n_steps`.
-        """
-        A = model.transmat_
-        n_states = model.n_components
-
+        # Initialize probability vector with 1.0 at the last known state
         pi_t = np.zeros(n_states)
-        pi_t[last_state_index] = 1.0
+        pi_t[last_state] = 1.0
 
+        # Evolve the state distribution over `n_steps`
         for _ in range(n_steps):
             pi_t = np.dot(pi_t, A)
 
-        final_probs = {
-            state_labels.get(i, f"State {i}"): round(pi_t[i], 4)
-            for i in range(n_states)
+        # Create dictionary with labeled states and their forecasted probabilities
+        labeled_distribution = {
+            state_labels.get(i, f"State {i}"): round(prob, 4)
+            for i, prob in enumerate(pi_t)
         }
 
-        return final_probs
+        inferencing.forecast_distribution = labeled_distribution

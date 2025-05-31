@@ -151,12 +151,12 @@ class ModelsInferenceProcessor:
 
         self.forecast_distribution = final_prob_dist
 
-        print(f"\nTicker: {self.ticker} — Forecast at step {n_steps}:")
+        print(f"\nTicker: {inferencing.ticker} — Forecast at step {n_steps}:")
         for label, prob in final_prob_dist.items():
             print(f"  {label}: {prob}")
 
-
-    def forecast_final_state_distribution(self, model, last_state_index, n_steps, state_labels):
+    @staticmethod
+    def forecast_final_state_distribution(model, last_state_index, n_steps, state_labels):
         """
         Forecast the probability distribution over states after `n_steps`.
         """

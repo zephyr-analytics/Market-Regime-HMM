@@ -28,6 +28,7 @@ class BuildProcessor:
         Z = results["linkage_matrix"]
         clusters = results["clusters"]
         labels = results["labels"]
+        predicted_states = self.predict_future_states(parsed_objects=parsed_objects)
 
 
     @staticmethod

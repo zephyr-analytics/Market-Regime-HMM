@@ -65,7 +65,7 @@ def evaluate_state_stability(states, overall_threshold=0.2, window_size=20, flip
     }
 
 
-def label_states(training):
+def label_states(training=None, inferencing=None):
     """
     Labels HMM states based on mean returns.
 
@@ -76,8 +76,13 @@ def label_states(training):
     - state_label_dict: Dict mapping state index to label.
     - state_labels_array: Array of labels for each state in training.train_states.
     """
-    states = training.train_states.copy()
-    returns = training.train_data.copy()
+    if training:
+        states = training.train_states.copy()
+        returns = training.train_data.copy()
+    elif inferencing:
+        states = inferencing.test_states.copy()
+        returns = inferencing.test_data.copy()
+
     returns = returns['Momentum'].reset_index(drop=True)
 
     # Compute mean return for each state

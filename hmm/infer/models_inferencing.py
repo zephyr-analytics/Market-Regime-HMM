@@ -2,21 +2,19 @@
 """
 import pandas as pd
 
-class ModelsTraining:
+class ModelsInferencing:
     """
-    Class for managing the data and configuration required for training models.
     """
 
     def __init__(self):
         self._ticker = None
         self._start_date = None
         self._end_date = None
-        self._data = None
+        self._model = None
         self._train_data = None
         self._test_data = None
         self._train_states = None
-        self._features = None
-        self._model = None
+        self._test_states = None
         self._state_labels = None
 
 
@@ -78,6 +76,25 @@ class ModelsTraining:
         self._end_date = value
 
     @property
+    def model(self) -> dict:
+        """
+        dict: A dictionary representing the trained model or model configuration.
+        """
+        return self._model
+
+    @model.setter
+    def model(self, value: dict):
+        """
+        Set the model configuration or trained model.
+
+        Parameters
+        ----------
+        value : dict
+            Dictionary containing model parameters or the model itself.
+        """
+        self._model = value
+
+    @property
     def train_data(self) -> pd.DataFrame:
         """
         pd.DataFrame: A string reference or path to the training dataset.
@@ -116,63 +133,6 @@ class ModelsTraining:
         self._test_data = value
 
     @property
-    def features(self) -> list:
-        """
-        list: A list of feature names used for training.
-        """
-        return self._features
-
-    @features.setter
-    def features(self, value: list):
-        """
-        Set the features used for training.
-
-        Parameters
-        ----------
-        value : list
-            List of feature names.
-        """
-        self._features = value
-
-    @property
-    def data(self) -> pd.Series:
-        """
-        pandas.Series: The complete dataset used for training and testing.
-        """
-        return self._data
-
-    @data.setter
-    def data(self, value: pd.Series):
-        """
-        Set the complete dataset.
-
-        Parameters
-        ----------
-        value : pandas.Series
-            Time series data used for training and evaluation.
-        """
-        self._data = value
-
-    @property
-    def model(self) -> dict:
-        """
-        dict: A dictionary representing the trained model or model configuration.
-        """
-        return self._model
-
-    @model.setter
-    def model(self, value: dict):
-        """
-        Set the model configuration or trained model.
-
-        Parameters
-        ----------
-        value : dict
-            Dictionary containing model parameters or the model itself.
-        """
-        self._model = value
-
-    @property
     def train_states(self) -> dict:
         """
         dict: A dictionary of training states or results from model fitting.
@@ -190,6 +150,25 @@ class ModelsTraining:
             Dictionary of training states, such as hidden states or results.
         """
         self._train_states = value
+
+    @property
+    def test_states(self) -> dict:
+        """
+        dict: A dictionary of training states or results from model fitting.
+        """
+        return self._test_states
+
+    @test_states.setter
+    def test_states(self, value: dict):
+        """
+        Set the training states.
+
+        Parameters
+        ----------
+        value : dict
+            Dictionary of training states, such as hidden states or results.
+        """
+        self._test_states = value
 
     @property
     def state_labels(self) -> dict:

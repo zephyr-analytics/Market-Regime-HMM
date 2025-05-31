@@ -7,6 +7,7 @@ import os
 import numpy as np
 
 import hmm.utilities as utilities
+from hmm.infer.models_inferencing import ModelsInferencing
 from hmm.results.results_processor import ResultsProcessor
 
 
@@ -29,17 +30,18 @@ class ModelsInferenceProcessor:
         max_retries : int
             Number of attempts to ensure proper state transition.
         """
+        inferencing = self.initialize_models_inferencing(
+            ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
+        )
 
-        # TODO create models inferencing.
-
-        model = self.load_model(ticker=self.ticker)
-        training = self.load_training(ticker=self.ticker)
+        self.load_model(inferencing=inferencing)
+        self.load_training(inferencing=inferencing)
 
         for attempt in range(1, max_retries + 1):
             print(f"\n[{self.ticker}] Inference attempt {attempt}...")
-            test_states, test_data = self.infer_states(model=model, training=training)
+            self.infer_states(inferencing=inferencing)
 
-            is_stable = self._evaluate_model_quality(test_states=test_states)
+            is_stable = self._evaluate_model_quality(inferencing=inferencing)
             if is_stable:
                 break
             elif attempt < max_retries:
@@ -47,52 +49,101 @@ class ModelsInferenceProcessor:
             else:
                 print(f"[{self.ticker}] Maximum retries reached. Proceeding with last inference.")
 
-        self.label_states(training=training)
-        self.compute_weight(initial_weight=self.config["weights"][self.ticker])
-        results = ResultsProcessor(
-            training=training, ticker=self.ticker, start_date=self.start_date,
-            end_date=self.end_date, test_states=test_states, test_data=test_data
-        )
+        self.label_states(inferencing=inferencing)
+        self.preditct_future_state(inferencing=inferencing)
+        results = ResultsProcessor(inferencing=inferencing)
         results.process()
 
+        return inferencing
 
-    def load_model(self, ticker):
+    @staticmethod
+    def initialize_models_inferencing(ticker: str, start_date: str, end_date: str) -> ModelsInferencing:
+        """
+        Method to initalize ModelsInferencing.
+
+        Parameters
+        ----------
+        ticker : str
+            String representing ticker symbol for training.
+        start_date : str
+            String representing start date for data retrival.
+        end_data : str
+            String representing end date for data retrival.
+        """
+        inferencing = ModelsInferencing()
+        inferencing.ticker = ticker
+        inferencing.start_date = start_date
+        inferencing.end_date = end_date
+
+        return inferencing
+
+    @staticmethod
+    def load_model(inferencing: ModelsInferencing):
         """
         """
-        model_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "models", f"{ticker}_model.pkl")
+        model_path = os.path.join(
+            os.getcwd(), "hmm", "train", "artifacts", "models", f"{inferencing.ticker}_model.pkl"
+        )
         if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Saved model not found for {ticker}: {model_path}")
-
+            raise FileNotFoundError(f"Saved model not found for {inferencing.ticker}: {model_path}")
         model = joblib.load(model_path)
+        inferencing.model = model
 
-        return model
-
-    def load_training(self, ticker):
+    @staticmethod
+    def load_training(inferencing):
         """
         """
-        training_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}_training.pkl")
+        training_path = os.path.join(
+            os.getcwd(), "hmm", "train", "artifacts", "training", f"{inferencing.ticker}_training.pkl"
+        )
         training = joblib.load(training_path)
-        return training
+        inferencing.train_data = training.train_data
+        inferencing.test_data = training.test_data
+        inferencing.train_states = training.train_states
 
-    def label_states(self, training):
+    @staticmethod
+    def infer_states(inferencing):
         """
         """
-        state_label_dict = utilities.label_states(training=training)
-        print(f"{training.state_labels}")
-        print(f"{self.ticker}: {state_label_dict}")
+        model = inferencing.model
 
-    def infer_states(self, model, training, n_steps=21):
-        """
-        """
-        test_data = training.test_data[['Momentum', 'Volatility']].values
+        test_data = inferencing.test_data[['Momentum', 'Volatility']].values
         test_states = utilities.smooth_states(model.predict(test_data))
-        training.test_states = test_states
+        inferencing.test_states = test_states
 
-        last_state = test_states[-1]
-        state_labels = training.state_labels.copy()
+    @staticmethod
+    def label_states(inferencing):
+        """
+        """
+        state_label_dict = utilities.label_states(inferencing=inferencing)
+        inferencing.state_labels = state_label_dict
+        print(f"{inferencing.state_labels}")
+        print(f"{inferencing.ticker}: {state_label_dict}")
 
+    @staticmethod
+    def _evaluate_model_quality(inferencing):
+        """
+        """
+        result = utilities.evaluate_state_stability(inferencing.test_states)
+        print(f"[{inferencing.ticker}] Model stability evaluation:")
+        print(f"  - Transition rate: {result['transition_rate']}")
+        print(f"  - Transition windows: {result['transitions']}")
+
+        if result["is_unstable"]:
+            print(f"  - WARNING: Model is unstable. Reason: {result['reason']}")
+            return False
+        else:
+            print("  - Model is stable.")
+            return True
+
+
+    def preditct_future_state(self, inferencing, n_steps=21):
+        """
+        """
+        last_state = inferencing.test_states[-1]
+        state_labels = inferencing.state_labels.copy()
         final_prob_dist = self.forecast_final_state_distribution(
-            model=model,
+            model=inferencing.model,
             last_state_index=last_state,
             n_steps=n_steps,
             state_labels=state_labels
@@ -104,23 +155,10 @@ class ModelsInferenceProcessor:
         for label, prob in final_prob_dist.items():
             print(f"  {label}: {prob}")
 
-        return test_states, test_data
-    
-    def _evaluate_model_quality(self, test_states):
-        result = utilities.evaluate_state_stability(test_states)
-        print(f"[{self.ticker}] Model stability evaluation:")
-        print(f"  - Transition rate: {result['transition_rate']}")
-        print(f"  - Transition windows: {result['transitions']}")
-
-        if result["is_unstable"]:
-            print(f"  - WARNING: Model is unstable. Reason: {result['reason']}")
-            return False
-        else:
-            print("  - Model is stable.")
-            return True
 
     def forecast_final_state_distribution(self, model, last_state_index, n_steps, state_labels):
         """
+        Forecast the probability distribution over states after `n_steps`.
         """
         A = model.transmat_
         n_states = model.n_components
@@ -132,49 +170,8 @@ class ModelsInferenceProcessor:
             pi_t = np.dot(pi_t, A)
 
         final_probs = {
-            state_labels[i]: round(pi_t[i], 4)
+            state_labels.get(i, f"State {i}"): round(pi_t[i], 4)
             for i in range(n_states)
         }
 
         return final_probs
-
-    def compute_weight(self, initial_weight):
-        """
-        Computes a weight based on the forecasted probability distribution.
-        Adjusts the base weight depending on market sentiment probabilities.
-        """
-        probs = self.forecast_distribution
-        bullish = probs.get('Bullish', 0)
-        neutral = probs.get('Neutral', 0)
-        bearish = probs.get('Bearish', 0)
-        top = max(probs, key=probs.get)
-
-        # Immediate override: too much bearish risk
-        if bearish > 0.15:
-            raw_weight = 0
-
-        elif bullish > 0.9:
-            raw_weight = 1.5 * initial_weight
-
-        elif 0.9 >= bullish > 0.75:
-            raw_weight = 1.25 * initial_weight
-
-        elif 0.75 >= bullish > 0.55:
-            raw_weight = 1.1 * initial_weight
-        # NOTE this is not correct logic.
-        elif 0.55 >= bullish > 0.5:
-            raw_weight = 1.0 * initial_weight
-
-        elif top == 'Neutral':
-            if bullish >= 0.05:
-                raw_weight = initial_weight
-            elif bullish <= bearish:
-                raw_weight = 0.5 * initial_weight
-            else:
-                raw_weight = 0.25 * initial_weight
-
-        else:
-            # Default fallback — low exposure
-            raw_weight = 0.1 * initial_weight
-
-        print(f"Weight for: {self.ticker}: {raw_weight}\n")

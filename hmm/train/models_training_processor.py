@@ -48,9 +48,7 @@ class ModelsTrainingProcessor:
                 print(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
 
         self._save_model(training=training)
-        results = ResultsProcessor(
-            training=training, ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
-        )
+        results = ResultsProcessor(training=training)
         results.process()
 
         return training

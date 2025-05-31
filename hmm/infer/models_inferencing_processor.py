@@ -94,7 +94,7 @@ class ModelsInferenceProcessor:
         """
         """
         training_path = os.path.join(
-            os.getcwd(), "hmm", "train", "artifacts", "training", f"{inferencing.ticker}_training.pkl"
+            os.getcwd(), "hmm", "train", "artifacts", "training", f"{inferencing.ticker}.pkl"
         )
         training = joblib.load(training_path)
         inferencing.train_data = training.train_data

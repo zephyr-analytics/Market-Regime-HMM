@@ -8,20 +8,20 @@ import numpy as np
 
 import hmm.utilities as utilities
 from hmm.infer.models_inferencing import ModelsInferencing
-from hmm.results.results_processor import ResultsProcessor
+from hmm.results import InferencingResultsProcessor
 
 
 class ModelsInferenceProcessor:
-    def __init__(self, config, ticker):
+    """
+    """
+    def __init__(self, config: dict, ticker: str):
         self.config=config
         self.ticker = ticker
         self.start_date = config["start_date"]
         self.end_date = config["end_date"]
         self.forecast_distribution = {}
-        self.raw_weight = 0
-        self.weight = 0
 
-    def process(self, max_retries=5):
+    def process(self, max_retries: int=10):
         """
         Method to process through inferencing.
 
@@ -50,8 +50,8 @@ class ModelsInferenceProcessor:
                 print(f"[{self.ticker}] Maximum retries reached. Proceeding with last inference.")
 
         self.label_states(inferencing=inferencing)
-        self.preditct_future_state(inferencing=inferencing)
-        results = ResultsProcessor(inferencing=inferencing)
+        self.predict_future_state(inferencing=inferencing)
+        results = InferencingResultsProcessor(inferencing=inferencing)
         results.process()
 
         return inferencing
@@ -80,6 +80,12 @@ class ModelsInferenceProcessor:
     @staticmethod
     def load_model(inferencing: ModelsInferencing):
         """
+        Method to load the trained model to be parsed for inferencing.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         model_path = os.path.join(
             os.getcwd(), "hmm", "train", "artifacts", "models", f"{inferencing.ticker}_model.pkl"
@@ -87,14 +93,21 @@ class ModelsInferenceProcessor:
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Saved model not found for {inferencing.ticker}: {model_path}")
         model = joblib.load(model_path)
+
         inferencing.model = model
 
     @staticmethod
-    def load_training(inferencing):
+    def load_training(inferencing: ModelsInferencing):
         """
+
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         training_path = os.path.join(
-            os.getcwd(), "hmm", "train", "artifacts", "training", f"{inferencing.ticker}_training.pkl"
+            os.getcwd(), "hmm", "train", "artifacts", "training", f"{inferencing.ticker}.pkl"
         )
         training = joblib.load(training_path)
         inferencing.train_data = training.train_data
@@ -102,8 +115,14 @@ class ModelsInferenceProcessor:
         inferencing.train_states = training.train_states
 
     @staticmethod
-    def infer_states(inferencing):
+    def infer_states(inferencing: ModelsInferencing):
         """
+        Method to predict states for test_data.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         model = inferencing.model
 
@@ -112,8 +131,14 @@ class ModelsInferenceProcessor:
         inferencing.test_states = test_states
 
     @staticmethod
-    def label_states(inferencing):
+    def label_states(inferencing: ModelsInferencing):
         """
+        Method to label states based on inferencing.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         state_label_dict = utilities.label_states(inferencing=inferencing)
         inferencing.state_labels = state_label_dict
@@ -121,8 +146,14 @@ class ModelsInferenceProcessor:
         print(f"{inferencing.ticker}: {state_label_dict}")
 
     @staticmethod
-    def _evaluate_model_quality(inferencing):
+    def _evaluate_model_quality(inferencing: ModelsInferencing):
         """
+        Method to evaluate quality of the model and retrain if necessary.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         result = utilities.evaluate_state_stability(inferencing.test_states)
         print(f"[{inferencing.ticker}] Model stability evaluation:")
@@ -136,42 +167,32 @@ class ModelsInferenceProcessor:
             print("  - Model is stable.")
             return True
 
-
-    def preditct_future_state(self, inferencing, n_steps=21):
+    @staticmethod
+    def predict_future_state(inferencing: ModelsInferencing, n_steps: int=21):
         """
+        Method to predict future states based on n number of timesteps forward.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
+        n_steps : int
+            The number of time steps to predict forward.
         """
         last_state = inferencing.test_states[-1]
         state_labels = inferencing.state_labels.copy()
-        final_prob_dist = self.forecast_final_state_distribution(
-            model=inferencing.model,
-            last_state_index=last_state,
-            n_steps=n_steps,
-            state_labels=state_labels
-        )
-
-        self.forecast_distribution = final_prob_dist
-
-        print(f"\nTicker: {self.ticker} — Forecast at step {n_steps}:")
-        for label, prob in final_prob_dist.items():
-            print(f"  {label}: {prob}")
-
-
-    def forecast_final_state_distribution(self, model, last_state_index, n_steps, state_labels):
-        """
-        Forecast the probability distribution over states after `n_steps`.
-        """
-        A = model.transmat_
-        n_states = model.n_components
+        A = inferencing.model.transmat_
+        n_states = inferencing.model.n_components
 
         pi_t = np.zeros(n_states)
-        pi_t[last_state_index] = 1.0
+        pi_t[last_state] = 1.0
 
         for _ in range(n_steps):
             pi_t = np.dot(pi_t, A)
 
-        final_probs = {
-            state_labels.get(i, f"State {i}"): round(pi_t[i], 4)
-            for i in range(n_states)
+        labeled_distribution = {
+            state_labels.get(i, f"State {i}"): round(prob, 4)
+            for i, prob in enumerate(pi_t)
         }
 
-        return final_probs
+        inferencing.forecast_distribution = labeled_distribution

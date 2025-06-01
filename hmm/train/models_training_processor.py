@@ -10,16 +10,18 @@ from hmmlearn.hmm import GaussianHMM
 
 import hmm.utilities as utilities
 from hmm.train.models_training import ModelsTraining
-from hmm.results.results_processor import ResultsProcessor
+from hmm.results import TrainingResultsProcessor
 
 
 class ModelsTrainingProcessor:
-    def __init__(self, config, ticker):
+    """
+    """
+    def __init__(self, config: dict, ticker: str):
         self.ticker = ticker
         self.start_date = config["start_date"]
         self.end_date = config["end_date"]
 
-    def process(self, max_retries=5):
+    def process(self, max_retries: int=10):
         """
         Method to process through training.
 
@@ -48,7 +50,7 @@ class ModelsTrainingProcessor:
                 print(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
 
         self._save_model(training=training)
-        results = ResultsProcessor(training=training)
+        results = TrainingResultsProcessor(training=training)
         results.process()
 
         return training
@@ -177,7 +179,7 @@ class ModelsTrainingProcessor:
     @staticmethod
     def _evaluate_model_quality(training: ModelsTraining):
         """
-        Method to evaluate quality of the model.
+        Method to evaluate quality of the model and retrain if necessary.
 
         Parameters
         ----------

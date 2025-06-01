@@ -1,5 +1,6 @@
 """
 """
+import json
 import os
 import pickle
 
@@ -11,26 +12,40 @@ import scipy.stats as stats
 
 def compounded_return(series, window):
     """
+
+    Parameters
+    ----------
+    series : 
+
+    window : 
+
+    Returns
+    -------
+
     """
     daily_returns = series.pct_change().fillna(0) + 1
+
     return daily_returns.rolling(window).apply(lambda x: x.prod() - 1, raw=True)
 
 
-def evaluate_state_stability(states, overall_threshold=0.2, window_size=20, flip_threshold=5, flip_window_limit=5):
+def evaluate_state_stability(states, overall_threshold=0.2, window_size=20, flip_threshold=5, flip_window_limit=5) -> dict:
     """
-    Evaluate the stability of HMM-predicted states by:
-    1. Calculating the overall transition rate.
-    2. Detecting localized flip-flopping behavior in sliding windows.
 
-    Args:
-        states (List[int] or np.ndarray): Sequence of predicted HMM states.
-        overall_threshold (float): Max allowed global transition rate.
-        window_size (int): Length of window for localized flip detection.
-        flip_threshold (int): Max allowed state changes in one window.
-        flip_window_limit (int): Max number of windows allowed to exceed the flip threshold.
+    Parameters
+    ----------
+    states : 
 
-    Returns:
-        dict: Dictionary with evaluation metrics and flags.
+    overall_threshold : 
+
+    window_size : 
+
+    flip_threshold : 
+
+    flip_window_limit : 
+
+    Returns
+    -------
+    dict : 
     """
     if len(states) < window_size + 1:
         return {
@@ -65,16 +80,20 @@ def evaluate_state_stability(states, overall_threshold=0.2, window_size=20, flip
     }
 
 
-def label_states(training=None, inferencing=None):
+def label_states(training=None, inferencing=None) -> dict:
     """
     Labels HMM states based on mean returns.
 
-    Parameters:
-    - training: Object with `train_states` (array) and `train_data` (DataFrame with 'Return' column)
+    Parameters
+    ----------
+    training : 
 
-    Returns:
-    - state_label_dict: Dict mapping state index to label.
-    - state_labels_array: Array of labels for each state in training.train_states.
+    inferencing : 
+
+    Returns
+    -------
+    state_label_dict : dict
+    
     """
     if training:
         states = training.train_states.copy()
@@ -85,17 +104,14 @@ def label_states(training=None, inferencing=None):
 
     returns = returns['Momentum'].reset_index(drop=True)
 
-    # Compute mean return for each state
     state_returns = []
     for state in np.unique(states):
         state_mask = states == state
         mean_return = returns[state_mask].mean()
         state_returns.append((state, mean_return))
 
-    # Sort states by mean return
-    state_returns.sort(key=lambda x: x[1])  # ascending order
+    state_returns.sort(key=lambda x: x[1])
 
-    # Map based on rank
     labels = ['Bearish', 'Neutral', 'Bullish']
     state_label_dict = {
         state: labels[i] for i, (state, _) in enumerate(state_returns)
@@ -107,6 +123,14 @@ def label_states(training=None, inferencing=None):
 def load_from_pickle(file_path: str):
     """
     Load the ModelsTraining instance from a pickle file.
+
+    Parameters
+    ----------
+    file_path : str
+
+    Returns
+    -------
+
     """
     with open(file_path, 'rb') as f:
         return pickle.load(f)
@@ -115,24 +139,61 @@ def load_from_pickle(file_path: str):
 def persist_to_pickle(file, file_path: str):
     """
     Pickle the ModelsTraining instance to a file.
+
+    Parameters
+    ----------
+    file_path : str
+
+    Returns
+    -------
+    
     """
     with open(file_path, 'wb') as f:
         pickle.dump(file, f)
 
 
-def smooth_states(states, window=5):
+def smooth_states(states, window=21):
     """
+
+    Parameters
+    ----------
+    states : 
+
+    window : int
+
+    Returns
+    -------
+    pd.Series : 
     """
     return pd.Series(states).rolling(window, center=True, min_periods=1).apply(
         lambda x: stats.mode(x)[0][0], raw=False
     ).astype(int).values
 
 
-def save_plot(filename, plot_type):
+def save_plot(filename, plot_type, plot_sub_folder):
     """
+
+    Parameters
+    ----------
+    filename : 
+
+    plot_type :
+
+    plot_sub_folder : 
+    
     """
-    directory = os.path.join("artifacts", plot_type)
+    directory = os.path.join(os.getcwd(), "hmm", plot_sub_folder, "artifacts", plot_type)
     os.makedirs(directory, exist_ok=True)
     filepath = os.path.join(directory, filename)
     plt.savefig(filepath)
     plt.close()
+
+def load_config():
+    """
+    Method to load the config file.
+    """
+    config_path = os.path.join(os.getcwd(), "config.json")
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+    with open(config_path, 'r') as f:
+        return json.load(f)

@@ -1,9 +1,14 @@
 """
+Getter and setter module for inferencing models.
 """
+
 import pandas as pd
+from hmmlearn.hmm import GaussianHMM
+
 
 class ModelsInferencing:
     """
+    Class for managing the data and configuration required for inferencing models.
     """
 
     def __init__(self):
@@ -16,7 +21,7 @@ class ModelsInferencing:
         self._train_states = None
         self._test_states = None
         self._state_labels = None
-
+        self._forecast_distribution = None
 
     @property
     def ticker(self) -> str:
@@ -76,33 +81,33 @@ class ModelsInferencing:
         self._end_date = value
 
     @property
-    def model(self) -> dict:
+    def model(self) -> GaussianHMM:
         """
-        dict: A dictionary representing the trained model or model configuration.
+        GaussianHMM: A dictionary representing the trained model or model configuration.
         """
         return self._model
 
     @model.setter
-    def model(self, value: dict):
+    def model(self, value: GaussianHMM):
         """
         Set the model configuration or trained model.
 
         Parameters
         ----------
-        value : dict
+        value : GaussianHMM
             Dictionary containing model parameters or the model itself.
         """
         self._model = value
 
     @property
-    def train_data(self) -> pd.DataFrame:
+    def train_data(self) -> pd.Series:
         """
         pd.DataFrame: A string reference or path to the training dataset.
         """
         return self._train_data
 
     @train_data.setter
-    def train_data(self, value: pd.DataFrame):
+    def train_data(self, value: pd.Series):
         """
         Set the training data reference or path.
 
@@ -188,3 +193,22 @@ class ModelsInferencing:
             Dictionary mapping state indices or codes to descriptive labels.
         """
         self._state_labels = value
+
+    @property
+    def forecast_distribution(self) -> dict:
+        """
+        dict: A dictionary mapping states to labels or interpretations.
+        """
+        return self._forecast_distribution
+
+    @forecast_distribution.setter
+    def forecast_distribution(self, value: dict):
+        """
+        Set the state labels.
+
+        Parameters
+        ----------
+        value : dict
+            Dictionary mapping state indices or codes to descriptive labels.
+        """
+        self._forecast_distribution = value

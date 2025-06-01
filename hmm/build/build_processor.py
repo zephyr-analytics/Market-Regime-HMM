@@ -21,6 +21,7 @@ class BuildProcessor:
 
     def process(self):
         """
+        Method to process through the BuildProcessor.
         """
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
         parsed_objects = self.load_pickles_by_ticker(directory=file_path, tickers=self.config["tickers"])
@@ -42,6 +43,17 @@ class BuildProcessor:
     @staticmethod
     def load_pickles_by_ticker(directory: str, tickers: list) -> dict:
         """
+
+        Parameters
+        ----------
+        directory : 
+
+        tickers : 
+
+        Returns
+        -------
+        parsed_objects : 
+
         """
         parsed_objects = {}
 
@@ -63,6 +75,15 @@ class BuildProcessor:
     @staticmethod
     def extract_states(parsed_objects: dict) -> dict:
         """
+
+        Parameters
+        ----------
+        parsed_objects : 
+
+        Returns
+        -------
+        state_data : 
+
         """
         state_data = {}
 
@@ -91,8 +112,17 @@ class BuildProcessor:
         return state_data
 
     @staticmethod
-    def prepare_state_sequences(state_data: dict, lookback: int=63):
+    def prepare_state_sequences(state_data: dict, lookback: int=63) -> np.ndarray:
         """
+
+        Parameters
+        ----------
+        state_data : 
+
+        lookback : 
+
+        Returns 
+        np.ndarray : 
         """
         all_labels = set()
         for data in state_data.values():
@@ -116,6 +146,18 @@ class BuildProcessor:
     @staticmethod
     def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, percentile: float = 80.0) -> dict:
         """
+
+        Parameters
+        ----------
+        sequences : 
+
+        tickers : 
+
+        percentile : 
+
+        Returns
+        -------
+
         """
         distance_matrix = pdist(sequences, metric='euclidean')
         Z = linkage(distance_matrix, method='ward')
@@ -147,6 +189,15 @@ class BuildProcessor:
     @staticmethod
     def extract_forecast_distributions(parsed_objects: dict) -> dict:
         """
+
+        Parameters
+        ----------
+        parsed_objects : 
+
+        Returns
+        -------
+        forecast_data : 
+
         """
         forecast_data = {}
 
@@ -160,6 +211,16 @@ class BuildProcessor:
     @staticmethod
     def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict) -> dict:
         """
+
+        Parameters
+        ----------
+        forecast_data : 
+
+        clusters : 
+
+        Returns
+        -------
+
         """
         from collections import defaultdict
 
@@ -194,6 +255,15 @@ class BuildProcessor:
     @staticmethod
     def build_final_portfolio(clusters: dict, forecast_data: dict, category_weights: dict):
         """
+
+        Parameters
+        ----------
+        clusters : 
+
+        forecast_data : 
+
+        category_weigths :
+
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         ticker_weights = defaultdict(float)
@@ -249,6 +319,11 @@ class BuildProcessor:
     @staticmethod
     def plot_portfolio(ticker_weights: dict):
         """
+
+        Parameters
+        ----------
+        ticker_wegihts : 
+
         """
         if not ticker_weights:
             print("No weights to plot.")

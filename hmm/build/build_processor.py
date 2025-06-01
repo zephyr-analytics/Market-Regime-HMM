@@ -114,32 +114,49 @@ class BuildProcessor:
         return np.array(sequences), tickers
 
     @staticmethod
-    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, threshold: int=15.0) -> dict:
-            """
-            """
-            # Compute pairwise distances and linkage matrix
-            distance_matrix = pdist(sequences, metric='euclidean')
-            Z = linkage(distance_matrix, method='ward')
+    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, percentile: float = 80.0) -> dict:
+        """
+        Performs hierarchical clustering on sequences and dynamically determines the distance threshold
+        based on a given percentile of the linkage distances.
 
-            # Generate flat cluster labels
-            labels = fcluster(Z, t=threshold, criterion='distance')
-            cluster_map = dict(zip(tickers, labels))
+        Args:
+            sequences (np.ndarray): Encoded sequences per asset.
+            tickers (list): List of asset tickers corresponding to the sequences.
+            percentile (float): Percentile (0-100) to select the threshold from linkage distances.
 
-            # Plot dendrogram
-            plt.figure(figsize=(12, 6))
-            dendrogram(Z, labels=tickers, leaf_rotation=90)
-            plt.title("Hierarchical Clustering of Tickers by State Sequences")
-            plt.xlabel("Ticker")
-            plt.ylabel("Distance")
-            plt.tight_layout()
-            plt.show()
+        Returns:
+            dict: A dictionary containing the linkage matrix, cluster labels, cluster mapping, and threshold.
+        """
+        # Compute pairwise distances and linkage matrix
+        distance_matrix = pdist(sequences, metric='euclidean')
+        Z = linkage(distance_matrix, method='ward')
 
-            # Return structured results
-            return {
-                'linkage_matrix': Z,
-                'clusters': cluster_map,
-                'labels': labels
-            }
+        # Compute threshold from a chosen percentile of the linkage distances
+        linkage_distances = Z[:, 2]
+        threshold = np.percentile(linkage_distances, percentile)
+
+        # Generate flat cluster labels
+        labels = fcluster(Z, t=threshold, criterion='distance')
+        cluster_map = dict(zip(tickers, labels))
+
+        # Plot dendrogram with threshold line
+        plt.figure(figsize=(12, 6))
+        dendrogram(Z, labels=tickers, leaf_rotation=90)
+        plt.axhline(y=threshold, c='red', linestyle='dashed', label=f'Threshold: {threshold:.2f} (P{percentile})')
+        plt.title("Hierarchical Clustering of Tickers by State Sequences")
+        plt.xlabel("Ticker")
+        plt.ylabel("Distance")
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+        # Return structured results
+        return {
+            'linkage_matrix': Z,
+            'clusters': cluster_map,
+            'labels': labels,
+            'threshold': threshold
+        }
 
     @staticmethod
     def extract_forecast_distributions(parsed_objects: dict) -> dict:

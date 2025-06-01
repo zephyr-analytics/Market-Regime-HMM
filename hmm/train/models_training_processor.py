@@ -10,7 +10,7 @@ from hmmlearn.hmm import GaussianHMM
 
 import hmm.utilities as utilities
 from hmm.train.models_training import ModelsTraining
-from hmm.results.results_processor import ResultsProcessor
+from hmm.results import TrainingResultsProcessor
 
 
 class ModelsTrainingProcessor:
@@ -48,7 +48,7 @@ class ModelsTrainingProcessor:
                 print(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
 
         self._save_model(training=training)
-        results = ResultsProcessor(training=training)
+        results = TrainingResultsProcessor(training=training)
         results.process()
 
         return training

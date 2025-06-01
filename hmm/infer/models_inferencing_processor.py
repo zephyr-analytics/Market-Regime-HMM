@@ -8,7 +8,7 @@ import numpy as np
 
 import hmm.utilities as utilities
 from hmm.infer.models_inferencing import ModelsInferencing
-from hmm.results.results_processor import ResultsProcessor
+from hmm.results import InferencingResultsProcessor
 
 
 class ModelsInferenceProcessor:
@@ -49,7 +49,7 @@ class ModelsInferenceProcessor:
 
         self.label_states(inferencing=inferencing)
         self.predict_future_state(inferencing=inferencing)
-        results = ResultsProcessor(inferencing=inferencing)
+        results = InferencingResultsProcessor(inferencing=inferencing)
         results.process()
 
         return inferencing

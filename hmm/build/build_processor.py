@@ -38,7 +38,6 @@ class BuildProcessor:
 
         self.plot_portfolio(ticker_weights=portfolio)
 
-
     @staticmethod
     def load_pickles_by_ticker(directory: str, tickers: list) -> dict:
         """
@@ -117,19 +116,15 @@ class BuildProcessor:
     def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, percentile: float = 80.0) -> dict:
         """
         """
-        # Compute pairwise distances and linkage matrix
         distance_matrix = pdist(sequences, metric='euclidean')
         Z = linkage(distance_matrix, method='ward')
 
-        # Compute threshold from a chosen percentile of the linkage distances
         linkage_distances = Z[:, 2]
         threshold = np.percentile(linkage_distances, percentile)
 
-        # Generate flat cluster labels
         labels = fcluster(Z, t=threshold, criterion='distance')
         cluster_map = dict(zip(tickers, labels))
 
-        # Plot dendrogram with threshold line
         plt.figure(figsize=(12, 6))
         dendrogram(Z, labels=tickers, leaf_rotation=90)
         plt.axhline(y=threshold, c='red', linestyle='dashed', label=f'Threshold: {threshold:.2f} (P{percentile})')
@@ -140,7 +135,6 @@ class BuildProcessor:
         plt.tight_layout()
         plt.show()
 
-        # Return structured results
         return {
             'linkage_matrix': Z,
             'clusters': cluster_map,
@@ -175,7 +169,6 @@ class BuildProcessor:
             if cluster_id is None:
                 continue
 
-            # Extract forecast dict from numpy array wrapper
             forecast_dict = forecast_array.item() if isinstance(forecast_array, np.ndarray) else forecast_array
 
             for category in valid_categories:
@@ -183,13 +176,11 @@ class BuildProcessor:
                 if value is not None:
                     cluster_category_sums[cluster_id][category] += value
 
-        # Compute total sums across clusters per category
         total_per_category = {cat: 0.0 for cat in valid_categories}
         for cluster_vals in cluster_category_sums.values():
             for cat in valid_categories:
                 total_per_category[cat] += cluster_vals[cat]
 
-        # Normalize weights per category
         category_weights = {cat: {} for cat in valid_categories}
         for cluster_id, sums in cluster_category_sums.items():
             for cat in valid_categories:
@@ -204,16 +195,14 @@ class BuildProcessor:
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         ticker_weights = defaultdict(float)
-        orphaned_weight = 0.0  # to collect unused category-cluster weights
+        orphaned_weight = 0.0
 
         for category in valid_categories:
             cluster_weights = category_weights.get(category, {})
 
             for cluster_id, cluster_weight in cluster_weights.items():
-                # Get tickers in this cluster
                 tickers_in_cluster = [tkr for tkr, cid in clusters.items() if cid == cluster_id]
 
-                # Filter and score
                 scores = []
                 for tkr in tickers_in_cluster:
                     forecast = forecast_data.get(tkr)
@@ -223,7 +212,7 @@ class BuildProcessor:
                         continue
 
                     if forecast.get("Bearish", 0.0) > 0.15:
-                        continue  # drop asset
+                        continue
 
                     bullish_score = forecast.get("Bullish", 0.0)
                     scores.append((tkr, bullish_score))
@@ -242,14 +231,12 @@ class BuildProcessor:
                         norm_score = score / total_bullish
                         ticker_weights[tkr] += cluster_weight * norm_score
 
-        # Redistribute orphaned_weight to remaining tickers proportionally
         if orphaned_weight > 0 and ticker_weights:
             total_allocated = sum(ticker_weights.values())
             for tkr in ticker_weights:
                 proportion = ticker_weights[tkr] / total_allocated
                 ticker_weights[tkr] += orphaned_weight * proportion
 
-        # Final normalization
         total = sum(ticker_weights.values())
         if total > 0:
             ticker_weights = {tkr: w / total for tkr, w in ticker_weights.items()}
@@ -262,10 +249,9 @@ class BuildProcessor:
         """
         """
         if not ticker_weights:
-            print("⚠️ No weights to plot.")
+            print("No weights to plot.")
             return
 
-        # Sort for visual clarity (largest first)
         sorted_items = sorted(ticker_weights.items(), key=lambda x: x[1], reverse=True)
         labels, weights = zip(*sorted_items)
 
@@ -279,6 +265,6 @@ class BuildProcessor:
             textprops={'fontsize': 9}
         )
         plt.title("Final Portfolio Composition")
-        plt.axis('equal')  # Ensures the pie is round
+        plt.axis('equal')
         plt.tight_layout()
         plt.show()

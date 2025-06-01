@@ -129,10 +129,10 @@ def smooth_states(states, window=5):
     ).astype(int).values
 
 
-def save_plot(filename, plot_type):
+def save_plot(filename, plot_type, plot_sub_folder):
     """
     """
-    directory = os.path.join("artifacts", plot_type)
+    directory = os.path.join(os.getcwd(), "hmm", plot_sub_folder, "artifacts", plot_type)
     os.makedirs(directory, exist_ok=True)
     filepath = os.path.join(directory, filename)
     plt.savefig(filepath)

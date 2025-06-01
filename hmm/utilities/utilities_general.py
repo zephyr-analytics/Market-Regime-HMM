@@ -152,7 +152,7 @@ def persist_to_pickle(file, file_path: str):
         pickle.dump(file, f)
 
 
-def smooth_states(states, window=5):
+def smooth_states(states, window=21):
     """
 
     Parameters

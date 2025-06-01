@@ -7,6 +7,7 @@ from collections import defaultdict
 
 import numpy as np
 import matplotlib.pyplot as plt
+import hmm.utilities as utilities
 from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 from sklearn.preprocessing import LabelEncoder
@@ -133,7 +134,8 @@ class BuildProcessor:
         plt.ylabel("Distance")
         plt.legend()
         plt.tight_layout()
-        plt.show()
+        utilities.save_plot(filename="cluster_distribution.png", plot_type="cluster_distribution", plot_sub_folder="build")
+        plt.close()
 
         return {
             'linkage_matrix': Z,
@@ -267,4 +269,5 @@ class BuildProcessor:
         plt.title("Final Portfolio Composition")
         plt.axis('equal')
         plt.tight_layout()
-        plt.show()
+        utilities.save_plot(filename="portfolio_allocation.png", plot_type="portfolio_allocation", plot_sub_folder="build")
+        plt.close()

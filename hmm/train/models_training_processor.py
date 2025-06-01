@@ -177,7 +177,7 @@ class ModelsTrainingProcessor:
     @staticmethod
     def _evaluate_model_quality(training: ModelsTraining):
         """
-        Method to evaluate quality of the model.
+        Method to evaluate quality of the model and retrain if necessary.
 
         Parameters
         ----------

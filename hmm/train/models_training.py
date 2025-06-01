@@ -1,6 +1,10 @@
 """
+Getter and setter module for training models.
 """
+
 import pandas as pd
+from hmmlearn.hmm import GaussianHMM
+
 
 class ModelsTraining:
     """
@@ -18,7 +22,6 @@ class ModelsTraining:
         self._features = None
         self._model = None
         self._state_labels = None
-
 
     @property
     def ticker(self) -> str:
@@ -154,20 +157,20 @@ class ModelsTraining:
         self._data = value
 
     @property
-    def model(self) -> dict:
+    def model(self) -> GaussianHMM:
         """
-        dict: A dictionary representing the trained model or model configuration.
+        GaussianHMM: A dictionary representing the trained model or model configuration.
         """
         return self._model
 
     @model.setter
-    def model(self, value: dict):
+    def model(self, value: GaussianHMM):
         """
         Set the model configuration or trained model.
 
         Parameters
         ----------
-        value : dict
+        value : GaussianHMM
             Dictionary containing model parameters or the model itself.
         """
         self._model = value

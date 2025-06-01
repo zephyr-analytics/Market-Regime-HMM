@@ -78,6 +78,12 @@ class ModelsInferenceProcessor:
     @staticmethod
     def load_model(inferencing: ModelsInferencing):
         """
+        Method to load the trained model to be parsed for inferencing.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         model_path = os.path.join(
             os.getcwd(), "hmm", "train", "artifacts", "models", f"{inferencing.ticker}_model.pkl"
@@ -85,11 +91,18 @@ class ModelsInferenceProcessor:
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Saved model not found for {inferencing.ticker}: {model_path}")
         model = joblib.load(model_path)
+
         inferencing.model = model
 
     @staticmethod
     def load_training(inferencing: ModelsInferencing):
         """
+
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         training_path = os.path.join(
             os.getcwd(), "hmm", "train", "artifacts", "training", f"{inferencing.ticker}.pkl"
@@ -102,6 +115,12 @@ class ModelsInferenceProcessor:
     @staticmethod
     def infer_states(inferencing: ModelsInferencing):
         """
+        Method to predict states for test_data.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         model = inferencing.model
 
@@ -112,6 +131,12 @@ class ModelsInferenceProcessor:
     @staticmethod
     def label_states(inferencing: ModelsInferencing):
         """
+        Method to label states based on inferencing.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         state_label_dict = utilities.label_states(inferencing=inferencing)
         inferencing.state_labels = state_label_dict
@@ -121,6 +146,12 @@ class ModelsInferenceProcessor:
     @staticmethod
     def _evaluate_model_quality(inferencing: ModelsInferencing):
         """
+        Method to evaluate quality of the model and retrain if necessary.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
         """
         result = utilities.evaluate_state_stability(inferencing.test_states)
         print(f"[{inferencing.ticker}] Model stability evaluation:")
@@ -137,21 +168,26 @@ class ModelsInferenceProcessor:
     @staticmethod
     def predict_future_state(inferencing: ModelsInferencing, n_steps: int=21):
         """
+        Method to predict future states based on n number of timesteps forward.
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            ModelsInferencing instances.
+        n_steps : int
+            The number of time steps to predict forward.
         """
         last_state = inferencing.test_states[-1]
         state_labels = inferencing.state_labels.copy()
         A = inferencing.model.transmat_
         n_states = inferencing.model.n_components
 
-        # Initialize probability vector with 1.0 at the last known state
         pi_t = np.zeros(n_states)
         pi_t[last_state] = 1.0
 
-        # Evolve the state distribution over `n_steps`
         for _ in range(n_steps):
             pi_t = np.dot(pi_t, A)
 
-        # Create dictionary with labeled states and their forecasted probabilities
         labeled_distribution = {
             state_labels.get(i, f"State {i}"): round(prob, 4)
             for i, prob in enumerate(pi_t)

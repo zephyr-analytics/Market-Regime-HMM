@@ -116,16 +116,6 @@ class BuildProcessor:
     @staticmethod
     def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, percentile: float = 80.0) -> dict:
         """
-        Performs hierarchical clustering on sequences and dynamically determines the distance threshold
-        based on a given percentile of the linkage distances.
-
-        Args:
-            sequences (np.ndarray): Encoded sequences per asset.
-            tickers (list): List of asset tickers corresponding to the sequences.
-            percentile (float): Percentile (0-100) to select the threshold from linkage distances.
-
-        Returns:
-            dict: A dictionary containing the linkage matrix, cluster labels, cluster mapping, and threshold.
         """
         # Compute pairwise distances and linkage matrix
         distance_matrix = pdist(sequences, metric='euclidean')

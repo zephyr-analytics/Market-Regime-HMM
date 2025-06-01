@@ -14,6 +14,8 @@ from hmm.results import TrainingResultsProcessor
 
 
 class ModelsTrainingProcessor:
+    """
+    """
     def __init__(self, config: dict, ticker: str):
         self.ticker = ticker
         self.start_date = config["start_date"]

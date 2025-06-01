@@ -12,6 +12,8 @@ from hmm.results import InferencingResultsProcessor
 
 
 class ModelsInferenceProcessor:
+    """
+    """
     def __init__(self, config: dict, ticker: str):
         self.config=config
         self.ticker = ticker

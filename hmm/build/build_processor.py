@@ -3,31 +3,30 @@
 import glob
 import pickle
 import os
+from collections import defaultdict
 
 import numpy as np
-from sklearn.preprocessing import LabelEncoder
+import matplotlib.pyplot as plt
 from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
-import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
 
 
 class BuildProcessor:
     """
     """
-    def __init__(self, config):
+    def __init__(self, config: dict):
         self.config = config
 
     def process(self):
         """
         """
-        file_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "inferencing")
+        file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
         parsed_objects = self.load_pickles_by_ticker(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
         seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=252)
         results = self.cluster_and_plot_sequence(seq_matrix, ticker_list)
-        Z = results["linkage_matrix"]
         clusters = results["clusters"]
-        labels = results["labels"]
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
         category_weights = self.compute_categorical_weights_by_cluster(forecast_data=forecast_data, clusters=clusters)
 
@@ -41,17 +40,8 @@ class BuildProcessor:
 
 
     @staticmethod
-    def load_pickles_by_ticker(directory, tickers):
+    def load_pickles_by_ticker(directory: str, tickers: list) -> dict:
         """
-        Load pickle files from a directory that match the given tickers.
-
-        Args:
-            directory (str): Path to the directory containing .pkl files.
-            tickers (list): List of ticker strings to search for in filenames.
-
-        Returns:
-            dict: A dictionary mapping each ticker to its deserialized object(s).
-                If multiple files match a ticker, a list of objects is stored.
         """
         parsed_objects = {}
 
@@ -71,19 +61,8 @@ class BuildProcessor:
         return parsed_objects
 
     @staticmethod
-    def extract_states(parsed_objects):
+    def extract_states(parsed_objects: dict) -> dict:
         """
-        Extract and label train/test states from parsed model objects.
-
-        Args:
-            parsed_objects (dict): Mapping of ticker -> parsed model object.
-
-        Returns:
-            dict: Mapping of ticker -> dict with raw and labeled state arrays:
-                {
-                    'raw': np.ndarray of combined train/test states (int),
-                    'labels': np.ndarray of combined labels (str)
-                }
         """
         state_data = {}
 
@@ -112,17 +91,8 @@ class BuildProcessor:
         return state_data
 
     @staticmethod
-    def prepare_state_sequences(state_data, lookback=63):
+    def prepare_state_sequences(state_data: dict, lookback: int=63):
         """
-        Convert the last `lookback` labeled state values into a matrix
-        of integer-encoded sequences (preserving temporal order).
-
-        Args:
-            state_data (dict): {ticker: {'labels': np.ndarray of state labels}}
-            lookback (int): Number of most recent states to include.
-
-        Returns:
-            tuple: (np.ndarray of sequences, list of tickers)
         """
         all_labels = set()
         for data in state_data.values():
@@ -144,30 +114,15 @@ class BuildProcessor:
         return np.array(sequences), tickers
 
     @staticmethod
-    def cluster_and_plot_sequence(sequences, tickers, threshold=15.0, criterion='distance'):
+    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, threshold: int=15.0) -> dict:
             """
-            Perform hierarchical clustering on encoded label sequences,
-            plot dendrogram, and return clustering results.
-
-            Args:
-                sequences (np.ndarray): 2D array of encoded state labels.
-                tickers (list): List of tickers corresponding to rows in `sequences`.
-                threshold (float): Threshold to cut the dendrogram for cluster labels.
-                criterion (str): Criterion to use in fcluster (e.g., 'distance', 'maxclust').
-
-            Returns:
-                dict: {
-                    'linkage_matrix': np.ndarray,
-                    'clusters': dict[ticker -> cluster_id],
-                    'labels': np.ndarray of cluster labels
-                }
             """
             # Compute pairwise distances and linkage matrix
             distance_matrix = pdist(sequences, metric='euclidean')
             Z = linkage(distance_matrix, method='ward')
 
             # Generate flat cluster labels
-            labels = fcluster(Z, t=threshold, criterion=criterion)
+            labels = fcluster(Z, t=threshold, criterion='distance')
             cluster_map = dict(zip(tickers, labels))
 
             # Plot dendrogram
@@ -187,15 +142,8 @@ class BuildProcessor:
             }
 
     @staticmethod
-    def extract_forecast_distributions(parsed_objects):
+    def extract_forecast_distributions(parsed_objects: dict) -> dict:
         """
-        Extract forecast distributions from parsed model objects.
-
-        Args:
-            parsed_objects (dict): Mapping of ticker -> parsed model object.
-
-        Returns:
-            dict: Mapping of ticker -> np.ndarray of forecast distributions.
         """
         forecast_data = {}
 
@@ -203,11 +151,11 @@ class BuildProcessor:
             forecast = getattr(obj, 'forecast_distribution', None)
             if forecast is not None:
                 forecast_data[ticker] = np.asarray(forecast)
-
+        print(forecast_data)
         return forecast_data
 
     @staticmethod
-    def compute_categorical_weights_by_cluster(forecast_data, clusters):
+    def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict) -> dict:
         """
         """
         from collections import defaultdict
@@ -244,26 +192,9 @@ class BuildProcessor:
         return category_weights
 
     @staticmethod
-    def build_final_portfolio(clusters, forecast_data, category_weights):
+    def build_final_portfolio(clusters: dict, forecast_data: dict, category_weights: dict):
         """
-        Constructs final portfolio with weights for all tickers in retained clusters,
-        excluding tickers with Bearish > 0.15. Their weights are redistributed within
-        the cluster-category, or globally if needed.
-
-        Args:
-            clusters (dict): {ticker: cluster_id}
-            forecast_data (dict): {ticker: np.array({category: prob}, dtype=object)}
-            category_weights (dict): {
-                'Bullish': {cluster_id: weight, ...},
-                'Neutral': {...},
-                'Bearish': {...}
-            }
-
-        Returns:
-            dict: {ticker: final_weight}
         """
-        from collections import defaultdict
-
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         ticker_weights = defaultdict(float)
         orphaned_weight = 0.0  # to collect unused category-cluster weights
@@ -320,13 +251,8 @@ class BuildProcessor:
         return ticker_weights
 
     @staticmethod
-    def plot_portfolio(ticker_weights, title="Final Portfolio Composition"):
+    def plot_portfolio(ticker_weights: dict):
         """
-        Plots a pie chart of all portfolio weights by ticker, labeling every slice.
-
-        Args:
-            ticker_weights (dict): {ticker: weight}
-            title (str): Chart title
         """
         if not ticker_weights:
             print("⚠️ No weights to plot.")
@@ -345,7 +271,7 @@ class BuildProcessor:
             wedgeprops=dict(edgecolor='w'),
             textprops={'fontsize': 9}
         )
-        plt.title(title)
+        plt.title("Final Portfolio Composition")
         plt.axis('equal')  # Ensures the pie is round
         plt.tight_layout()
         plt.show()

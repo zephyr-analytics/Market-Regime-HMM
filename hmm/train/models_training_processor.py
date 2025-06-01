@@ -14,12 +14,12 @@ from hmm.results.results_processor import ResultsProcessor
 
 
 class ModelsTrainingProcessor:
-    def __init__(self, config, ticker):
+    def __init__(self, config: dict, ticker: str):
         self.ticker = ticker
         self.start_date = config["start_date"]
         self.end_date = config["end_date"]
 
-    def process(self, max_retries=5):
+    def process(self, max_retries: int=10):
         """
         Method to process through training.
 

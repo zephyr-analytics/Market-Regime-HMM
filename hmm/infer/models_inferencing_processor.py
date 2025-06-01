@@ -12,14 +12,14 @@ from hmm.results.results_processor import ResultsProcessor
 
 
 class ModelsInferenceProcessor:
-    def __init__(self, config, ticker):
+    def __init__(self, config: dict, ticker: str):
         self.config=config
         self.ticker = ticker
         self.start_date = config["start_date"]
         self.end_date = config["end_date"]
         self.forecast_distribution = {}
 
-    def process(self, max_retries=5):
+    def process(self, max_retries: int=10):
         """
         Method to process through inferencing.
 
@@ -88,7 +88,7 @@ class ModelsInferenceProcessor:
         inferencing.model = model
 
     @staticmethod
-    def load_training(inferencing):
+    def load_training(inferencing: ModelsInferencing):
         """
         """
         training_path = os.path.join(
@@ -100,7 +100,7 @@ class ModelsInferenceProcessor:
         inferencing.train_states = training.train_states
 
     @staticmethod
-    def infer_states(inferencing):
+    def infer_states(inferencing: ModelsInferencing):
         """
         """
         model = inferencing.model
@@ -110,7 +110,7 @@ class ModelsInferenceProcessor:
         inferencing.test_states = test_states
 
     @staticmethod
-    def label_states(inferencing):
+    def label_states(inferencing: ModelsInferencing):
         """
         """
         state_label_dict = utilities.label_states(inferencing=inferencing)
@@ -119,7 +119,7 @@ class ModelsInferenceProcessor:
         print(f"{inferencing.ticker}: {state_label_dict}")
 
     @staticmethod
-    def _evaluate_model_quality(inferencing):
+    def _evaluate_model_quality(inferencing: ModelsInferencing):
         """
         """
         result = utilities.evaluate_state_stability(inferencing.test_states)
@@ -135,11 +135,8 @@ class ModelsInferenceProcessor:
             return True
 
     @staticmethod
-    def predict_future_state(inferencing, n_steps=21):
+    def predict_future_state(inferencing: ModelsInferencing, n_steps: int=21):
         """
-        Predicts the future state distribution after `n_steps` transitions 
-        from the last known state, returning a dictionary of labeled states 
-        and their corresponding probabilities.
         """
         last_state = inferencing.test_states[-1]
         state_labels = inferencing.state_labels.copy()

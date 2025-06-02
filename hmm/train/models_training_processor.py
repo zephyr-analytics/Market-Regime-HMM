@@ -115,12 +115,13 @@ class ModelsTrainingProcessor:
             ModelsTraining instance.
         """
         training_data = training.data.copy()
+        ret_1m = utilities.compounded_return(training_data, 21)
         ret_3m = utilities.compounded_return(training_data, 63)
         ret_6m = utilities.compounded_return(training_data, 126)
         ret_9m = utilities.compounded_return(training_data, 189)
         ret_12m = utilities.compounded_return(training_data, 252)
 
-        momentum = (ret_3m + ret_6m + ret_9m + ret_12m) / 4
+        momentum = (ret_1m + ret_3m + ret_6m + ret_9m + ret_12m) / 5
 
         rolling_vol_1m = training_data.pct_change().rolling(window=21).std()
         rolling_vol_3m = training_data.pct_change().rolling(window=63).std()
@@ -175,7 +176,7 @@ class ModelsTrainingProcessor:
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
         print(f"{training.ticker}: {state_label_dict}")
-    
+
     @staticmethod
     def _evaluate_model_quality(training: ModelsTraining):
         """

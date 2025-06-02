@@ -30,12 +30,15 @@ class BuildProcessor:
         results = self.cluster_and_plot_sequence(seq_matrix, ticker_list)
         clusters = results["clusters"]
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
-        category_weights = self.compute_categorical_weights_by_cluster(forecast_data=forecast_data, clusters=clusters)
+        category_weights = self.compute_categorical_weights_by_cluster(
+            forecast_data=forecast_data, clusters=clusters, bearish_cutoff=self.config["bearish_cutoff"]
+        )
 
         portfolio = self.build_final_portfolio(
             clusters=clusters,
             forecast_data=forecast_data,
-            category_weights=category_weights
+            category_weights=category_weights,
+            bearish_cutoff=self.config["bearish_cutoff"]
         )
 
         self.plot_portfolio(ticker_weights=portfolio)
@@ -46,14 +49,15 @@ class BuildProcessor:
 
         Parameters
         ----------
-        directory : 
-
-        tickers : 
+        directory : str
+        String representing the file path.
+        tickers : list
+        List of str ticker symbols.
 
         Returns
         -------
-        parsed_objects : 
-
+        parsed_objects : dict
+        Dictionary of loaded pickle files representing persisted inference files.
         """
         parsed_objects = {}
 
@@ -144,7 +148,7 @@ class BuildProcessor:
         return np.array(sequences), tickers
 
     @staticmethod
-    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, percentile: float = 80.0) -> dict:
+    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, percentile: float = 50.0) -> dict:
         """
 
         Parameters
@@ -186,46 +190,65 @@ class BuildProcessor:
             'threshold': threshold
         }
 
+
     @staticmethod
     def extract_forecast_distributions(parsed_objects: dict) -> dict:
         """
+        Extracts forecast distributions from parsed inference objects and normalizes state keys
+        to 'Bullish' if 'Bullish' is not already present.
 
         Parameters
         ----------
-        parsed_objects : 
+        parsed_objects : dict
+            Dictionary of model inference objects with `forecast_distribution` attributes.
 
         Returns
         -------
-        forecast_data : 
-
+        dict
+            Dictionary of forecast distributions by ticker with keys normalized.
         """
         forecast_data = {}
 
         for ticker, obj in parsed_objects.items():
             forecast = getattr(obj, 'forecast_distribution', None)
-            if forecast is not None:
-                forecast_data[ticker] = np.asarray(forecast)
+            if forecast is not None and isinstance(forecast, dict):
+                # Only map if 'Bullish' is not already present
+                if "Bullish" not in forecast:
+                    mapped_forecast = {}
+                    for k, v in forecast.items():
+                        if k in {"State 0", "State 1", "State 2"}:
+                            mapped_forecast["Bullish"] = mapped_forecast.get("Bullish", 0.0) + v
+                        else:
+                            mapped_forecast[k] = v
+                    forecast_data[ticker] = np.asarray(mapped_forecast)
+                else:
+                    forecast_data[ticker] = np.asarray(forecast)
         print(forecast_data)
         return forecast_data
 
+
     @staticmethod
-    def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict) -> dict:
+    def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict, bearish_cutoff: float) -> dict:
         """
+        Computes normalized weights for Bullish, Neutral, and Bearish forecasts per cluster.
+        Clusters with an average Bearish sentiment > 0.15 are assigned zero weight across all categories.
 
         Parameters
         ----------
-        forecast_data : 
-
-        clusters : 
+        forecast_data : dict
+            Mapping of tickers to forecast dictionaries or np.ndarrays containing {"Bullish", "Neutral", "Bearish"} scores.
+        clusters : dict
+            Mapping of tickers to cluster IDs.
 
         Returns
         -------
-
+        dict
+            Nested dictionary where category_weights[category][cluster_id] = normalized weight.
         """
-        from collections import defaultdict
-
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         cluster_category_sums = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
+        cluster_counts = defaultdict(int)
+        cluster_bearish_totals = defaultdict(float)
 
         for ticker, forecast_array in forecast_data.items():
             cluster_id = clusters.get(ticker)
@@ -233,11 +256,20 @@ class BuildProcessor:
                 continue
 
             forecast_dict = forecast_array.item() if isinstance(forecast_array, np.ndarray) else forecast_array
+            if not isinstance(forecast_dict, dict):
+                continue
 
-            for category in valid_categories:
-                value = forecast_dict.get(category)
-                if value is not None:
-                    cluster_category_sums[cluster_id][category] += value
+            for cat in valid_categories:
+                cluster_category_sums[cluster_id][cat] += forecast_dict.get(cat, 0.0)
+
+            cluster_bearish_totals[cluster_id] += forecast_dict.get("Bearish", 0.0)
+            cluster_counts[cluster_id] += 1
+
+        for cluster_id in list(cluster_category_sums.keys()):
+            count = cluster_counts.get(cluster_id, 1)
+            avg_bearish = cluster_bearish_totals[cluster_id] / count if count > 0 else 0.0
+            if avg_bearish > bearish_cutoff:
+                cluster_category_sums[cluster_id] = {cat: 0.0 for cat in valid_categories}
 
         total_per_category = {cat: 0.0 for cat in valid_categories}
         for cluster_vals in cluster_category_sums.values():
@@ -250,20 +282,29 @@ class BuildProcessor:
                 total = total_per_category[cat]
                 category_weights[cat][cluster_id] = sums[cat] / total if total > 0 else 0.0
 
+        print(category_weights)
         return category_weights
 
+
     @staticmethod
-    def build_final_portfolio(clusters: dict, forecast_data: dict, category_weights: dict):
+    def build_final_portfolio(clusters: dict, forecast_data: dict, category_weights: dict, bearish_cutoff: float):
         """
+        Builds a final portfolio by allocating weights to tickers based on their forecasted category scores
+        and cluster-based category weights. Bullish scores are discounted by Bearish sentiment.
 
         Parameters
         ----------
-        clusters : 
+        clusters : dict
+            Mapping of tickers to cluster IDs.
+        forecast_data : dict
+            Mapping of tickers to forecast dictionaries or arrays with {"Bullish", "Neutral", "Bearish"} scores.
+        category_weights : dict
+            Nested dictionary with category -> cluster_id -> weight.
 
-        forecast_data : 
-
-        category_weigths :
-
+        Returns
+        -------
+        dict
+            Final ticker weight allocations.
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         ticker_weights = defaultdict(float)
@@ -283,10 +324,10 @@ class BuildProcessor:
                     if not forecast or not isinstance(forecast, dict):
                         continue
 
-                    if forecast.get("Bearish", 0.0) > 0.15:
+                    if forecast.get("Bearish", 0.0) > bearish_cutoff:
                         continue
 
-                    bullish_score = forecast.get("Bullish", 0.0)
+                    bullish_score = max(forecast.get("Bullish", 0.0) - forecast.get("Bearish", 0.0), 0.0)
                     scores.append((tkr, bullish_score))
 
                 if not scores:
@@ -312,9 +353,10 @@ class BuildProcessor:
         total = sum(ticker_weights.values())
         if total > 0:
             ticker_weights = {tkr: w / total for tkr, w in ticker_weights.items()}
-        ticker_weights = dict(ticker_weights)
+        dict(ticker_weights)
 
         return ticker_weights
+
 
     @staticmethod
     def plot_portfolio(ticker_weights: dict):

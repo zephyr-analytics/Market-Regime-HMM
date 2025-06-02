@@ -1,5 +1,10 @@
 # Market-HMM
 
+## Configuration
+
+-"diversification_level" a int between 10 and 90
+-Note: higher numbers lead to more diversifiaction.
+
 ## Train
 `python run.py --train`
 

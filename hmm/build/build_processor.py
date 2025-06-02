@@ -27,7 +27,7 @@ class BuildProcessor:
         parsed_objects = self.load_pickles_by_ticker(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
         seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=252)
-        results = self.cluster_and_plot_sequence(seq_matrix, ticker_list)
+        results = self.cluster_and_plot_sequence(seq_matrix, ticker_list, percentile=self.config["diversification_level"])
         clusters = results["clusters"]
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
         category_weights = self.compute_categorical_weights_by_cluster(
@@ -148,7 +148,7 @@ class BuildProcessor:
         return np.array(sequences), tickers
 
     @staticmethod
-    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, percentile: float = 50.0) -> dict:
+    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, percentile: float) -> dict:
         """
 
         Parameters

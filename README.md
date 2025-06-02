@@ -1,10 +1,13 @@
 # Market-HMM
 
 ## Train
-`--train`
+`python run.py --train`
 
 ## Infer
-`--infer`
+`python run.py --infer`
 
 ## Build Portfolio
-`--build`
+`python run.py --build`
+
+## Artifacts
+-Artifacts are located within each sub directory of hmm directory.

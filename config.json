@@ -1,12 +1,14 @@
 {
     "tickers": [
         "IUSG", "IUSV", "EFG", "EFV", "VWO", 
-        "BND", "BNDX", "EMB", "TLT", "IEI", "IEF", "SHY", "TLH",
+        "BND", "BNDX", "EMB", 
+        "TLT", "IEI", "IEF", "SHY", "TLH",
         "IAU", "DBC", "VNQ", "VNQI",
-        "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI"
+        "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
+        "UUP", "PFIX"
     ],    
-    "diversification_level": 50,
-    "bearish_cutoff" : 0.2,
+    "diversification_level": 65,
+    "bearish_cutoff" : 0.15,
     "start_date": "2008-01-01",
     "end_date": "2025-06-02",
     "max_retries": 10

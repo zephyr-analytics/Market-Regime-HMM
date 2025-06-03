@@ -16,6 +16,7 @@ from hmm.results import TrainingResultsProcessor
 
 class ModelsTrainingProcessor:
     """
+    Class for training Gaussian HMM.
     """
     def __init__(self, config: dict, ticker: str):
         self.ticker = ticker
@@ -26,6 +27,7 @@ class ModelsTrainingProcessor:
 
     def process(self):
         """
+        Method to process through the training module.
         """
         training = self.initialize_models_training(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
@@ -146,8 +148,16 @@ class ModelsTrainingProcessor:
     @staticmethod
     def _fit_model(n_states: int, training: ModelsTraining, max_retries: int) -> bool:
         """
-        Fits HMM model using training.train_data[['Momentum', 'Volatility']]
-        and returns whether convergence was successful.
+        Fits the HMM model.
+
+        Parameters
+        ----------
+        n_states : int
+            Number of states the model should train on.
+        training : ModelsTraining
+            ModelsTraining instance.
+        max_retries : int
+            Number of retries to train the model.
         """
         X = training.train_data[['Momentum', 'Volatility']].values
 
@@ -168,6 +178,7 @@ class ModelsTrainingProcessor:
                 print(f"[{training.ticker}] Model converged on attempt {attempt}")
                 training.model = model
                 training.train_states = utilities.smooth_states(model.predict(X))
+
                 return True
             else:
                 print(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
@@ -175,6 +186,7 @@ class ModelsTrainingProcessor:
         print(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
         training.model = model
         training.train_states = utilities.smooth_states(model.predict(X))
+
         return False
 
     @staticmethod

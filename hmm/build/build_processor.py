@@ -1,4 +1,5 @@
 """
+Module for building portfolio.
 """
 import glob
 import pickle
@@ -15,6 +16,7 @@ from sklearn.preprocessing import LabelEncoder
 
 class BuildProcessor:
     """
+    Class to take processed model data and build a portfolio.
     """
     def __init__(self, config: dict):
         self.config = config

@@ -13,6 +13,7 @@ from hmm.results import InferencingResultsProcessor
 
 class ModelsInferenceProcessor:
     """
+    Class for infering on the trained Gaussian HMM.
     """
     def __init__(self, config: dict, ticker: str):
         self.config=config

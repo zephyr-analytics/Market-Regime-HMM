@@ -22,15 +22,7 @@ class ModelsTrainingProcessor:
         self.start_date = config["start_date"]
         self.end_date = config["end_date"]
 
-    def process(self, max_retries: int=10):
-        """
-        Method to process through training.
-
-        Parameters
-        ----------
-        max_retries : int
-            Number of attempts to ensure proper state transition.
-        """
+    def process(self, max_retries: int = 10):
         training = self.initialize_models_training(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
@@ -39,7 +31,12 @@ class ModelsTrainingProcessor:
         for attempt in range(1, max_retries + 1):
             print(f"\n[{self.ticker}] Training attempt {attempt}...")
             self.prepare_data(training=training)
-            self._fit_model(n_states=3, training=training)
+
+            converged = self._fit_model(n_states=3, training=training)
+            if not converged:
+                print(f"[{self.ticker}] Retrying model training due to non-convergence...")
+                continue
+
             self._label_states(training=training)
 
             is_stable = self._evaluate_model_quality(training=training)
@@ -141,23 +138,38 @@ class ModelsTrainingProcessor:
         training.features = scaled_features
 
     @staticmethod
-    def _fit_model(n_states: int, training: ModelsTraining):
+    def _fit_model(n_states: int, training: ModelsTraining, convergence_retries: int = 3) -> bool:
         """
-        Method to fit the data to the model.
-
-        Parameters
-        ----------
-        n_states : int
-            Integer representing the number of expected states.
-        training : ModelsTraining
-            ModelsTraining instance.
+        Fits HMM model using training.train_data[['Momentum', 'Volatility']]
+        and returns whether convergence was successful.
         """
-        model = GaussianHMM(n_components=n_states, covariance_type="diag", tol=0.0001, n_iter=10000)
-        model.fit(training.train_data[['Momentum', 'Volatility']].values)
-        train_states = utilities.smooth_states(model.predict(training.train_data[['Momentum', 'Volatility']].values))
+        X = training.train_data[['Momentum', 'Volatility']].values
 
+        for attempt in range(1, convergence_retries + 1):
+            model = GaussianHMM(
+                n_components=n_states,
+                covariance_type="diag",
+                tol=0.0001,
+                n_iter=10000,
+                verbose=False,
+                params="stmc",
+                init_params="stmc"
+            )
+
+            model.fit(X)
+
+            if model.monitor_.converged:
+                print(f"[{training.ticker}] Model converged on attempt {attempt}")
+                training.model = model
+                training.train_states = utilities.smooth_states(model.predict(X))
+                return True
+            else:
+                print(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
+
+        print(f"[{training.ticker}] ERROR: Failed to converge after {convergence_retries} attempts.")
         training.model = model
-        training.train_states = train_states
+        training.train_states = utilities.smooth_states(model.predict(X))
+        return False
 
     @staticmethod
     def _label_states(training: ModelsTraining):

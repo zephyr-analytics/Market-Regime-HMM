@@ -281,7 +281,6 @@ class BuildProcessor:
             for cat in valid_categories:
                 total = total_per_category[cat]
                 category_weights[cat][cluster_id] = sums[cat] / total if total > 0 else 0.0
-
         print(category_weights)
         return category_weights
 

@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import yfinance as yf
 from hmmlearn.hmm import GaussianHMM
+from sklearn.preprocessing import StandardScaler
 
 import hmm.utilities as utilities
 from hmm.train.models_training import ModelsTraining
@@ -107,7 +108,7 @@ class ModelsTrainingProcessor:
     @staticmethod
     def prepare_data(training: ModelsTraining):
         """
-        Prepare data for model fitting/trianing.
+        Prepare data for model fitting/training using StandardScaler for normalization.
 
         Parameters
         ----------
@@ -115,34 +116,29 @@ class ModelsTrainingProcessor:
             ModelsTraining instance.
         """
         training_data = training.data.copy()
+
         ret_1m = utilities.compounded_return(training_data, 21)
         ret_3m = utilities.compounded_return(training_data, 63)
         ret_6m = utilities.compounded_return(training_data, 126)
         ret_9m = utilities.compounded_return(training_data, 189)
         ret_12m = utilities.compounded_return(training_data, 252)
-
         momentum = (ret_1m + ret_3m + ret_6m + ret_9m + ret_12m) / 5
 
         rolling_vol_1m = training_data.pct_change().rolling(window=21).std()
         rolling_vol_3m = training_data.pct_change().rolling(window=63).std()
-        vol_concat = pd.concat([rolling_vol_1m, rolling_vol_3m], axis=1)
-        min_vol = vol_concat.min().min()
-        max_vol = vol_concat.max().max()
-        scaled_vol_1m = 1 - (rolling_vol_1m - min_vol) / (max_vol - min_vol)
-        scaled_vol_3m = 1 - (rolling_vol_3m - min_vol) / (max_vol - min_vol)
-        mean_scaled_vol = (scaled_vol_1m + scaled_vol_3m) / 2
+        mean_vol = (rolling_vol_1m + rolling_vol_3m) / 2
 
-        features = pd.concat([momentum, mean_scaled_vol], axis=1).dropna()
+        features = pd.concat([momentum, mean_vol], axis=1).dropna()
         features.columns = ['Momentum', 'Volatility']
 
-        split_index = int(len(features) * 0.7)
+        scaler = StandardScaler()
+        scaled = scaler.fit_transform(features)
+        scaled_features = pd.DataFrame(scaled, index=features.index, columns=features.columns)
 
-        train_data = features.iloc[:split_index]
-        test_data = features.iloc[split_index:]
-
-        training.train_data = train_data
-        training.test_data = test_data
-        training.features = features
+        split_index = int(len(scaled_features) * 0.7)
+        training.train_data = scaled_features.iloc[:split_index]
+        training.test_data = scaled_features.iloc[split_index:]
+        training.features = scaled_features
 
     @staticmethod
     def _fit_model(n_states: int, training: ModelsTraining):

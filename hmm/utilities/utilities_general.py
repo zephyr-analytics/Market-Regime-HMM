@@ -10,18 +10,19 @@ import numpy as np
 import scipy.stats as stats
 
 
-def compounded_return(series, window):
+def compounded_return(series: pd.Series, window: int) -> pd.Series:
     """
+    Method to aggregate price data into compound returns over a set horizon.
 
     Parameters
     ----------
-    series : 
-
-    window : 
-
+    series : pd.Series
+        Series of price data to calculate compounded returns from.
+    window : int
+        Integer representing the time steps in days to compound over.
     Returns
     -------
-
+    pd.Series : 
     """
     daily_returns = series.pct_change().fillna(0) + 1
 
@@ -30,22 +31,33 @@ def compounded_return(series, window):
 
 def evaluate_state_stability(states, overall_threshold=0.2, window_size=20, flip_threshold=5, flip_window_limit=5) -> dict:
     """
+    Evaluates the temporal stability of a sequence of hidden states to assess model quality.
+
+    This function calculates the rate of state transitions and detects regions of frequent switching
+    ("flip-flopping") within sliding windows. It flags instability based on configurable thresholds.
 
     Parameters
     ----------
-    states : 
-
-    overall_threshold : 
-
-    window_size : 
-
-    flip_threshold : 
-
-    flip_window_limit : 
+    states : np.ndarray
+        A sequence of inferred hidden states (e.g., from an HMM) over time.
+    overall_threshold : float, optional
+        The maximum acceptable overall transition rate (fraction of time steps where state changes),
+        above which the sequence is considered unstable. Default is 0.2.
+    window_size : int, optional
+        The number of time steps in each sliding window used to assess local instability. Default is 20.
+    flip_threshold : int, optional
+        The minimum number of state changes within a window to count it as a flip-flop window. Default is 5.
+    flip_window_limit : int, optional
+        The maximum allowable number of flip-flop windows before flagging instability. Default is 5.
 
     Returns
     -------
-    dict : 
+    dict
+        A dictionary containing:
+        - "transition_rate" (float or None): Fraction of transitions across the full sequence.
+        - "transitions" (int or None): Number of windows with excessive state changes.
+        - "is_unstable" (bool): Whether the state sequence is considered unstable.
+        - "reason" (str): Explanation for instability, or "Stable" if none detected.
     """
     if len(states) < window_size + 1:
         return {
@@ -86,14 +98,14 @@ def label_states(training=None, inferencing=None) -> dict:
 
     Parameters
     ----------
-    training : 
-
-    inferencing : 
-
+    training : ModelsTraining
+        ModelsTraining instance.
+    inferencing : ModelsInferencing
+        MondelsInferencing instance.
     Returns
     -------
     state_label_dict : dict
-    
+        Dictionary containing states and state labels for an asset.
     """
     if training:
         states = training.train_states.copy()
@@ -122,15 +134,15 @@ def label_states(training=None, inferencing=None) -> dict:
 
 def load_from_pickle(file_path: str):
     """
-    Load the ModelsTraining instance from a pickle file.
+    Loads a pickled persist instance from a pickle file.
 
     Parameters
     ----------
     file_path : str
-
+        String representing the file path to load a pickle file from.
     Returns
     -------
-
+    object : Deserialized object that was persisted.
     """
     with open(file_path, 'rb') as f:
         return pickle.load(f)
@@ -138,32 +150,32 @@ def load_from_pickle(file_path: str):
 
 def persist_to_pickle(file, file_path: str):
     """
-    Pickle the ModelsTraining instance to a file.
+    Pickles the persist instance to a file.
 
     Parameters
     ----------
+    file : object
+        Object to be persisted.
     file_path : str
-
-    Returns
-    -------
-    
+        String representing the file path to persist a pickle file from.    
     """
     with open(file_path, 'wb') as f:
         pickle.dump(file, f)
 
 
-def smooth_states(states, window=21):
+def smooth_states(states: np.ndarray, window: int=5):
     """
+    Method to smooth states.
 
     Parameters
     ----------
-    states : 
-
+    states : np.ndarray
+        Array of state labels to smooth over.
     window : int
-
+        Integer representing the window of time to smooth over for states.
     Returns
     -------
-    pd.Series : 
+    pd.Series : Series of smoothed states.
     """
     return pd.Series(states).rolling(window, center=True, min_periods=1).apply(
         lambda x: stats.mode(x)[0][0], raw=False

@@ -21,18 +21,24 @@ class ModelsTrainingProcessor:
         self.ticker = ticker
         self.start_date = config["start_date"]
         self.end_date = config["end_date"]
+        self.max_retries = config["max_retries"]
+        self.n_states = 3
 
-    def process(self, max_retries: int = 10):
+    def process(self):
+        """
+        """
         training = self.initialize_models_training(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
         self._load_data(training=training)
 
-        for attempt in range(1, max_retries + 1):
+        for attempt in range(1, self.max_retries + 1):
             print(f"\n[{self.ticker}] Training attempt {attempt}...")
             self.prepare_data(training=training)
 
-            converged = self._fit_model(n_states=3, training=training)
+            converged = self._fit_model(
+                n_states=self.n_states, training=training, max_retries=self.max_retries
+            )
             if not converged:
                 print(f"[{self.ticker}] Retrying model training due to non-convergence...")
                 continue
@@ -42,7 +48,7 @@ class ModelsTrainingProcessor:
             is_stable = self._evaluate_model_quality(training=training)
             if is_stable:
                 break
-            elif attempt < max_retries:
+            elif attempt < self.max_retries:
                 print(f"[{self.ticker}] Retrying model training due to instability...")
             else:
                 print(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
@@ -138,14 +144,14 @@ class ModelsTrainingProcessor:
         training.features = scaled_features
 
     @staticmethod
-    def _fit_model(n_states: int, training: ModelsTraining, convergence_retries: int = 3) -> bool:
+    def _fit_model(n_states: int, training: ModelsTraining, max_retries) -> bool:
         """
         Fits HMM model using training.train_data[['Momentum', 'Volatility']]
         and returns whether convergence was successful.
         """
         X = training.train_data[['Momentum', 'Volatility']].values
 
-        for attempt in range(1, convergence_retries + 1):
+        for attempt in range(1, max_retries + 1):
             model = GaussianHMM(
                 n_components=n_states,
                 covariance_type="diag",
@@ -166,7 +172,7 @@ class ModelsTrainingProcessor:
             else:
                 print(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
 
-        print(f"[{training.ticker}] ERROR: Failed to converge after {convergence_retries} attempts.")
+        print(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
         training.model = model
         training.train_states = utilities.smooth_states(model.predict(X))
         return False

@@ -8,5 +8,6 @@
     "diversification_level": 65,
     "bearish_cutoff" : 0.2,
     "start_date": "2008-01-01",
-    "end_date": "2025-06-01"
+    "end_date": "2025-06-01",
+    "max_retries": 10
 }

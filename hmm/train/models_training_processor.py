@@ -144,7 +144,7 @@ class ModelsTrainingProcessor:
         training.features = scaled_features
 
     @staticmethod
-    def _fit_model(n_states: int, training: ModelsTraining, max_retries) -> bool:
+    def _fit_model(n_states: int, training: ModelsTraining, max_retries: int) -> bool:
         """
         Fits HMM model using training.train_data[['Momentum', 'Volatility']]
         and returns whether convergence was successful.
@@ -155,7 +155,7 @@ class ModelsTrainingProcessor:
             model = GaussianHMM(
                 n_components=n_states,
                 covariance_type="diag",
-                tol=0.0001,
+                tol=0.00001,
                 n_iter=10000,
                 verbose=False,
                 params="stmc",

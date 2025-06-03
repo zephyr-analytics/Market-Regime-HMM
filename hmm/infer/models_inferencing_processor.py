@@ -158,4 +158,3 @@ class ModelsInferenceProcessor:
         }
 
         inferencing.forecast_distribution = labeled_distribution
-

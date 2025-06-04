@@ -24,6 +24,8 @@ class ModelsTrainingProcessor:
         self.end_date = config["end_date"]
         self.max_retries = config["max_retries"]
         self.n_states = 3
+        self.momentum_intervals = config["momentum_intervals"]
+        self.volatility_interval = config["volatility_interval"]
 
     def process(self):
         """
@@ -36,7 +38,11 @@ class ModelsTrainingProcessor:
 
         for attempt in range(1, self.max_retries + 1):
             print(f"\n[{self.ticker}] Training attempt {attempt}...")
-            self.prepare_data(training=training)
+            self.prepare_data(
+                training=training,
+                momentum_intervals=self.momentum_intervals,
+                volatility_interval=self.volatility_interval
+            )
 
             converged = self._fit_model(
                 n_states=self.n_states, training=training, max_retries=self.max_retries
@@ -111,7 +117,9 @@ class ModelsTrainingProcessor:
         training.data = series
 
     @staticmethod
-    def prepare_data(training: ModelsTraining):
+    def prepare_data(
+        training: ModelsTraining, momentum_intervals: list, volatility_interval: int
+    ):
         """
         Prepare data for model fitting/training using StandardScaler for normalization.
 
@@ -122,18 +130,15 @@ class ModelsTrainingProcessor:
         """
         training_data = training.data.copy()
 
-        ret_1m = utilities.compounded_return(training_data, 21)
-        ret_3m = utilities.compounded_return(training_data, 63)
-        ret_6m = utilities.compounded_return(training_data, 126)
-        ret_9m = utilities.compounded_return(training_data, 189)
-        ret_12m = utilities.compounded_return(training_data, 252)
-        momentum = (ret_1m + ret_3m + ret_6m + ret_9m + ret_12m) / 5
+        ret_1m = utilities.compounded_return(training_data, momentum_intervals[0])
+        ret_3m = utilities.compounded_return(training_data, momentum_intervals[1])
+        ret_6m = utilities.compounded_return(training_data, momentum_intervals[2])
+        ret_9m = utilities.compounded_return(training_data, momentum_intervals[3])
+        momentum = (ret_1m + ret_3m + ret_6m + ret_9m) / 5
 
-        rolling_vol_1m = training_data.pct_change().rolling(window=21).std()
-        rolling_vol_3m = training_data.pct_change().rolling(window=63).std()
-        mean_vol = (rolling_vol_1m + rolling_vol_3m) / 2
+        rolling_vol_1 = training_data.pct_change().rolling(window=volatility_interval).std()
 
-        features = pd.concat([momentum, mean_vol], axis=1).dropna()
+        features = pd.concat([momentum, rolling_vol_1], axis=1).dropna()
         features.columns = ['Momentum', 'Volatility']
 
         scaler = StandardScaler()

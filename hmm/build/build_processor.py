@@ -9,6 +9,9 @@ from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 import hmm.utilities as utilities
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
 from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 from sklearn.preprocessing import LabelEncoder
@@ -44,6 +47,8 @@ class BuildProcessor:
         )
 
         self.plot_portfolio(ticker_weights=portfolio)
+        self.generate_pdf_report(clusters, forecast_data, category_weights)
+
 
     @staticmethod
     def load_pickles_by_ticker(directory: str, tickers: list) -> dict:
@@ -233,7 +238,7 @@ class BuildProcessor:
     def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict, bearish_cutoff: float) -> dict:
         """
         Computes normalized weights for Bullish, Neutral, and Bearish forecasts per cluster.
-        Clusters with an average Bearish sentiment > 0.15 are assigned zero weight across all categories.
+        Bullish scores are discounted by Bearish before computing weights. All clusters are retained.
 
         Parameters
         ----------
@@ -249,9 +254,7 @@ class BuildProcessor:
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         cluster_category_sums = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
-        cluster_counts = defaultdict(int)
-        cluster_bearish_totals = defaultdict(float)
-
+        
         for ticker, forecast_array in forecast_data.items():
             cluster_id = clusters.get(ticker)
             if cluster_id is None:
@@ -261,18 +264,13 @@ class BuildProcessor:
             if not isinstance(forecast_dict, dict):
                 continue
 
-            for cat in valid_categories:
-                cluster_category_sums[cluster_id][cat] += forecast_dict.get(cat, 0.0)
+            # Apply Bullish - Bearish discount logic
+            bullish_score = max(0.0, forecast_dict.get("Bullish", 0.0) - forecast_dict.get("Bearish", 0.0))
+            cluster_category_sums[cluster_id]["Bullish"] += bullish_score
+            cluster_category_sums[cluster_id]["Neutral"] += forecast_dict.get("Neutral", 0.0)
+            cluster_category_sums[cluster_id]["Bearish"] += forecast_dict.get("Bearish", 0.0)
 
-            cluster_bearish_totals[cluster_id] += forecast_dict.get("Bearish", 0.0)
-            cluster_counts[cluster_id] += 1
-
-        for cluster_id in list(cluster_category_sums.keys()):
-            count = cluster_counts.get(cluster_id, 1)
-            avg_bearish = cluster_bearish_totals[cluster_id] / count if count > 0 else 0.0
-            if avg_bearish > bearish_cutoff:
-                cluster_category_sums[cluster_id] = {cat: 0.0 for cat in valid_categories}
-
+        # Normalize per category across clusters
         total_per_category = {cat: 0.0 for cat in valid_categories}
         for cluster_vals in cluster_category_sums.values():
             for cat in valid_categories:
@@ -283,6 +281,7 @@ class BuildProcessor:
             for cat in valid_categories:
                 total = total_per_category[cat]
                 category_weights[cat][cluster_id] = sums[cat] / total if total > 0 else 0.0
+
         print(category_weights)
         return category_weights
 
@@ -389,3 +388,61 @@ class BuildProcessor:
         plt.tight_layout()
         utilities.save_plot(filename="portfolio_allocation.png", plot_type="portfolio_allocation", plot_sub_folder="build")
         plt.close()
+
+
+    @staticmethod
+    def generate_pdf_report(clusters, forecast_data, category_weights, output_path="portfolio_report.pdf"):
+        """
+        """
+        c = canvas.Canvas(output_path, pagesize=letter)
+        width, height = letter
+
+        y = height - inch  # Start 1 inch from top
+        line_height = 12
+
+        def write_line(text, indent=0):
+            nonlocal y
+            if y < inch:  # If space is low, start a new page
+                c.showPage()
+                c.setFont("Helvetica", 10)
+                y = height - inch
+
+            c.drawString(inch + indent, y, text)
+            y -= line_height
+
+        c.setFont("Helvetica-Bold", 16)
+        write_line("Portfolio Clustering Report")
+        c.setFont("Helvetica", 10)
+        y -= 10
+
+        # Cluster Breakdown
+        write_line("Cluster Breakdown", indent=0)
+        cluster_assets = defaultdict(list)
+        for ticker, cluster in clusters.items():
+            cluster_assets[cluster].append(ticker)
+
+        for cluster_id, tickers in sorted(cluster_assets.items()):
+            write_line(f"Cluster {cluster_id}:", indent=10)
+            for t in tickers:
+                write_line(f"- {t}", indent=20)
+            y -= 4
+
+        y -= 10
+        write_line("Category Weights by Cluster", indent=0)
+
+        for category, cluster_weights in category_weights.items():
+            write_line(f"{category}:", indent=10)
+            for cluster_id, weight in sorted(cluster_weights.items()):
+                write_line(f"- Cluster {cluster_id}: {weight:.2%}", indent=20)
+            y -= 4
+
+        y -= 10
+        write_line("Forecast Distribution by Asset", indent=0)
+        for ticker, forecast_array in forecast_data.items():
+            forecast_dict = forecast_array.item() if isinstance(forecast_array, np.ndarray) else forecast_array
+            write_line(f"{ticker}:", indent=10)
+            for k in ['Bullish', 'Neutral', 'Bearish']:
+                write_line(f"{k}: {forecast_dict.get(k, 0):.2%}", indent=20)
+            y -= 4
+
+        c.save()

@@ -4,12 +4,15 @@
         "BND", "BNDX", "EMB", 
         "TLT", "IEI", "IEF", "SHY", "TLH",
         "IAU", "DBC", "VNQ", "VNQI",
-        "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
-        "UUP", "PFIX"
-    ],    
-    "diversification_level": 65,
-    "bearish_cutoff" : 0.15,
-    "start_date": "2008-01-01",
+        "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI"
+    ],
+    "diversification_level": 75,
+    "bearish_cutoff" : 0.10,
+    "start_date": "2000-01-01",
     "end_date": "2025-06-02",
-    "max_retries": 10
+    "max_retries": 10,
+    "momentum_intervals": [
+        5, 21, 63, 126
+    ],
+    "volatility_interval": 21
 }

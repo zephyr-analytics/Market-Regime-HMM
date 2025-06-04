@@ -38,12 +38,14 @@ class BuildProcessor:
         category_weights = self.compute_categorical_weights_by_cluster(
             forecast_data=forecast_data, clusters=clusters
         )
-
+        price_data=utilities.load_price_data(tickers=self.config["tickers"], start_date=self.config["start_date"], end_date=self.config["end_date"])
         portfolio = self.build_final_portfolio(
             clusters=clusters,
             forecast_data=forecast_data,
             category_weights=category_weights,
-            bearish_cutoff=self.config["bearish_cutoff"]
+            bearish_cutoff=self.config["bearish_cutoff"],
+            price_data=price_data,
+            sma_lookback=self.config["moving_average"]
         )
 
         self.plot_portfolio(ticker_weights=portfolio)
@@ -230,7 +232,7 @@ class BuildProcessor:
                     forecast_data[ticker] = np.asarray(mapped_forecast)
                 else:
                     forecast_data[ticker] = np.asarray(forecast)
-        print(forecast_data)
+        # print(forecast_data)
         return forecast_data
 
 
@@ -255,7 +257,7 @@ class BuildProcessor:
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         cluster_category_sums = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
-        
+        print(clusters)
         for ticker, forecast_array in forecast_data.items():
             cluster_id = clusters.get(ticker)
             if cluster_id is None:
@@ -283,16 +285,18 @@ class BuildProcessor:
                 total = total_per_category[cat]
                 category_weights[cat][cluster_id] = sums[cat] / total if total > 0 else 0.0
 
-        print(category_weights)
+        # print(category_weights)
         return category_weights
 
 
     @staticmethod
-    def build_final_portfolio(clusters: dict, forecast_data: dict, category_weights: dict, bearish_cutoff: float):
+    def build_final_portfolio(
+        clusters: dict, forecast_data: dict, category_weights: dict, 
+        bearish_cutoff: float, price_data: dict, sma_lookback: int
+    ):
         """
-        Calculates final portfolio structure and weights. 
-        Secondary risk metric introduced where assets are dropped from the 
-        portfolio based on bearish_cutoff probability.
+        Calculates final portfolio structure and weights with SMA filter. 
+        Assets below their SMA have their weights reallocated to cash.
 
         Parameters
         ----------
@@ -300,13 +304,19 @@ class BuildProcessor:
             Dictionary of ticker mapping to probabilities.
         clusters : dict
             Dictionary of ticker mapping to cluster IDs.
-        category_ weights : dict
+        category_weights : dict
             Dictionary containing cluster weights.
+        bearish_cutoff : float
+            Threshold beyond which assets are excluded due to bearish outlook.
+        price_data : dict
+            Dictionary mapping tickers to historical price Series (pd.Series).
+        sma_lookback : int
+            Lookback window for SMA calculation.
 
         Returns
         -------
         ticker_weights : dict
-            Final ticker weight allocations.
+            Final ticker weight allocations (includes "CASH" if any weights are moved).
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         ticker_weights = defaultdict(float)
@@ -352,12 +362,28 @@ class BuildProcessor:
                 proportion = ticker_weights[tkr] / total_allocated
                 ticker_weights[tkr] += orphaned_weight * proportion
 
-        total = sum(ticker_weights.values())
-        if total > 0:
-            ticker_weights = {tkr: w / total for tkr, w in ticker_weights.items()}
-        dict(ticker_weights)
+        # Apply SMA filter
+        cash_weight = 0.0
+        filtered_weights = {}
+        for tkr, weight in ticker_weights.items():
+            prices = price_data.get(tkr)
+            if prices is None or len(prices) < sma_lookback:
+                cash_weight += weight
+                continue
+            sma = prices[-sma_lookback:].mean()
+            if prices.iloc[-1] < sma or prices.iloc[-2] < sma:
+                cash_weight += weight
+            else:
+                filtered_weights[tkr] = weight
 
-        return ticker_weights
+        # Normalize remaining weights and assign to cash
+        total = sum(filtered_weights.values())
+        if total > 0:
+            filtered_weights = {tkr: w / total * (1.0 - cash_weight) for tkr, w in filtered_weights.items()}
+        if cash_weight > 0:
+            filtered_weights['CASH'] = cash_weight
+
+        return filtered_weights
 
 
     @staticmethod

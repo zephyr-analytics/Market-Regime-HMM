@@ -148,6 +148,53 @@ def load_from_pickle(file_path: str):
         return pickle.load(f)
 
 
+def load_price_data(tickers: list[str], start_date: str, end_date: str) -> dict:
+    """
+    Loads adjusted close price data for multiple tickers using yfinance.
+
+    Parameters
+    ----------
+    tickers : list of str
+        List of ticker symbols.
+    start_date : str
+        Start date in 'YYYY-MM-DD' format.
+    end_date : str
+        End date in 'YYYY-MM-DD' format.
+
+    Returns
+    -------
+    dict
+        Dictionary mapping ticker to its pd.Series of adjusted close prices.
+    """
+    import yfinance as yf
+    import pandas as pd
+
+    data = yf.download(
+        tickers=tickers,
+        start=start_date,
+        end=end_date,
+        group_by='ticker',
+        auto_adjust=False,
+        progress=False,
+        threads=True
+    )
+
+    price_data = {}
+
+    for ticker in tickers:
+        try:
+            if isinstance(data.columns, pd.MultiIndex):
+                series = data[ticker]['Adj Close'].dropna()
+            else:
+                # Single ticker fallback
+                series = data['Adj Close'].dropna()
+            price_data[ticker] = series
+        except Exception:
+            continue  # skip ticker if any issue arises
+
+    return price_data
+
+
 def persist_to_pickle(file, file_path: str):
     """
     Pickles the persist instance to a file.

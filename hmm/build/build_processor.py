@@ -235,22 +235,23 @@ class BuildProcessor:
 
 
     @staticmethod
-    def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict, bearish_cutoff: float) -> dict:
+    def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict) -> dict:
         """
-        Computes normalized weights for Bullish, Neutral, and Bearish forecasts per cluster.
-        Bullish scores are discounted by Bearish before computing weights. All clusters are retained.
+        Method to calculate initial cluster weights.
+        Bullish probability weighting of clusters is first discounted by 
+        bearish probability, which should provide higher risk adjusted returns.
 
         Parameters
         ----------
         forecast_data : dict
-            Mapping of tickers to forecast dictionaries or np.ndarrays containing {"Bullish", "Neutral", "Bearish"} scores.
+            Dictionary of ticker mapping to probabilities.
         clusters : dict
-            Mapping of tickers to cluster IDs.
+            Dictionary of ticker mapping to cluster IDs.
 
         Returns
         -------
-        dict
-            Nested dictionary where category_weights[category][cluster_id] = normalized weight.
+        category_ weights : dict
+            Dictionary containing cluster weights.
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         cluster_category_sums = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
@@ -289,21 +290,22 @@ class BuildProcessor:
     @staticmethod
     def build_final_portfolio(clusters: dict, forecast_data: dict, category_weights: dict, bearish_cutoff: float):
         """
-        Builds a final portfolio by allocating weights to tickers based on their forecasted category scores
-        and cluster-based category weights. Bullish scores are discounted by Bearish sentiment.
+        Calculates final portfolio structure and weights. 
+        Secondary risk metric introduced where assets are dropped from the 
+        portfolio based on bearish_cutoff probability.
 
         Parameters
         ----------
-        clusters : dict
-            Mapping of tickers to cluster IDs.
         forecast_data : dict
-            Mapping of tickers to forecast dictionaries or arrays with {"Bullish", "Neutral", "Bearish"} scores.
-        category_weights : dict
-            Nested dictionary with category -> cluster_id -> weight.
+            Dictionary of ticker mapping to probabilities.
+        clusters : dict
+            Dictionary of ticker mapping to cluster IDs.
+        category_ weights : dict
+            Dictionary containing cluster weights.
 
         Returns
         -------
-        dict
+        ticker_weights : dict
             Final ticker weight allocations.
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
@@ -361,11 +363,12 @@ class BuildProcessor:
     @staticmethod
     def plot_portfolio(ticker_weights: dict):
         """
+        Method to plot the final portfolio weights.
 
         Parameters
         ----------
-        ticker_wegihts : 
-
+        ticker_weights : dict
+            Final ticker weight allocations.
         """
         if not ticker_weights:
             print("No weights to plot.")
@@ -393,6 +396,16 @@ class BuildProcessor:
     @staticmethod
     def generate_pdf_report(clusters, forecast_data, category_weights, output_path="portfolio_report.pdf"):
         """
+        Method to generate a pdf report detailing the overall weighting mechanics used to generate the portfolio weights.
+
+        Parameters
+        ----------
+        clusters : dict
+            Dictionary of ticker mapping to cluster IDs.
+        forecast_data : dict
+            Dictionary of ticker mapping to probabilities.
+        category_ weights : dict
+            Dictionary containing cluster weights.
         """
         c = canvas.Canvas(output_path, pagesize=letter)
         width, height = letter

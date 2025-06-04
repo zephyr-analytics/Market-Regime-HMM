@@ -31,12 +31,12 @@ class BuildProcessor:
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
         parsed_objects = self.load_pickles_by_ticker(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
-        seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=252)
+        seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=63)
         results = self.cluster_and_plot_sequence(seq_matrix, ticker_list, percentile=self.config["diversification_level"])
         clusters = results["clusters"]
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
         category_weights = self.compute_categorical_weights_by_cluster(
-            forecast_data=forecast_data, clusters=clusters, bearish_cutoff=self.config["bearish_cutoff"]
+            forecast_data=forecast_data, clusters=clusters
         )
 
         portfolio = self.build_final_portfolio(
@@ -123,7 +123,7 @@ class BuildProcessor:
         return state_data
 
     @staticmethod
-    def prepare_state_sequences(state_data: dict, lookback: int=63) -> np.ndarray:
+    def prepare_state_sequences(state_data: dict, lookback: int) -> np.ndarray:
         """
 
         Parameters
@@ -141,7 +141,7 @@ class BuildProcessor:
             all_labels.update(trimmed)
 
         encoder = LabelEncoder()
-        encoder.fit(list(filter(None, all_labels)))\
+        encoder.fit(list(filter(None, all_labels)))
 
         sequences = []
         tickers = []

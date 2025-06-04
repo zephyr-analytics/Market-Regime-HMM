@@ -31,7 +31,7 @@ class BuildProcessor:
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
         parsed_objects = self.load_pickles_by_ticker(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
-        seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=63)
+        seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=126)
         results = self.cluster_and_plot_sequence(seq_matrix, ticker_list, percentile=self.config["diversification_level"])
         clusters = results["clusters"]
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
@@ -221,7 +221,6 @@ class BuildProcessor:
         for ticker, obj in parsed_objects.items():
             forecast = getattr(obj, 'forecast_distribution', None)
             if forecast is not None and isinstance(forecast, dict):
-                # Only map if 'Bullish' is not already present
                 if "Bullish" not in forecast:
                     mapped_forecast = {}
                     for k, v in forecast.items():
@@ -232,7 +231,7 @@ class BuildProcessor:
                     forecast_data[ticker] = np.asarray(mapped_forecast)
                 else:
                     forecast_data[ticker] = np.asarray(forecast)
-        # print(forecast_data)
+
         return forecast_data
 
 
@@ -267,13 +266,11 @@ class BuildProcessor:
             if not isinstance(forecast_dict, dict):
                 continue
 
-            # Apply Bullish - Bearish discount logic
             bullish_score = max(0.0, forecast_dict.get("Bullish", 0.0) - forecast_dict.get("Bearish", 0.0))
             cluster_category_sums[cluster_id]["Bullish"] += bullish_score
             cluster_category_sums[cluster_id]["Neutral"] += forecast_dict.get("Neutral", 0.0)
             cluster_category_sums[cluster_id]["Bearish"] += forecast_dict.get("Bearish", 0.0)
 
-        # Normalize per category across clusters
         total_per_category = {cat: 0.0 for cat in valid_categories}
         for cluster_vals in cluster_category_sums.values():
             for cat in valid_categories:
@@ -285,7 +282,6 @@ class BuildProcessor:
                 total = total_per_category[cat]
                 category_weights[cat][cluster_id] = sums[cat] / total if total > 0 else 0.0
 
-        # print(category_weights)
         return category_weights
 
 
@@ -362,7 +358,6 @@ class BuildProcessor:
                 proportion = ticker_weights[tkr] / total_allocated
                 ticker_weights[tkr] += orphaned_weight * proportion
 
-        # Apply SMA filter
         cash_weight = 0.0
         filtered_weights = {}
         for tkr, weight in ticker_weights.items():
@@ -376,7 +371,6 @@ class BuildProcessor:
             else:
                 filtered_weights[tkr] = weight
 
-        # Normalize remaining weights and assign to cash
         total = sum(filtered_weights.values())
         if total > 0:
             filtered_weights = {tkr: w / total * (1.0 - cash_weight) for tkr, w in filtered_weights.items()}
@@ -436,12 +430,12 @@ class BuildProcessor:
         c = canvas.Canvas(output_path, pagesize=letter)
         width, height = letter
 
-        y = height - inch  # Start 1 inch from top
+        y = height - inch
         line_height = 12
 
         def write_line(text, indent=0):
             nonlocal y
-            if y < inch:  # If space is low, start a new page
+            if y < inch:
                 c.showPage()
                 c.setFont("Helvetica", 10)
                 y = height - inch
@@ -454,7 +448,6 @@ class BuildProcessor:
         c.setFont("Helvetica", 10)
         y -= 10
 
-        # Cluster Breakdown
         write_line("Cluster Breakdown", indent=0)
         cluster_assets = defaultdict(list)
         for ticker, cluster in clusters.items():

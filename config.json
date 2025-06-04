@@ -6,14 +6,14 @@
         "IAU", "DBC", "VNQ", "VNQI",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI"
     ],
+    "momentum_intervals": [
+        5, 21, 63, 126
+    ],
     "diversification_level": 50,
     "bearish_cutoff" : 0.10,
     "start_date": "2000-01-01",
     "end_date": "2025-06-03",
     "max_retries": 10,
-    "momentum_intervals": [
-        5, 21, 63, 126
-    ],
     "volatility_interval": 21,
     "moving_average": 147
 }

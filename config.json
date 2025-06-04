@@ -6,7 +6,7 @@
         "IAU", "DBC", "VNQ", "VNQI",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI"
     ],
-    "diversification_level": 75,
+    "diversification_level": 50,
     "bearish_cutoff" : 0.10,
     "start_date": "2000-01-01",
     "end_date": "2025-06-02",

@@ -4,10 +4,12 @@ Module for training models.
 import joblib
 import os
 
+import numpy as np
 import pandas as pd
 import yfinance as yf
 from hmmlearn.hmm import GaussianHMM
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster._kmeans import KMeans
 
 import hmm.utilities as utilities
 from hmm.train.models_training import ModelsTraining
@@ -150,10 +152,11 @@ class ModelsTrainingProcessor:
         training.test_data = scaled_features.iloc[split_index:]
         training.features = scaled_features
 
+
     @staticmethod
     def _fit_model(n_states: int, training: ModelsTraining, max_retries: int) -> bool:
         """
-        Fits the HMM model.
+        Fits the HMM model with initialized means and covariances.
 
         Parameters
         ----------
@@ -166,6 +169,18 @@ class ModelsTrainingProcessor:
         """
         X = training.train_data[['Momentum', 'Volatility']].values
 
+        kmeans = KMeans(n_clusters=n_states, random_state=42)
+        labels = kmeans.fit_predict(X)
+        initial_means = kmeans.cluster_centers_
+
+        covariances = np.zeros((n_states, X.shape[1]))
+        for i in range(n_states):
+            cluster_points = X[labels == i]
+            if len(cluster_points) > 1:
+                covariances[i] = np.var(cluster_points, axis=0) + 1e-4
+            else:
+                covariances[i] = np.var(X, axis=0) + 1e-4
+
         for attempt in range(1, max_retries + 1):
             model = GaussianHMM(
                 n_components=n_states,
@@ -174,8 +189,13 @@ class ModelsTrainingProcessor:
                 n_iter=10000,
                 verbose=False,
                 params="stmc",
-                init_params="stmc"
+                init_params=""
             )
+
+            model.startprob_ = np.full(n_states, 1.0 / n_states)
+            model.transmat_ = np.full((n_states, n_states), 1.0 / n_states)
+            model.means_ = initial_means
+            model.covars_ = covariances
 
             model.fit(X)
 
@@ -183,7 +203,6 @@ class ModelsTrainingProcessor:
                 print(f"[{training.ticker}] Model converged on attempt {attempt}")
                 training.model = model
                 training.train_states = utilities.smooth_states(model.predict(X))
-
                 return True
             else:
                 print(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
@@ -193,6 +212,7 @@ class ModelsTrainingProcessor:
         training.train_states = utilities.smooth_states(model.predict(X))
 
         return False
+
 
     @staticmethod
     def _label_states(training: ModelsTraining):

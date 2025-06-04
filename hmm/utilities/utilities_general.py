@@ -210,25 +210,6 @@ def persist_to_pickle(file, file_path: str):
         pickle.dump(file, f)
 
 
-def smooth_states(states: np.ndarray, window: int=5):
-    """
-    Method to smooth states.
-
-    Parameters
-    ----------
-    states : np.ndarray
-        Array of state labels to smooth over.
-    window : int
-        Integer representing the window of time to smooth over for states.
-    Returns
-    -------
-    pd.Series : Series of smoothed states.
-    """
-    return pd.Series(states).rolling(window, center=True, min_periods=1).apply(
-        lambda x: stats.mode(x)[0][0], raw=False
-    ).astype(int).values
-
-
 def save_plot(filename, plot_type, plot_sub_folder):
     """
 

@@ -202,14 +202,14 @@ class ModelsTrainingProcessor:
             if model.monitor_.converged:
                 print(f"[{training.ticker}] Model converged on attempt {attempt}")
                 training.model = model
-                training.train_states = utilities.smooth_states(model.predict(X))
+                training.train_states = model.predict(X)
                 return True
             else:
                 print(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
 
         print(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
         training.model = model
-        training.train_states = utilities.smooth_states(model.predict(X))
+        training.train_states = model.predict(X)
 
         return False
 

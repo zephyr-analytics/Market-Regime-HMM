@@ -111,7 +111,7 @@ class ModelsInferenceProcessor:
         model = inferencing.model
 
         test_data = inferencing.test_data[['Momentum', 'Volatility']].values
-        test_states = utilities.smooth_states(model.predict(test_data))
+        test_states = model.predict(test_data)
         inferencing.test_states = test_states
 
     @staticmethod

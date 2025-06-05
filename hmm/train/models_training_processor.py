@@ -147,7 +147,7 @@ class ModelsTrainingProcessor:
         scaled = scaler.fit_transform(features)
         scaled_features = pd.DataFrame(scaled, index=features.index, columns=features.columns)
 
-        split_index = int(len(scaled_features) * 0.7)
+        split_index = int(len(scaled_features) * 0.5)
         training.train_data = scaled_features.iloc[:split_index]
         training.test_data = scaled_features.iloc[split_index:]
         training.features = scaled_features
@@ -202,14 +202,14 @@ class ModelsTrainingProcessor:
             if model.monitor_.converged:
                 print(f"[{training.ticker}] Model converged on attempt {attempt}")
                 training.model = model
-                training.train_states = utilities.smooth_states(model.predict(X))
+                training.train_states = model.predict(X)
                 return True
             else:
                 print(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
 
         print(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
         training.model = model
-        training.train_states = utilities.smooth_states(model.predict(X))
+        training.train_states = model.predict(X)
 
         return False
 

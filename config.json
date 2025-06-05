@@ -9,11 +9,10 @@
     "momentum_intervals": [
         5, 21, 63, 126
     ],
-    "diversification_level": 50,
-    "bearish_cutoff" : 0.10,
-    "start_date": "2000-01-01",
-    "end_date": "2025-06-03",
-    "max_retries": 10,
     "volatility_interval": 21,
+    "bearish_cutoff" : 0.12,
+    "start_date": "2000-01-01",
+    "end_date": "2022-06-01",
+    "max_retries": 10,
     "moving_average": 147
 }

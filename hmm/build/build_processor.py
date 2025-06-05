@@ -14,7 +14,8 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 
 
 class BuildProcessor:
@@ -32,7 +33,7 @@ class BuildProcessor:
         parsed_objects = self.load_pickles_by_ticker(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
         seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=126)
-        results = self.cluster_and_plot_sequence(seq_matrix, ticker_list, percentile=self.config["diversification_level"])
+        results = self.cluster_and_plot_sequence(seq_matrix, ticker_list)
         clusters = results["clusters"]
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
         category_weights = self.compute_categorical_weights_by_cluster(
@@ -156,38 +157,59 @@ class BuildProcessor:
 
         return np.array(sequences), tickers
 
+
     @staticmethod
-    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, percentile: float) -> dict:
+    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, max_clusters: int = 10) -> dict:
         """
-
-        Parameters
-        ----------
-        sequences : 
-
-        tickers : 
-
-        percentile : 
-
-        Returns
-        -------
-
+        Automatically determine optimal number of clusters using normalized ensemble score 
+        from silhouette, calinski-harabasz, and davies-bouldin indices.
         """
-        distance_matrix = pdist(sequences, metric='euclidean')
-        Z = linkage(distance_matrix, method='ward')
+        epsilon = 1e-10
+        sequences = np.array(sequences, dtype=np.float64)
+        sequences = np.nan_to_num(sequences, nan=0.0)
+        row_norms = np.linalg.norm(sequences, axis=1)
+        zero_mask = row_norms == 0
+        sequences[zero_mask] = epsilon
 
-        linkage_distances = Z[:, 2]
-        threshold = np.percentile(linkage_distances, percentile)
+        distance_matrix = pdist(sequences, metric='cosine')
+        print(distance_matrix)
+        Z = linkage(distance_matrix, method='average')
 
-        labels = fcluster(Z, t=threshold, criterion='distance')
-        cluster_map = dict(zip(tickers, labels))
+        scores = []
+        label_map = {}
+
+        for k in range(2, min(max_clusters + 1, len(sequences))):
+            labels = fcluster(Z, k, criterion='maxclust')
+            try:
+                sil = silhouette_score(sequences, labels)
+                ch = calinski_harabasz_score(sequences, labels)
+                db = davies_bouldin_score(sequences, labels)
+                scores.append([sil, ch, db])
+                label_map[k] = labels
+            except Exception:
+                continue
+
+        if not scores:
+            raise ValueError("No valid clustering results found.")
+
+        scores = np.array(scores)
+        scores[:, 2] = -scores[:, 2]
+
+        scaler = MinMaxScaler()
+        scaled_scores = scaler.fit_transform(scores)
+
+        mean_scores = scaled_scores.mean(axis=1)
+        best_idx = np.argmax(mean_scores)
+        best_k = list(label_map.keys())[best_idx]
+        best_labels = label_map[best_k]
+
+        cluster_map = dict(zip(tickers, best_labels))
 
         plt.figure(figsize=(12, 6))
         dendrogram(Z, labels=tickers, leaf_rotation=90)
-        plt.axhline(y=threshold, c='red', linestyle='dashed', label=f'Threshold: {threshold:.2f} (P{percentile})')
-        plt.title("Hierarchical Clustering of Tickers by State Sequences")
+        plt.title(f"Hierarchical Clustering of Tickers (auto k={best_k})")
         plt.xlabel("Ticker")
         plt.ylabel("Distance")
-        plt.legend()
         plt.tight_layout()
         utilities.save_plot(filename="cluster_distribution.png", plot_type="cluster_distribution", plot_sub_folder="build")
         plt.close()
@@ -195,8 +217,8 @@ class BuildProcessor:
         return {
             'linkage_matrix': Z,
             'clusters': cluster_map,
-            'labels': labels,
-            'threshold': threshold
+            'labels': best_labels,
+            'n_clusters': best_k
         }
 
 
@@ -231,7 +253,7 @@ class BuildProcessor:
                     forecast_data[ticker] = np.asarray(mapped_forecast)
                 else:
                     forecast_data[ticker] = np.asarray(forecast)
-
+        print(forecast_data)
         return forecast_data
 
 
@@ -291,8 +313,8 @@ class BuildProcessor:
         bearish_cutoff: float, price_data: dict, sma_lookback: int
     ):
         """
-        Calculates final portfolio structure and weights with SMA filter. 
-        Assets below their SMA have their weights reallocated to cash.
+        Calculates final portfolio structure and weights with SMA filter.
+        Assets below their SMA have their weights reallocated proportionally to remaining assets.
 
         Parameters
         ----------
@@ -312,7 +334,7 @@ class BuildProcessor:
         Returns
         -------
         ticker_weights : dict
-            Final ticker weight allocations (includes "CASH" if any weights are moved).
+            Final ticker weight allocations with full distribution (no "CASH").
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         ticker_weights = defaultdict(float)
@@ -335,8 +357,13 @@ class BuildProcessor:
                     if forecast.get("Bearish", 0.0) > bearish_cutoff:
                         continue
 
-                    bullish_score = max(forecast.get("Bullish", 0.0) - forecast.get("Bearish", 0.0), 0.0)
-                    scores.append((tkr, bullish_score))
+                    bullish = forecast.get("Bullish", 0.0)
+                    bearish = forecast.get("Bearish", 0.0)
+                    neutral = forecast.get("Neutral", 1e-6)  # Avoid division by zero
+
+                    adjusted_bullish = max(bullish - bearish, 0.0)
+                    adjusted_score = adjusted_bullish / neutral
+                    scores.append((tkr, adjusted_score))
 
                 if not scores:
                     orphaned_weight += cluster_weight
@@ -358,24 +385,23 @@ class BuildProcessor:
                 proportion = ticker_weights[tkr] / total_allocated
                 ticker_weights[tkr] += orphaned_weight * proportion
 
-        cash_weight = 0.0
+        # Filter out assets below SMA and redistribute their weights
         filtered_weights = {}
+        total_valid_weight = 0.0
         for tkr, weight in ticker_weights.items():
             prices = price_data.get(tkr)
             if prices is None or len(prices) < sma_lookback:
-                cash_weight += weight
                 continue
             sma = prices[-sma_lookback:].mean()
-            if prices.iloc[-1] < sma or prices.iloc[-2] < sma:
-                cash_weight += weight
-            else:
+            if prices.iloc[-1] >= sma and prices.iloc[-2] >= sma:
                 filtered_weights[tkr] = weight
+                total_valid_weight += weight
 
-        total = sum(filtered_weights.values())
-        if total > 0:
-            filtered_weights = {tkr: w / total * (1.0 - cash_weight) for tkr, w in filtered_weights.items()}
-        if cash_weight > 0:
-            filtered_weights['CASH'] = cash_weight
+        if not filtered_weights:
+            return {}  # fallback if all tickers are below SMA
+
+        # Reweight to sum to 1.0
+        filtered_weights = {tkr: w / total_valid_weight for tkr, w in filtered_weights.items()}
 
         return filtered_weights
 

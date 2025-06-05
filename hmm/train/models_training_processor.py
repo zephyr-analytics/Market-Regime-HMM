@@ -147,7 +147,7 @@ class ModelsTrainingProcessor:
         scaled = scaler.fit_transform(features)
         scaled_features = pd.DataFrame(scaled, index=features.index, columns=features.columns)
 
-        split_index = int(len(scaled_features) * 0.7)
+        split_index = int(len(scaled_features) * 0.5)
         training.train_data = scaled_features.iloc[:split_index]
         training.test_data = scaled_features.iloc[split_index:]
         training.features = scaled_features

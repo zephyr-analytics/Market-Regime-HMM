@@ -22,6 +22,7 @@ class ModelsTrainingProcessor:
     """
     def __init__(self, config: dict, ticker: str):
         self.ticker = ticker
+        self.config = config
         self.start_date = config["start_date"]
         self.end_date = config["end_date"]
         self.max_retries = config["max_retries"]
@@ -43,7 +44,8 @@ class ModelsTrainingProcessor:
             self.prepare_data(
                 training=training,
                 momentum_intervals=self.momentum_intervals,
-                volatility_interval=self.volatility_interval
+                volatility_interval=self.volatility_interval,
+                split=self.config["train_test_split"]
             )
 
             converged = self._fit_model(
@@ -120,7 +122,7 @@ class ModelsTrainingProcessor:
 
     @staticmethod
     def prepare_data(
-        training: ModelsTraining, momentum_intervals: list, volatility_interval: int
+        training: ModelsTraining, momentum_intervals: list, volatility_interval: int, split: float
     ):
         """
         Prepare data for model fitting/training using StandardScaler for normalization.
@@ -147,7 +149,7 @@ class ModelsTrainingProcessor:
         scaled = scaler.fit_transform(features)
         scaled_features = pd.DataFrame(scaled, index=features.index, columns=features.columns)
 
-        split_index = int(len(scaled_features) * 0.5)
+        split_index = int(len(scaled_features) * split)
         training.train_data = scaled_features.iloc[:split_index]
         training.test_data = scaled_features.iloc[split_index:]
         training.features = scaled_features

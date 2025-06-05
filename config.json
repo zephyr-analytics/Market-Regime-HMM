@@ -10,6 +10,7 @@
         5, 21, 63, 126
     ],
     "volatility_interval": 21,
+    "train_test_split": 0.50,
     "bearish_cutoff" : 0.12,
     "start_date": "2000-01-01",
     "end_date": "2025-06-01",

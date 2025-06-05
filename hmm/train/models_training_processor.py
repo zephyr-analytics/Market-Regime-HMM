@@ -30,6 +30,7 @@ class ModelsTrainingProcessor:
         self.momentum_intervals = config["momentum_intervals"]
         self.volatility_interval = config["volatility_interval"]
 
+
     def process(self):
         """
         Method to process through the training module.
@@ -71,6 +72,7 @@ class ModelsTrainingProcessor:
 
         return training
 
+
     @staticmethod
     def initialize_models_training(ticker: str, start_date: str, end_date: str) -> ModelsTraining:
         """
@@ -91,6 +93,7 @@ class ModelsTrainingProcessor:
         training.end_date = end_date
 
         return training
+
 
     @staticmethod
     def _load_data(training: ModelsTraining):
@@ -119,6 +122,7 @@ class ModelsTrainingProcessor:
             series = adj_close["Adj Close"].dropna()
 
         training.data = series
+
 
     @staticmethod
     def prepare_data(
@@ -230,6 +234,7 @@ class ModelsTrainingProcessor:
         training.state_labels = state_label_dict
         print(f"{training.ticker}: {state_label_dict}")
 
+
     @staticmethod
     def _evaluate_model_quality(training: ModelsTraining):
         """
@@ -251,6 +256,7 @@ class ModelsTrainingProcessor:
         else:
             print("  - Model is stable.")
             return True
+
 
     @staticmethod
     def _save_model(training: ModelsTraining):

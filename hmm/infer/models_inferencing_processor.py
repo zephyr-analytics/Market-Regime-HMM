@@ -21,6 +21,7 @@ class ModelsInferenceProcessor:
         self.end_date = config["end_date"]
         self.forecast_distribution = {}
 
+
     def process(self):
         """
         Method to process through inferencing.
@@ -39,6 +40,7 @@ class ModelsInferenceProcessor:
         results.process()
 
         return inferencing
+
 
     @staticmethod
     def initialize_models_inferencing(ticker: str, start_date: str, end_date: str) -> ModelsInferencing:
@@ -61,6 +63,7 @@ class ModelsInferenceProcessor:
 
         return inferencing
 
+
     @staticmethod
     def load_model(inferencing: ModelsInferencing):
         """
@@ -80,6 +83,7 @@ class ModelsInferenceProcessor:
 
         inferencing.model = model
 
+
     @staticmethod
     def load_training(inferencing: ModelsInferencing):
         """
@@ -98,6 +102,7 @@ class ModelsInferenceProcessor:
         inferencing.test_data = training.test_data
         inferencing.train_states = training.train_states
 
+
     @staticmethod
     def infer_states(inferencing: ModelsInferencing):
         """
@@ -114,6 +119,7 @@ class ModelsInferenceProcessor:
         test_states = model.predict(test_data)
         inferencing.test_states = test_states
 
+
     @staticmethod
     def label_states(inferencing: ModelsInferencing):
         """
@@ -128,6 +134,7 @@ class ModelsInferenceProcessor:
         inferencing.state_labels = state_label_dict
         print(f"{inferencing.state_labels}")
         print(f"{inferencing.ticker}: {state_label_dict}")
+
 
     @staticmethod
     def predict_future_state(inferencing: ModelsInferencing, n_steps: int = 21):

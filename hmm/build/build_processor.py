@@ -2,20 +2,21 @@
 Module for building portfolio.
 """
 import glob
-import pickle
 import os
+import pickle
 from collections import defaultdict
 
-import numpy as np
 import matplotlib.pyplot as plt
-import hmm.utilities as utilities
+import numpy as np
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
-from scipy.spatial.distance import pdist
+from reportlab.pdfgen import canvas
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from scipy.spatial.distance import pdist
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+
+import hmm.utilities as utilities
 
 
 class BuildProcessor:

@@ -3,6 +3,7 @@ Module for inferencing models.
 """
 import joblib
 import os
+
 import numpy as np
 
 import hmm.utilities as utilities

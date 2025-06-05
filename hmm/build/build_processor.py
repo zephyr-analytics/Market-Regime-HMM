@@ -30,7 +30,7 @@ class BuildProcessor:
         Method to process through the BuildProcessor.
         """
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
-        parsed_objects = self.load_pickles_by_ticker(directory=file_path, tickers=self.config["tickers"])
+        parsed_objects = self.load_models_inference(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
         seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=126)
         results = self.cluster_and_plot_sequence(seq_matrix, ticker_list)
@@ -54,20 +54,21 @@ class BuildProcessor:
 
 
     @staticmethod
-    def load_pickles_by_ticker(directory: str, tickers: list) -> dict:
+    def load_models_inference(directory: str, tickers: list) -> dict:
         """
-
+        Method to load the persisted ModelsInference instance for each ticker.
+        
         Parameters
         ----------
         directory : str
-        String representing the file path.
+            String representing the file path.
         tickers : list
-        List of str ticker symbols.
+            List of str ticker symbols.
 
         Returns
         -------
         parsed_objects : dict
-        Dictionary of loaded pickle files representing persisted inference files.
+            Dictionary of loaded pickle files representing persisted inference files.
         """
         parsed_objects = {}
 
@@ -89,15 +90,16 @@ class BuildProcessor:
     @staticmethod
     def extract_states(parsed_objects: dict) -> dict:
         """
+        Method to extract state data from the loaded ModelInference instance.
 
         Parameters
         ----------
-        parsed_objects : 
-
+        parsed_objects : dict
+            Dictionary of loaded pickle files representing persisted inference files.
         Returns
         -------
-        state_data : 
-
+        state_data : dict
+            Dictionary of tickers and cooresponding state data.
         """
         state_data = {}
 
@@ -128,15 +130,16 @@ class BuildProcessor:
     @staticmethod
     def prepare_state_sequences(state_data: dict, lookback: int) -> np.ndarray:
         """
+        Method to parse state data into state sequences for clustering.
 
         Parameters
         ----------
-        state_data : 
-
-        lookback : 
-
+        state_data : dict
+            Dictionary of tickers and cooresponding state data.
+        lookback : int
+            Integer representing the cutoff lookback period for clustering.
         Returns 
-        np.ndarray : 
+        np.ndarray : An array of state sequences.
         """
         all_labels = set()
         for data in state_data.values():
@@ -159,10 +162,21 @@ class BuildProcessor:
 
 
     @staticmethod
-    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, max_clusters: int = 10) -> dict:
+    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, max_clusters: int = 15) -> dict:
         """
-        Automatically determine optimal number of clusters using normalized ensemble score 
-        from silhouette, calinski-harabasz, and davies-bouldin indices.
+        Method to cluster state sequences to determine portfolio categories.
+
+        Parameters
+        ----------
+        sequences : np.ndarray
+
+        tickers : list
+
+        max_clusters : int
+
+        Returns
+        -------
+        dict : 
         """
         epsilon = 1e-10
         sequences = np.array(sequences, dtype=np.float64)
@@ -225,8 +239,7 @@ class BuildProcessor:
     @staticmethod
     def extract_forecast_distributions(parsed_objects: dict) -> dict:
         """
-        Extracts forecast distributions from parsed inference objects and normalizes state keys
-        to 'Bullish' if 'Bullish' is not already present.
+        Method to extract forecast_data from the loaded ModelsInference instance.
 
         Parameters
         ----------
@@ -235,7 +248,7 @@ class BuildProcessor:
 
         Returns
         -------
-        dict
+        forecast_data : dict
             Dictionary of forecast distributions by ticker with keys normalized.
         """
         forecast_data = {}
@@ -334,7 +347,7 @@ class BuildProcessor:
         Returns
         -------
         ticker_weights : dict
-            Final ticker weight allocations with full distribution (no "CASH").
+            Final ticker weight allocations with full distribution.
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         ticker_weights = defaultdict(float)
@@ -359,7 +372,7 @@ class BuildProcessor:
 
                     bullish = forecast.get("Bullish", 0.0)
                     bearish = forecast.get("Bearish", 0.0)
-                    neutral = forecast.get("Neutral", 1e-6)  # Avoid division by zero
+                    neutral = forecast.get("Neutral", 1e-6)
 
                     adjusted_bullish = max(bullish - bearish, 0.0)
                     adjusted_score = adjusted_bullish / neutral
@@ -385,7 +398,6 @@ class BuildProcessor:
                 proportion = ticker_weights[tkr] / total_allocated
                 ticker_weights[tkr] += orphaned_weight * proportion
 
-        # Filter out assets below SMA and redistribute their weights
         filtered_weights = {}
         total_valid_weight = 0.0
         for tkr, weight in ticker_weights.items():
@@ -398,9 +410,8 @@ class BuildProcessor:
                 total_valid_weight += weight
 
         if not filtered_weights:
-            return {}  # fallback if all tickers are below SMA
+            return {}
 
-        # Reweight to sum to 1.0
         filtered_weights = {tkr: w / total_valid_weight for tkr, w in filtered_weights.items()}
 
         return filtered_weights

@@ -290,8 +290,8 @@ class BuildProcessor:
             Dictionary containing cluster weights.
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
-        cluster_category_sums = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
-        print(clusters)
+        cluster_scores = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
+
         for ticker, forecast_array in forecast_data.items():
             cluster_id = clusters.get(ticker)
             if cluster_id is None:
@@ -301,21 +301,26 @@ class BuildProcessor:
             if not isinstance(forecast_dict, dict):
                 continue
 
-            bullish_score = max(0.0, forecast_dict.get("Bullish", 0.0) - forecast_dict.get("Bearish", 0.0))
-            cluster_category_sums[cluster_id]["Bullish"] += bullish_score
-            cluster_category_sums[cluster_id]["Neutral"] += forecast_dict.get("Neutral", 0.0)
-            cluster_category_sums[cluster_id]["Bearish"] += forecast_dict.get("Bearish", 0.0)
+            bullish = forecast_dict.get("Bullish", 0.0)
+            bearish = forecast_dict.get("Bearish", 0.0)
+            neutral = forecast_dict.get("Neutral", 0.0)
+
+            adjusted_bullish = (bullish - bearish) / neutral if neutral > 0 else 0.0
+
+            cluster_scores[cluster_id]["Bullish"] += max(0.0, adjusted_bullish)
+            cluster_scores[cluster_id]["Neutral"] += neutral
+            cluster_scores[cluster_id]["Bearish"] += bearish
 
         total_per_category = {cat: 0.0 for cat in valid_categories}
-        for cluster_vals in cluster_category_sums.values():
+        for cluster_vals in cluster_scores.values():
             for cat in valid_categories:
                 total_per_category[cat] += cluster_vals[cat]
 
         category_weights = {cat: {} for cat in valid_categories}
-        for cluster_id, sums in cluster_category_sums.items():
+        for cluster_id, scores in cluster_scores.items():
             for cat in valid_categories:
                 total = total_per_category[cat]
-                category_weights[cat][cluster_id] = sums[cat] / total if total > 0 else 0.0
+                category_weights[cat][cluster_id] = scores[cat] / total if total > 0 else 0.0
 
         return category_weights
 

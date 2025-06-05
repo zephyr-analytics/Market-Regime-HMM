@@ -13,7 +13,7 @@
     "train_test_split": 0.50,
     "bearish_cutoff" : 0.12,
     "start_date": "2000-01-01",
-    "end_date": "2025-06-01",
+    "end_date": "2025-06-04",
     "max_retries": 10,
     "moving_average": 147
 }

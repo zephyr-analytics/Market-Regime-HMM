@@ -1,6 +1,8 @@
 """
 """
 
+import logging
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -8,11 +10,12 @@ import yfinance as yf
 
 import hmm.utilities as utilities
 
+logger = logging.getLogger(__name__)
+
 
 class ResultsProcessor:
     """
     """
-    # TODO this class needs to be parsed to ensure that train and infer are getting their own handling.
     def __init__(self, ticker, model, train_states, train_data, start_date, end_date, label_dict, plot_sub_folder):
         self.ticker = ticker
         self.model = model

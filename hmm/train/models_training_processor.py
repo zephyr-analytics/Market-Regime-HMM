@@ -1,7 +1,9 @@
 """
 Module for training models.
 """
+
 import joblib
+import logging
 import os
 
 import numpy as np
@@ -14,6 +16,8 @@ from sklearn.preprocessing import StandardScaler
 import hmm.utilities as utilities
 from hmm.train.models_training import ModelsTraining
 from hmm.results import TrainingResultsProcessor
+
+logger = logging.getLogger(__name__)
 
 
 class ModelsTrainingProcessor:

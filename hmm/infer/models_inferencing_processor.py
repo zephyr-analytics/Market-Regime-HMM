@@ -1,7 +1,9 @@
 """
 Module for inferencing models.
 """
+
 import joblib
+import logging
 import os
 
 import numpy as np
@@ -9,6 +11,8 @@ import numpy as np
 import hmm.utilities as utilities
 from hmm.infer.models_inferencing import ModelsInferencing
 from hmm.results import InferencingResultsProcessor
+
+logger = logging.getLogger(__name__)
 
 
 class ModelsInferenceProcessor:

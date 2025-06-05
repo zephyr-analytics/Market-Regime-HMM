@@ -1,7 +1,9 @@
 """
 Module for building portfolio.
 """
+
 import glob
+import logging
 import os
 import pickle
 from collections import defaultdict
@@ -17,6 +19,8 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bo
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
 import hmm.utilities as utilities
+
+logger = logging.getLogger(__name__)
 
 
 class BuildProcessor:
@@ -40,7 +44,11 @@ class BuildProcessor:
         category_weights = self.compute_categorical_weights_by_cluster(
             forecast_data=forecast_data, clusters=clusters
         )
-        price_data=utilities.load_price_data(tickers=self.config["tickers"], start_date=self.config["start_date"], end_date=self.config["end_date"])
+
+        price_data=utilities.load_price_data(
+            tickers=self.config["tickers"], start_date=self.config["start_date"], end_date=self.config["end_date"]
+        )
+
         portfolio = self.build_final_portfolio(
             clusters=clusters,
             forecast_data=forecast_data,

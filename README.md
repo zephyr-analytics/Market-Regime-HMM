@@ -1,20 +1,25 @@
 # Market-HMM
 
 ## Configuration
--"tickers" 
+-"tickers":
 
--"diversification_level" an int between 10 and 90.
--Note: Higher numbers lead to more diversifiaction.
+-"momentum_intervals":
 
--"bearish_cutoff" a float between 0.01 and 0.99.
+-"volatility_interval":
+
+-"bearish_cutoff": a float between 0.01 and 0.99.
 -Note: This is the cut off probability of a bearish state transition, used to filter assets when building the portfolio.
 
--"start_date"
+-"start_date":
 
--"end_date"
+-"end_date":
 
--"max_retries" an int for max number of retries of training a model.
+-"max_retries": an int for max number of retries of training a model.
 -Note: If training fails beyond nth retries for convergence and on jitter of states then an assessment of the underlying data is necessary.
+
+-"moving_average": simple moving average lookback window (trading days)
+-Note: this is used to further filter assets based on being below thier SMA.
+-See: A Quantitative Approach to Tactical Asset Allocation, 2007 Faber, M
 
 ## Train
 `python run.py --train`

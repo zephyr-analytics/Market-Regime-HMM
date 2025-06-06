@@ -286,26 +286,36 @@ class BuildProcessor:
     @staticmethod
     def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict) -> dict:
         """
-        Method to calculate initial cluster weights.
-        Bullish probability weighting of clusters is first discounted by 
-        bearish probability, which should provide higher risk adjusted returns.
+        Calculate cluster weights based on adjusted bullish probabilities, 
+        filtering out clusters with bullish signals weaker than SHV.
 
         Parameters
         ----------
         forecast_data : dict
-            Dictionary of ticker mapping to probabilities.
+            Dictionary of ticker to forecast probability dictionaries.
         clusters : dict
-            Dictionary of ticker mapping to cluster IDs.
+            Dictionary of ticker to cluster ID mapping.
 
         Returns
         -------
-        category_ weights : dict
-            Dictionary containing cluster weights.
+        category_weights : dict
+            Dictionary of cluster weights for each category.
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         cluster_scores = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
 
+        shv_forecast = forecast_data.get("SHV")
+        if isinstance(shv_forecast, np.ndarray):
+            shv_forecast = shv_forecast.item()
+
+        shv_bullish = 0.0
+        if isinstance(shv_forecast, dict):
+            shv_bullish = shv_forecast.get("Bullish", 0.0)
+
         for ticker, forecast_array in forecast_data.items():
+            if ticker == "SHV":
+                continue
+
             cluster_id = clusters.get(ticker)
             if cluster_id is None:
                 continue
@@ -318,11 +328,12 @@ class BuildProcessor:
             bearish = forecast_dict.get("Bearish", 0.0)
             neutral = forecast_dict.get("Neutral", 0.0)
 
-            adjusted_bullish = (bullish - bearish)
+            adjusted_bullish = bullish - bearish
 
-            cluster_scores[cluster_id]["Bullish"] += max(0.0, adjusted_bullish)
-            cluster_scores[cluster_id]["Neutral"] += neutral
-            cluster_scores[cluster_id]["Bearish"] += bearish
+            if adjusted_bullish > shv_bullish:
+                cluster_scores[cluster_id]["Bullish"] += max(0.0, adjusted_bullish)
+                cluster_scores[cluster_id]["Neutral"] += neutral
+                cluster_scores[cluster_id]["Bearish"] += bearish
 
         total_per_category = {cat: 0.0 for cat in valid_categories}
         for cluster_vals in cluster_scores.values():

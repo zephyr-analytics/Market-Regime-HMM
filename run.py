@@ -142,6 +142,7 @@ def main():
         for ticker in tickers:
             if args.train:
                 print(f"Training model for {ticker}...")
+                config["current_end"] = config["end_date"]
                 model = ModelsTrainingProcessor(config=config, ticker=ticker)
                 training = model.process()
                 file_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}.pkl")
@@ -151,6 +152,7 @@ def main():
 
             elif args.infer:
                 print(f"Running inference for {ticker}...")
+                config["current_end"] = config["end_date"]
                 model = ModelsInferenceProcessor(config=config, ticker=ticker)
                 inferencing = model.process()
                 file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing", f"{ticker}.pkl")
@@ -160,6 +162,7 @@ def main():
 
     elif args.build:
         print("Building single portfolio...")
+        config["current_end"] = config["end_date"]
         build = BuildProcessor(config=config)
         portfolio = build.process()
         print(f"Built portfolio: {portfolio}")

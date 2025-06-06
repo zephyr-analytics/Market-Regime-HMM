@@ -4,3 +4,5 @@
 */__pycache__
 *.pdf
 *.csv
+*.log
+*/logs

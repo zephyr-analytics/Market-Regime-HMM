@@ -439,7 +439,7 @@ class BuildProcessor:
 
         if any(np.isnan(w) or w <= 0 for w in filtered_weights.values()):
             return {'SHV': 1.0}
-        print(filtered_weights)
+
         return filtered_weights
 
 

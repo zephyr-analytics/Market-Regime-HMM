@@ -47,7 +47,7 @@ class ModelsTrainingProcessor:
         self._load_data(training=training, data=self.data)
 
         for attempt in range(1, self.max_retries + 1):
-            print(f"\n[{self.ticker}] Training attempt {attempt}...")
+            logger.info(f"\n[{self.ticker}] Training attempt {attempt}...")
             self.prepare_data(
                 training=training,
                 momentum_intervals=self.momentum_intervals,
@@ -59,7 +59,7 @@ class ModelsTrainingProcessor:
                 n_states=self.n_states, training=training, max_retries=self.max_retries
             )
             if not converged:
-                print(f"[{self.ticker}] Retrying model training due to non-convergence...")
+                logger.info(f"[{self.ticker}] Retrying model training due to non-convergence...")
                 continue
 
             self._label_states(training=training)
@@ -68,9 +68,9 @@ class ModelsTrainingProcessor:
             if is_stable:
                 break
             elif attempt < self.max_retries:
-                print(f"[{self.ticker}] Retrying model training due to instability...")
+                logger.info(f"[{self.ticker}] Retrying model training due to instability...")
             else:
-                print(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
+                logger.info(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
 
         self._save_model(training=training)
         if persist: 
@@ -206,14 +206,14 @@ class ModelsTrainingProcessor:
             model.fit(X)
 
             if model.monitor_.converged:
-                print(f"[{training.ticker}] Model converged on attempt {attempt}")
+                logger.info(f"[{training.ticker}] Model converged on attempt {attempt}")
                 training.model = model
                 training.train_states = model.predict(X)
                 return True
             else:
-                print(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
+                logger.info(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
 
-        print(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
+        logger.info(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
         training.model = model
         training.train_states = model.predict(X)
 
@@ -232,7 +232,7 @@ class ModelsTrainingProcessor:
         """
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
-        print(f"{training.ticker}: {state_label_dict}")
+        logger.info(f"{training.ticker}: {state_label_dict}")
 
 
     @staticmethod
@@ -246,15 +246,10 @@ class ModelsTrainingProcessor:
             ModelsTraining instance.
         """
         result = utilities.evaluate_state_stability(training.train_states)
-        print(f"[{training.ticker}] Model stability evaluation:")
-        print(f"  - Transition rate: {result['transition_rate']}")
-        print(f"  - Transition windows: {result['transitions']}")
 
         if result["is_unstable"]:
-            print(f"  - WARNING: Model is unstable. Reason: {result['reason']}")
             return False
         else:
-            print("  - Model is stable.")
             return True
 
 

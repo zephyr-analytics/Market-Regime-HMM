@@ -142,8 +142,8 @@ class ModelsInferenceProcessor:
         """
         state_label_dict = utilities.label_states(inferencing=inferencing)
         inferencing.state_labels = state_label_dict
-        print(f"{inferencing.state_labels}")
-        print(f"{inferencing.ticker}: {state_label_dict}")
+        # print(f"{inferencing.state_labels}")
+        # print(f"{inferencing.ticker}: {state_label_dict}")
 
 
     @staticmethod

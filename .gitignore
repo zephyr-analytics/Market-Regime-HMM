@@ -3,6 +3,6 @@
 *.pyc
 */__pycache__
 *.pdf
-*.csv
+portfolio_test_results.csv
 *.log
 */logs

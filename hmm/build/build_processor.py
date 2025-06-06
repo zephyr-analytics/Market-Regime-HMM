@@ -318,7 +318,7 @@ class BuildProcessor:
             bearish = forecast_dict.get("Bearish", 0.0)
             neutral = forecast_dict.get("Neutral", 0.0)
 
-            adjusted_bullish = (bullish - bearish) / neutral if neutral > 0 else 0.0
+            adjusted_bullish = (bullish - bearish)
 
             cluster_scores[cluster_id]["Bullish"] += max(0.0, adjusted_bullish)
             cluster_scores[cluster_id]["Neutral"] += neutral
@@ -394,12 +394,12 @@ class BuildProcessor:
 
                     adjusted_bullish = max(bullish - bearish, 0.0)
 
-                    if neutral == 0.0:
-                        adjusted_score = adjusted_bullish
-                    else:
-                        adjusted_score = adjusted_bullish / neutral
+                    # if neutral == 0.0:
+                    #     adjusted_score = adjusted_bullish
+                    # else:
+                    #     adjusted_score = adjusted_bullish / neutral
 
-                    scores.append((tkr, adjusted_score))
+                    scores.append((tkr, adjusted_bullish))
 
                 if not scores:
                     orphaned_weight += cluster_weight

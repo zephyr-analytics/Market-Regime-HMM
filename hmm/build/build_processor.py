@@ -19,6 +19,7 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bo
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
 import hmm.utilities as utilities
+from hmm.data.data_processor import DataProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +48,11 @@ class BuildProcessor:
             forecast_data=forecast_data, clusters=clusters
         )
 
-        price_data=utilities.load_price_data(
-            tickers=self.config["tickers"], start_date=self.start_date, end_date=self.end_date
-        )
+        # price_data=utilities.load_price_data(
+        #     tickers=self.config["tickers"], start_date=self.start_date, end_date=self.end_date
+        # )
+        data_process = DataProcessor(config=self.config)
+        price_data = data_process.process()
 
         portfolio = self.build_final_portfolio(
             clusters=clusters,

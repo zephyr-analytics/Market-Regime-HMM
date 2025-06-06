@@ -11,6 +11,7 @@ import pandas as pd
 
 import hmm.utilities as utilities
 from hmm.build.build_processor import BuildProcessor
+from hmm.data.data_processor import DataProcessor
 from hmm.train.models_training_processor import ModelsTrainingProcessor
 from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
 
@@ -82,7 +83,9 @@ def run_portfolio_test(config):
         # Train and infer for each ticker
         for ticker in tickers:
             print(f"Training model for {ticker}...")
-            trainer = ModelsTrainingProcessor(config=config, ticker=ticker)
+            data_process = DataProcessor(config=config)
+            data = data_process.process()
+            trainer = ModelsTrainingProcessor(config=config, data=data, ticker=ticker)
             training = trainer.process()
             file_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}.pkl")
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -143,7 +146,9 @@ def main():
             if args.train:
                 print(f"Training model for {ticker}...")
                 config["current_end"] = config["end_date"]
-                model = ModelsTrainingProcessor(config=config, ticker=ticker)
+                data_process = DataProcessor(config=config)
+                data = data_process.process()
+                model = ModelsTrainingProcessor(config=config, data=data, ticker=ticker)
                 training = model.process()
                 file_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}.pkl")
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)

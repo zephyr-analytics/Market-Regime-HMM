@@ -24,9 +24,10 @@ class ModelsTrainingProcessor:
     """
     Class for training Gaussian HMM.
     """
-    def __init__(self, config: dict, ticker: str):
+    def __init__(self, config: dict, data: pd.DataFrame, ticker: str):
         self.ticker = ticker
         self.config = config
+        self.data = data
         self.start_date = config["start_date"]
         self.end_date = config["current_end"]
         self.max_retries = config["max_retries"]
@@ -43,7 +44,7 @@ class ModelsTrainingProcessor:
         training = self.initialize_models_training(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
-        self._load_data(training=training)
+        self._load_data(training=training, data=self.data)
 
         for attempt in range(1, self.max_retries + 1):
             print(f"\n[{self.ticker}] Training attempt {attempt}...")
@@ -105,7 +106,7 @@ class ModelsTrainingProcessor:
 
 
     @staticmethod
-    def _load_data(training: ModelsTraining):
+    def _load_data(training: ModelsTraining, data: pd.DataFrame):
         """
         Method to load data for preparation.
 
@@ -115,20 +116,10 @@ class ModelsTrainingProcessor:
             ModelsTraining instance.
         """
         ticker = training.ticker
-        adj_close = yf.download(
-            tickers=ticker,
-            start=training.start_date,
-            end=training.end_date,
-            group_by='ticker',
-            auto_adjust=False,
-            progress=False,
-            threads=True,
-        )
+        start_date = training.start_date
+        end_date = training.end_date
 
-        if isinstance(adj_close.columns, pd.MultiIndex):
-            series = adj_close[ticker]["Adj Close"].dropna()
-        else:
-            series = adj_close["Adj Close"].dropna()
+        series = pd.Series(data[f"{ticker}"]).loc[start_date:end_date]
 
         training.data = series
 

@@ -16,5 +16,6 @@
     "end_date": "2025-06-01",
     "max_retries": 10,
     "moving_average": 168,
-    "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv"
+    "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
+    "persist": true
 }

@@ -34,13 +34,12 @@ class ModelsTrainingProcessor:
         self.n_states = 3
         self.momentum_intervals = config["momentum_intervals"]
         self.volatility_interval = config["volatility_interval"]
-
+        self.persist = config["persist"]
 
     def process(self):
         """
         Method to process through the training module.
         """
-        persist = False
         training = self.initialize_models_training(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
@@ -73,7 +72,7 @@ class ModelsTrainingProcessor:
                 logger.info(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
 
         self._save_model(training=training)
-        if persist: 
+        if self.persist:
             results = TrainingResultsProcessor(training=training)
             results.process()
             

@@ -30,6 +30,10 @@
 ## Build Portfolio
 `python run.py --build`
 
+## Test Portfolio
+`python run.py --test`
+NOTE: currently has failures on timeouts from data handling.
+
 ## Artifacts
 -Artifacts are located within each sub directory of hmm directory.
 -Examples: hmm/train/artifacts, hmm/infer/artifacts, hmm/build/artifacts

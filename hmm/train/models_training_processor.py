@@ -28,7 +28,7 @@ class ModelsTrainingProcessor:
         self.ticker = ticker
         self.config = config
         self.start_date = config["start_date"]
-        self.end_date = config["end_date"]
+        self.end_date = config["current_end"]
         self.max_retries = config["max_retries"]
         self.n_states = 3
         self.momentum_intervals = config["momentum_intervals"]
@@ -39,6 +39,7 @@ class ModelsTrainingProcessor:
         """
         Method to process through the training module.
         """
+        persist = False
         training = self.initialize_models_training(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
@@ -71,10 +72,14 @@ class ModelsTrainingProcessor:
                 print(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
 
         self._save_model(training=training)
-        results = TrainingResultsProcessor(training=training)
-        results.process()
+        if persist: 
+            results = TrainingResultsProcessor(training=training)
+            results.process()
+            
+            return training
+        else:
 
-        return training
+            return training
 
 
     @staticmethod

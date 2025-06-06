@@ -23,7 +23,7 @@ class ModelsInferenceProcessor:
         self.config = config
         self.ticker = ticker
         self.start_date = config["start_date"]
-        self.end_date = config["end_date"]
+        self.end_date = config["current_end"]
         self.forecast_distribution = {}
 
 
@@ -31,6 +31,7 @@ class ModelsInferenceProcessor:
         """
         Method to process through inferencing.
         """
+        persist = False
         inferencing = self.initialize_models_inferencing(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
@@ -41,10 +42,14 @@ class ModelsInferenceProcessor:
 
         self.label_states(inferencing=inferencing)
         self.predict_future_state(inferencing=inferencing)
-        results = InferencingResultsProcessor(inferencing=inferencing)
-        results.process()
+        if persist:
+            results = InferencingResultsProcessor(inferencing=inferencing)
+            results.process()
 
-        return inferencing
+            return inferencing
+        else:
+
+            return inferencing
 
 
     @staticmethod

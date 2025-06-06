@@ -29,6 +29,8 @@ class BuildProcessor:
     """
     def __init__(self, config: dict):
         self.config = config
+        self.start_date = config["start_date"]
+        self.end_date = config["current_end"]
 
     def process(self):
         """
@@ -46,7 +48,7 @@ class BuildProcessor:
         )
 
         price_data=utilities.load_price_data(
-            tickers=self.config["tickers"], start_date=self.config["start_date"], end_date=self.config["end_date"]
+            tickers=self.config["tickers"], start_date=self.start_date, end_date=self.end_date
         )
 
         portfolio = self.build_final_portfolio(
@@ -60,6 +62,8 @@ class BuildProcessor:
 
         self.plot_portfolio(ticker_weights=portfolio)
         self.generate_pdf_report(clusters, forecast_data, category_weights)
+
+        return portfolio
 
 
     @staticmethod
@@ -195,7 +199,7 @@ class BuildProcessor:
         sequences[zero_mask] = epsilon
 
         distance_matrix = pdist(sequences, metric='cosine')
-        print(distance_matrix)
+
         Z = linkage(distance_matrix, method='average')
 
         scores = []
@@ -275,7 +279,7 @@ class BuildProcessor:
                     forecast_data[ticker] = np.asarray(mapped_forecast)
                 else:
                     forecast_data[ticker] = np.asarray(forecast)
-        print(forecast_data)
+
         return forecast_data
 
 
@@ -389,7 +393,12 @@ class BuildProcessor:
                     neutral = forecast.get("Neutral", 1e-6)
 
                     adjusted_bullish = max(bullish - bearish, 0.0)
-                    adjusted_score = adjusted_bullish / neutral
+
+                    if neutral == 0.0:
+                        adjusted_score = adjusted_bullish
+                    else:
+                        adjusted_score = adjusted_bullish / neutral
+
                     scores.append((tkr, adjusted_score))
 
                 if not scores:
@@ -423,11 +432,14 @@ class BuildProcessor:
                 filtered_weights[tkr] = weight
                 total_valid_weight += weight
 
-        if not filtered_weights:
-            return {}
+        if not filtered_weights or total_valid_weight == 0:
+            return {'SHV': 1.0}
 
         filtered_weights = {tkr: w / total_valid_weight for tkr, w in filtered_weights.items()}
 
+        if any(np.isnan(w) or w <= 0 for w in filtered_weights.values()):
+            return {'SHV': 1.0}
+        print(filtered_weights)
         return filtered_weights
 
 

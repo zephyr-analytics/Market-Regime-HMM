@@ -125,7 +125,7 @@ class ModelsInferenceProcessor:
         """
         model = inferencing.model
 
-        test_data = inferencing.test_data[['Momentum', 'Volatility']].values
+        test_data = inferencing.test_data[['Momentum', 'Volatility', "Short_Rates"]].values
         test_states = model.predict(test_data)
         inferencing.test_states = test_states
 

@@ -2,12 +2,14 @@
 Module for training models.
 """
 
+import datetime
 import joblib
 import logging
 import os
 
 import numpy as np
 import pandas as pd
+import pandas_datareader.data as web
 from hmmlearn.hmm import GaussianHMM
 from sklearn.cluster._kmeans import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -124,7 +126,11 @@ class ModelsTrainingProcessor:
 
     @staticmethod
     def prepare_data(
-        training: ModelsTraining, momentum_intervals: list, volatility_interval: int, split: float
+        training: ModelsTraining,
+        momentum_intervals: list,
+        volatility_interval: int,
+        split: float,
+        series="DFF"
     ):
         """
         Prepare data for model fitting/training using StandardScaler for normalization.
@@ -134,6 +140,17 @@ class ModelsTrainingProcessor:
         training : ModelsTraining
             ModelsTraining instance.
         """
+        start = training.start_date
+        end = training.end_date
+        try:
+            rate = web.DataReader(series, "fred", start, end)
+            rate.fillna(method="ffill", inplace=True)
+            short_rate = rate
+
+        except Exception as e:
+            logger.error(f"Failed to load FRED short rate series '{series}': {e}")
+            short_rate = None
+
         training_data = training.data.copy()
 
         ret_1m = utilities.compounded_return(training_data, momentum_intervals[0])
@@ -144,8 +161,8 @@ class ModelsTrainingProcessor:
 
         rolling_vol_1 = training_data.pct_change().rolling(window=volatility_interval).std()
 
-        features = pd.concat([momentum, rolling_vol_1], axis=1).dropna()
-        features.columns = ['Momentum', 'Volatility']
+        features = pd.concat([momentum, rolling_vol_1, short_rate], axis=1).dropna()
+        features.columns = ['Momentum', 'Volatility', "Short_Rates"]
 
         scaler = StandardScaler()
         scaled = scaler.fit_transform(features)
@@ -171,7 +188,7 @@ class ModelsTrainingProcessor:
         max_retries : int
             Number of retries to train the model.
         """
-        X = training.train_data[['Momentum', 'Volatility']].values
+        X = training.train_data[['Momentum', 'Volatility', "Short_Rates"]].values
 
         kmeans = KMeans(n_clusters=n_states, random_state=42)
         labels = kmeans.fit_predict(X)

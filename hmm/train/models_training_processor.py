@@ -45,19 +45,20 @@ class ModelsTrainingProcessor:
         self._load_data(training=training, data=self.data)
 
         for attempt in range(1, self.max_retries + 1):
-            logger.info(f"\n[{self.ticker}] Training attempt {attempt}...")
+            # logger.info(f"\n[{self.ticker}] Training attempt {attempt}...")
             self.prepare_data(
                 training=training,
                 momentum_intervals=self.momentum_intervals,
                 volatility_interval=self.volatility_interval,
-                split=self.config["train_test_split"]
+                split=self.config["train_test_split"],
+                data=self.data
             )
 
             converged = self._fit_model(
                 n_states=self.n_states, training=training, max_retries=self.max_retries
             )
             if not converged:
-                logger.info(f"[{self.ticker}] Retrying model training due to non-convergence...")
+                # logger.info(f"[{self.ticker}] Retrying model training due to non-convergence...")
                 continue
 
             self._label_states(training=training)
@@ -65,10 +66,10 @@ class ModelsTrainingProcessor:
             is_stable = self._evaluate_model_quality(training=training)
             if is_stable:
                 break
-            elif attempt < self.max_retries:
-                logger.info(f"[{self.ticker}] Retrying model training due to instability...")
-            else:
-                logger.info(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
+            # elif attempt < self.max_retries:
+            #     # logger.info(f"[{self.ticker}] Retrying model training due to instability...")
+            # else:
+            #     # logger.info(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
 
         self._save_model(training=training)
         if self.persist:
@@ -116,40 +117,49 @@ class ModelsTrainingProcessor:
         ticker = training.ticker
         start_date = training.start_date
         end_date = training.end_date
-
         series = pd.Series(data[f"{ticker}"]).loc[start_date:end_date]
-
         training.data = series
 
 
     @staticmethod
     def prepare_data(
-        training: ModelsTraining, momentum_intervals: list, volatility_interval: int, split: float
+        training: ModelsTraining,
+        momentum_intervals: list,
+        volatility_interval: int,
+        split: float,
+        data: pd.DataFrame
     ):
         """
-        Prepare data for model fitting/training using StandardScaler for normalization.
-
-        Parameters
-        ----------
-        training : ModelsTraining
-            ModelsTraining instance.
+        Prepare data for model fitting/training using StandardScaler for normalization,
+        except for short rates which are only percentage-changed.
         """
+        start = training.start_date
+        end = training.end_date
+
         training_data = training.data.copy()
 
-        ret_1m = utilities.compounded_return(training_data, momentum_intervals[0])
-        ret_3m = utilities.compounded_return(training_data, momentum_intervals[1])
-        ret_6m = utilities.compounded_return(training_data, momentum_intervals[2])
-        ret_9m = utilities.compounded_return(training_data, momentum_intervals[3])
-        momentum = (ret_1m + ret_3m + ret_6m + ret_9m) / 5
+        data = data.loc[start:end]
+        short_rate = data["DFF"]
+
+        returns = [
+            utilities.compound_return(
+                training_data.copy(), interval
+            ) for interval in momentum_intervals[:4]
+        ]
+        momentum = sum(returns) / len(returns)
 
         rolling_vol_1 = training_data.pct_change().rolling(window=volatility_interval).std()
 
-        features = pd.concat([momentum, rolling_vol_1], axis=1).dropna()
-        features.columns = ['Momentum', 'Volatility']
+        features = pd.concat([momentum, rolling_vol_1, short_rate], axis=1).dropna()
+        features.columns = ['Momentum', 'Volatility', "Short_Rates"]
 
         scaler = StandardScaler()
-        scaled = scaler.fit_transform(features)
-        scaled_features = pd.DataFrame(scaled, index=features.index, columns=features.columns)
+        scaled_part = scaler.fit_transform(features[['Momentum', 'Volatility']])
+        scaled_features = pd.DataFrame(
+            scaled_part, index=features.index, columns=['Momentum', 'Volatility']
+        )
+
+        scaled_features['Short_Rates'] = features['Short_Rates']
 
         split_index = int(len(scaled_features) * split)
         training.train_data = scaled_features.iloc[:split_index]
@@ -171,7 +181,7 @@ class ModelsTrainingProcessor:
         max_retries : int
             Number of retries to train the model.
         """
-        X = training.train_data[['Momentum', 'Volatility']].values
+        X = training.train_data[['Momentum', 'Volatility', "Short_Rates"]].values.copy()
 
         kmeans = KMeans(n_clusters=n_states, random_state=42)
         labels = kmeans.fit_predict(X)
@@ -189,7 +199,7 @@ class ModelsTrainingProcessor:
             model = GaussianHMM(
                 n_components=n_states,
                 covariance_type="diag",
-                tol=0.00001,
+                tol=1e-5,
                 n_iter=10000,
                 verbose=False,
                 params="stmc",
@@ -204,14 +214,14 @@ class ModelsTrainingProcessor:
             model.fit(X)
 
             if model.monitor_.converged:
-                logger.info(f"[{training.ticker}] Model converged on attempt {attempt}")
+                # logger.info(f"[{training.ticker}] Model converged on attempt {attempt}")
                 training.model = model
                 training.train_states = model.predict(X)
                 return True
-            else:
-                logger.info(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
+        #     else:
+        #         logger.info(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
 
-        logger.info(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
+        # logger.info(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
         training.model = model
         training.train_states = model.predict(X)
 
@@ -230,7 +240,7 @@ class ModelsTrainingProcessor:
         """
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
-        logger.info(f"{training.ticker}: {state_label_dict}")
+        # logger.info(f"{training.ticker}: {state_label_dict}")
 
 
     @staticmethod

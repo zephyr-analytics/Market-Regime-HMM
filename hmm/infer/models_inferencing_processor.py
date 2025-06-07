@@ -124,8 +124,7 @@ class ModelsInferenceProcessor:
             ModelsInferencing instances.
         """
         model = inferencing.model
-
-        test_data = inferencing.test_data[['Momentum', 'Volatility']].values
+        test_data = inferencing.test_data[['Momentum', 'Volatility', "Short_Rates"]].values.copy()
         test_states = model.predict(test_data)
         inferencing.test_states = test_states
 
@@ -142,8 +141,6 @@ class ModelsInferenceProcessor:
         """
         state_label_dict = utilities.label_states(inferencing=inferencing)
         inferencing.state_labels = state_label_dict
-        # print(f"{inferencing.state_labels}")
-        # print(f"{inferencing.ticker}: {state_label_dict}")
 
 
     @staticmethod

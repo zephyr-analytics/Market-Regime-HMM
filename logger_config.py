@@ -1,6 +1,10 @@
 import logging
 import os
+import warnings
 from datetime import datetime
+
+# Suppress all runtime warnings
+warnings.filterwarnings("ignore")
 
 # Create logs directory if it doesn't exist
 os.makedirs("logs", exist_ok=True)

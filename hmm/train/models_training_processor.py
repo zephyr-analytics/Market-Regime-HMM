@@ -2,14 +2,12 @@
 Module for training models.
 """
 
-import datetime
 import joblib
 import logging
 import os
 
 import numpy as np
 import pandas as pd
-import pandas_datareader.data as web
 from hmmlearn.hmm import GaussianHMM
 from sklearn.cluster._kmeans import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -52,7 +50,8 @@ class ModelsTrainingProcessor:
                 training=training,
                 momentum_intervals=self.momentum_intervals,
                 volatility_interval=self.volatility_interval,
-                split=self.config["train_test_split"]
+                split=self.config["train_test_split"],
+                data=self.data
             )
 
             converged = self._fit_model(
@@ -118,9 +117,7 @@ class ModelsTrainingProcessor:
         ticker = training.ticker
         start_date = training.start_date
         end_date = training.end_date
-
         series = pd.Series(data[f"{ticker}"]).loc[start_date:end_date]
-
         training.data = series
 
 
@@ -130,7 +127,7 @@ class ModelsTrainingProcessor:
         momentum_intervals: list,
         volatility_interval: int,
         split: float,
-        series="DFF"
+        data: pd.DataFrame
     ):
         """
         Prepare data for model fitting/training using StandardScaler for normalization,
@@ -138,21 +135,18 @@ class ModelsTrainingProcessor:
         """
         start = training.start_date
         end = training.end_date
-        try:
-            rate = web.DataReader(series, "fred", start, end)
-            rate.fillna(method="ffill", inplace=True)
-            short_rate = rate
-        except Exception as e:
-            # logger.error(f"Failed to load FRED short rate series '{series}': {e}")
-            short_rate = None
 
         training_data = training.data.copy()
 
-        ret_1m = utilities.compounded_return(training_data, momentum_intervals[0])
-        ret_3m = utilities.compounded_return(training_data, momentum_intervals[1])
-        ret_6m = utilities.compounded_return(training_data, momentum_intervals[2])
-        ret_9m = utilities.compounded_return(training_data, momentum_intervals[3])
-        momentum = (ret_1m + ret_3m + ret_6m + ret_9m) / 5
+        data = data.loc[start:end]
+        short_rate = data["DFF"]
+
+        returns = [
+            utilities.compound_return(
+                training_data.copy(), interval
+            ) for interval in momentum_intervals[:4]
+        ]
+        momentum = sum(returns) / len(returns)
 
         rolling_vol_1 = training_data.pct_change().rolling(window=volatility_interval).std()
 

@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-def compounded_return(series: pd.Series, window: int) -> pd.Series:
+def compound_return(series: pd.Series, window: int) -> pd.Series:
     """
     Method to aggregate price data into compound returns over a set horizon.
 

@@ -23,14 +23,11 @@ from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
 logger = logging.getLogger(__name__)
 
 
-def process_ticker(config, ticker):
+def process_ticker(config, data, ticker):
     """
     Train and run inference for a single ticker using its own data.
     """
     logger.debug(f"[{ticker}] Starting processing...")
-
-    data_process = DataProcessor(config=config)
-    data = data_process.process()
 
     trainer = ModelsTrainingProcessor(config=config, data=data, ticker=ticker)
     training = trainer.process()
@@ -51,6 +48,11 @@ def process_ticker(config, ticker):
 
 
 def run_portfolio_test(config):
+    """
+    """
+    data_process = DataProcessor(config=config)
+    data = data_process.process()
+    print(data)
     original_start = datetime.strptime(config["start_date"], "%Y-%m-%d")
     final_end = datetime.strptime(config["end_date"], "%Y-%m-%d")
 
@@ -67,13 +69,13 @@ def run_portfolio_test(config):
 
         logger.info("Training and inferring models for tickers...")
         with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as executor:
-            futures = [executor.submit(process_ticker, config, ticker) for ticker in tickers]
+            futures = [executor.submit(process_ticker, config, data, ticker) for ticker in tickers]
             for _ in tqdm(futures, desc="Processing tickers", leave=False):
                 _.result()
 
-        # Use one ticker's data for evaluation (assumes alignment)
-        data_process = DataProcessor(config=config)
-        data = data_process.process()
+        # # Use one ticker's data for evaluation (assumes alignment)
+        # data_process = DataProcessor(config=config)
+        # data = data_process.process()
 
         logger.info(f"Building portfolio for {test_start.date()} to {test_window_end.date()}...")
         build = PortfolioProcessor(config=config)

@@ -20,7 +20,7 @@ def compound_return(series: pd.Series, window: int) -> pd.Series:
         Integer representing the time steps in days to compound over.
     Returns
     -------
-    pd.Series : 
+    pd.Series : Series of rolling compound return over the time horizon.
     """
     daily_returns = series.pct_change().fillna(0) + 1
 
@@ -54,7 +54,7 @@ def load_from_pickle(file_path: str):
         return pickle.load(f)
 
 
-def load_price_data(tickers: list[str], start_date: str, end_date: str) -> dict:
+def load_price_data(tickers: list, start_date: str, end_date: str) -> dict:
     """
     Loads adjusted close price data for multiple tickers using yfinance.
 
@@ -115,17 +115,18 @@ def persist_to_pickle(file, file_path: str):
         pickle.dump(file, f)
 
 
-def save_plot(filename, plot_type, plot_sub_folder):
+def save_plot(filename: str, plot_type: str, plot_sub_folder: str):
     """
+    Method to persist png plots.
 
     Parameters
     ----------
-    filename : 
-
-    plot_type :
-
-    plot_sub_folder : 
-    
+    filename : str
+        String representing the desired file name.
+    plot_type : str
+        String representing the type of plot.
+    plot_sub_folder : str
+        String representing the sub-directory for storage. 
     """
     directory = os.path.join(os.getcwd(), "hmm", plot_sub_folder, "artifacts", plot_type)
     os.makedirs(directory, exist_ok=True)

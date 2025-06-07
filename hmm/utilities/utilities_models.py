@@ -10,6 +10,18 @@ def calculate_portfolio_return(
         portfolio: dict, data: pd.DataFrame, start_date: str, end_date: str
     ):
     """
+    Method to calculate portfolio returns. 
+
+    Parameters
+    ----------
+    portfolio : dict
+        Dictionary of ticker keys and weight values.
+    data : pd.DataFrame
+        Dataframe of price data.
+    start_date : str
+        String representing the start date.
+    end_date : str
+        String representing the end date.
     """
     if not portfolio:
         return 0.0
@@ -40,27 +52,25 @@ def evaluate_state_stability(
     ) -> dict:
     """
     Evaluates the temporal stability of a sequence of hidden states to assess model quality.
-
-    This function calculates the rate of state transitions and detects regions of frequent switching
-    ("flip-flopping") within sliding windows. It flags instability based on configurable thresholds.
+    This function calculates the rate of state transitions and detects regions of frequent switching within a sliding windows.
 
     Parameters
     ----------
     states : np.ndarray
         A sequence of inferred hidden states (e.g., from an HMM) over time.
-    overall_threshold : float, optional
+    overall_threshold : float
         The maximum acceptable overall transition rate (fraction of time steps where state changes),
         above which the sequence is considered unstable. Default is 0.2.
-    window_size : int, optional
+    window_size : int
         The number of time steps in each sliding window used to assess local instability. Default is 20.
-    flip_threshold : int, optional
+    flip_threshold : int
         The minimum number of state changes within a window to count it as a flip-flop window. Default is 5.
-    flip_window_limit : int, optional
+    flip_window_limit : int
         The maximum allowable number of flip-flop windows before flagging instability. Default is 5.
 
     Returns
     -------
-    dict
+    dict : 
         A dictionary containing:
         - "transition_rate" (float or None): Fraction of transitions across the full sequence.
         - "transitions" (int or None): Number of windows with excessive state changes.
@@ -108,12 +118,14 @@ def label_states(training=None, inferencing=None) -> dict:
     Parameters
     ----------
     training : ModelsTraining
+        ModelsTraining instance.
     inferencing : ModelsInferencing
+        ModelsInferencing instance.
 
     Returns
     -------
     label_map : dict
-        Dictionary with keys = HMM state IDs and values = labels.
+        Dictionary with keys as HMM state IDs and values as labels.
     """
     if training:
         states = training.train_states.copy()

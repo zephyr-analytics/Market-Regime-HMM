@@ -189,7 +189,7 @@ class ModelsTrainingProcessor:
             model = GaussianHMM(
                 n_components=n_states,
                 covariance_type="diag",
-                tol=0.00001,
+                tol=1e-5,
                 n_iter=10000,
                 verbose=False,
                 params="stmc",

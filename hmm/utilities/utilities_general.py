@@ -7,7 +7,7 @@ import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.stats as stats
+from scipy.stats import zscore
 
 
 def compounded_return(series: pd.Series, window: int) -> pd.Series:
@@ -94,18 +94,18 @@ def evaluate_state_stability(states, overall_threshold=0.2, window_size=20, flip
 
 def label_states(training=None, inferencing=None) -> dict:
     """
-    Labels HMM states based on mean returns.
+    Assigns labels 'Bearish', 'Neutral', 'Bullish' to HMM state IDs based on z-score of returns.
+    Ensures all three labels are present by assigning duplicate labels to existing states if needed.
 
     Parameters
     ----------
     training : ModelsTraining
-        ModelsTraining instance.
     inferencing : ModelsInferencing
-        MondelsInferencing instance.
+
     Returns
     -------
-    state_label_dict : dict
-        Dictionary containing states and state labels for an asset.
+    label_map : dict
+        Dictionary with keys = HMM state IDs and values = labels.
     """
     if training:
         states = training.train_states.copy()
@@ -113,23 +113,57 @@ def label_states(training=None, inferencing=None) -> dict:
     elif inferencing:
         states = inferencing.test_states.copy()
         returns = inferencing.test_data.copy()
+    else:
+        raise ValueError("Either training or inferencing must be provided.")
 
     returns = returns['Momentum'].reset_index(drop=True)
 
     state_returns = []
-    for state in np.unique(states):
-        state_mask = states == state
-        mean_return = returns[state_mask].mean()
-        state_returns.append((state, mean_return))
+    unique_states = np.unique(states)
+    for state in unique_states:
+        mask = states == state
+        mean_ret = returns[mask].mean() if mask.any() else 0.0
+        state_returns.append((state, mean_ret))
 
-    state_returns.sort(key=lambda x: x[1])
+    mean_vals = np.array([r[1] for r in state_returns])
+    zscores = zscore(mean_vals) if len(mean_vals) > 1 else np.array([0.0])
 
-    labels = ['Bearish', 'Neutral', 'Bullish']
-    state_label_dict = {
-        state: labels[i] for i, (state, _) in enumerate(state_returns)
-    }
+    sorted_states = [state_returns[i][0] for i in np.argsort(zscores)]
 
-    return state_label_dict
+    label_order = ['Bearish', 'Neutral', 'Bullish']
+    label_map = {}
+
+    n_states = len(sorted_states)
+
+    if n_states >= 3:
+        for i, label in enumerate(label_order):
+            state = sorted_states[i]
+            label_map[state] = label
+    elif n_states == 2:
+        label_map[sorted_states[0]] = 'Bearish'
+        label_map[sorted_states[1]] = 'Bullish'
+        if sorted_states[1] not in label_map:
+            label_map[sorted_states[1]] = 'Neutral'
+        else:
+            label_map[sorted_states[1]] = 'Bullish'
+            label_map[sorted_states[0]] = 'Neutral'
+    elif n_states == 1:
+        only_state = sorted_states[0]
+        label_map[only_state] = 'Bearish'
+
+        label_map = {
+            only_state: 'Bearish'
+        }
+
+        label_coverage = {
+            'Bearish': only_state,
+            'Neutral': only_state,
+            'Bullish': only_state
+        }
+
+        label_map = {v: k for k, v in label_coverage.items()}
+
+    return label_map
 
 
 def load_from_pickle(file_path: str):
@@ -186,11 +220,10 @@ def load_price_data(tickers: list[str], start_date: str, end_date: str) -> dict:
             if isinstance(data.columns, pd.MultiIndex):
                 series = data[ticker]['Adj Close'].dropna()
             else:
-                # Single ticker fallback
                 series = data['Adj Close'].dropna()
             price_data[ticker] = series
         except Exception:
-            continue  # skip ticker if any issue arises
+            continue
 
     return price_data
 

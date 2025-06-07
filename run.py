@@ -7,12 +7,14 @@ import os
 import pickle
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 import pandas as pd
 
 import logger_config
 import hmm.utilities as utilities
-from hmm.build.build_processor import BuildProcessor
+from hmm.build.portfolio_processor import PortfolioProcessor
 from hmm.data.data_processor import DataProcessor
 from hmm.train.models_training_processor import ModelsTrainingProcessor
 from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
@@ -21,98 +23,73 @@ from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
 logger = logging.getLogger(__name__)
 
 
-def calculate_portfolio_return(portfolio, data, start_date, end_date):
+def process_ticker(config, ticker):
     """
-    Calculate the portfolio return between start_date and end_date using
-    price data provided as a dict of Series.
-
-    Args:
-        portfolio (dict): Dictionary of {ticker: weight}.
-        start_date (datetime): Start of the return period.
-        end_date (datetime): End of the return period.
-
-    Returns:
-        float: Weighted portfolio return as a decimal (e.g., 0.02 = 2%).
+    Train and run inference for a single ticker using its own data.
     """
-    if not portfolio:
-        return 0.0
-    start_date = start_date.strftime("%Y-%m-%d")
-    end_date = end_date.strftime("%Y-%m-%d")
+    logger.debug(f"[{ticker}] Starting processing...")
 
-    tickers = list(portfolio.keys())
-    weights = pd.Series(portfolio)
+    data_process = DataProcessor(config=config)
+    data = data_process.process()
 
-    price_df = data[tickers]
+    trainer = ModelsTrainingProcessor(config=config, data=data, ticker=ticker)
+    training = trainer.process()
+    train_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}.pkl")
+    os.makedirs(os.path.dirname(train_path), exist_ok=True)
+    with open(train_path, 'wb') as f:
+        pickle.dump(training, f)
 
-    available_dates = price_df.index
+    inferencer = ModelsInferenceProcessor(config=config, ticker=ticker)
+    inferencing = inferencer.process()
+    infer_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing", f"{ticker}.pkl")
+    os.makedirs(os.path.dirname(infer_path), exist_ok=True)
+    with open(infer_path, 'wb') as f:
+        pickle.dump(inferencing, f)
 
-    start_date = available_dates[available_dates >= start_date].min()
-    end_date = available_dates[available_dates <= end_date].max()
-
-    start_prices = price_df.loc[start_date]
-    end_prices = price_df.loc[end_date]
-
-    returns = (end_prices - start_prices) / start_prices
-    portfolio_return = (returns * weights).sum()
-
-    return portfolio_return
+    logger.debug(f"[{ticker}] Finished.")
+    return True
 
 
 def run_portfolio_test(config):
-    """
-    """
     original_start = datetime.strptime(config["start_date"], "%Y-%m-%d")
     final_end = datetime.strptime(config["end_date"], "%Y-%m-%d")
 
-    # Start testing 1 year after the original start date
     test_start = original_start + relativedelta(years=2)
-
     results = []
 
     while test_start + relativedelta(months=1) <= final_end:
         test_window_end = test_start + relativedelta(months=1)
-
         logger.info(f"\n=== TEST WINDOW: {test_start.date()} to {test_window_end.date()} ===")
 
-        # Training window remains static
         config["current_start"] = original_start.strftime("%Y-%m-%d")
         config["current_end"] = test_start.strftime("%Y-%m-%d")
-
         tickers = config["tickers"]
 
-        # Train and infer for each ticker
-        for ticker in tickers:
-            logger.info(f"Training model for {ticker}...")
-            data_process = DataProcessor(config=config)
-            data = data_process.process()
-            trainer = ModelsTrainingProcessor(config=config, data=data, ticker=ticker)
-            training = trainer.process()
-            file_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}.pkl")
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'wb') as f:
-                pickle.dump(training, f)
+        logger.info("Training and inferring models for tickers...")
+        with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as executor:
+            futures = [executor.submit(process_ticker, config, ticker) for ticker in tickers]
+            for _ in tqdm(futures, desc="Processing tickers", leave=False):
+                _.result()
 
-            logger.info(f"Running inference for {ticker}...")
-            inferencer = ModelsInferenceProcessor(config=config, ticker=ticker)
-            inferencing = inferencer.process()
-            file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing", f"{ticker}.pkl")
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'wb') as f:
-                pickle.dump(inferencing, f)
+        # Use one ticker's data for evaluation (assumes alignment)
+        data_process = DataProcessor(config=config)
+        data = data_process.process()
 
-        # Build portfolio using inferred data
         logger.info(f"Building portfolio for {test_start.date()} to {test_window_end.date()}...")
-        build = BuildProcessor(config=config)
+        build = PortfolioProcessor(config=config)
         portfolio = build.process()
 
-        # Calculate return over next window
         return_window_start = test_start
         return_window_end = test_start + relativedelta(months=1)
         logger.info(f"Evaluating return from {return_window_start.date()} to {return_window_end.date()}...")
 
-        portfolio_return = calculate_portfolio_return(
-            portfolio=portfolio, data=data, start_date=return_window_start, end_date=return_window_end
+        portfolio_return = utilities.calculate_portfolio_return(
+            portfolio=portfolio,
+            data=data,
+            start_date=return_window_start,
+            end_date=return_window_end
         )
+
         logger.info(f"Portfolio: {portfolio}")
         logger.info(f"Portfolio return: {portfolio_return:.2%}")
 
@@ -126,7 +103,6 @@ def run_portfolio_test(config):
             "portfolio_return": portfolio_return
         })
 
-        # Move the test window forward by 1 month
         test_start += relativedelta(months=1)
 
     return results
@@ -173,7 +149,7 @@ def main():
     elif args.build:
         logger.info("Building single portfolio...")
         config["current_end"] = config["end_date"]
-        build = BuildProcessor(config=config)
+        build = PortfolioProcessor(config=config)
         portfolio = build.process()
         logger.info(f"Built portfolio: {portfolio}")
 

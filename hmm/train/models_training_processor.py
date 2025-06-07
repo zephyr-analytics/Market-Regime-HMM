@@ -133,12 +133,8 @@ class ModelsTrainingProcessor:
         series="DFF"
     ):
         """
-        Prepare data for model fitting/training using StandardScaler for normalization.
-
-        Parameters
-        ----------
-        training : ModelsTraining
-            ModelsTraining instance.
+        Prepare data for model fitting/training using StandardScaler for normalization,
+        except for short rates which are only percentage-changed.
         """
         start = training.start_date
         end = training.end_date
@@ -146,7 +142,6 @@ class ModelsTrainingProcessor:
             rate = web.DataReader(series, "fred", start, end)
             rate.fillna(method="ffill", inplace=True)
             short_rate = rate
-
         except Exception as e:
             logger.error(f"Failed to load FRED short rate series '{series}': {e}")
             short_rate = None
@@ -165,8 +160,12 @@ class ModelsTrainingProcessor:
         features.columns = ['Momentum', 'Volatility', "Short_Rates"]
 
         scaler = StandardScaler()
-        scaled = scaler.fit_transform(features)
-        scaled_features = pd.DataFrame(scaled, index=features.index, columns=features.columns)
+        scaled_part = scaler.fit_transform(features[['Momentum', 'Volatility']])
+        scaled_features = pd.DataFrame(
+            scaled_part, index=features.index, columns=['Momentum', 'Volatility']
+        )
+
+        scaled_features['Short_Rates'] = features['Short_Rates']
 
         split_index = int(len(scaled_features) * split)
         training.train_data = scaled_features.iloc[:split_index]

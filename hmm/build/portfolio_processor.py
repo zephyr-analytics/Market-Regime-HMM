@@ -8,23 +8,19 @@ import os
 import pickle
 from collections import defaultdict
 
-import matplotlib.pyplot as plt
 import numpy as np
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
-from reportlab.pdfgen import canvas
-from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
+from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import pdist
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
-import hmm.utilities as utilities
 from hmm.data.data_processor import DataProcessor
+from hmm.results.portfolio_results_processor import PortfolioResultsProcessor
 
 logger = logging.getLogger(__name__)
 
 
-class BuildProcessor:
+class PortfolioProcessor:
     """
     Class to take processed model data and build a portfolio.
     """
@@ -32,6 +28,7 @@ class BuildProcessor:
         self.config = config
         self.start_date = config["start_date"]
         self.end_date = config["current_end"]
+
 
     def process(self):
         """
@@ -41,7 +38,7 @@ class BuildProcessor:
         parsed_objects = self.load_models_inference(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
         seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=126)
-        results = self.cluster_and_plot_sequence(seq_matrix, ticker_list)
+        results = self.cluster_sequences(seq_matrix, ticker_list)
         clusters = results["clusters"]
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
         category_weights = self.compute_categorical_weights_by_cluster(
@@ -60,9 +57,14 @@ class BuildProcessor:
             price_data=price_data,
             sma_lookback=self.config["moving_average"]
         )
-
-        self.plot_portfolio(ticker_weights=portfolio)
-        self.generate_pdf_report(clusters, forecast_data, category_weights)
+        # NOTE possibly use a getter and setter for all results.
+        results_process = PortfolioResultsProcessor(
+            config=self.config,
+            Z=results["linkage_matrix"],
+            n_clusters=results["n_clusters"],
+            portfolio=portfolio
+        )
+        results_process.process()
 
         return portfolio
 
@@ -100,6 +102,7 @@ class BuildProcessor:
                 parsed_objects[ticker] = objects if len(objects) > 1 else objects[0]
 
         return parsed_objects
+
 
     @staticmethod
     def extract_states(parsed_objects: dict) -> dict:
@@ -141,6 +144,7 @@ class BuildProcessor:
 
         return state_data
 
+
     @staticmethod
     def prepare_state_sequences(state_data: dict, lookback: int) -> np.ndarray:
         """
@@ -176,7 +180,7 @@ class BuildProcessor:
 
 
     @staticmethod
-    def cluster_and_plot_sequence(sequences: np.ndarray, tickers: list, max_clusters: int = 15) -> dict:
+    def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int = 15) -> dict:
         """
         Method to cluster state sequences to determine portfolio categories.
 
@@ -232,15 +236,6 @@ class BuildProcessor:
         best_labels = label_map[best_k]
 
         cluster_map = dict(zip(tickers, best_labels))
-
-        plt.figure(figsize=(12, 6))
-        dendrogram(Z, labels=tickers, leaf_rotation=90)
-        plt.title(f"Hierarchical Clustering of Tickers (auto k={best_k})")
-        plt.xlabel("Ticker")
-        plt.ylabel("Distance")
-        plt.tight_layout()
-        utilities.save_plot(filename="cluster_distribution.png", plot_type="cluster_distribution", plot_sub_folder="build")
-        plt.close()
 
         return {
             'linkage_matrix': Z,
@@ -467,103 +462,3 @@ class BuildProcessor:
             return {'SHV': 1.0}
 
         return filtered_weights
-
-
-    @staticmethod
-    def plot_portfolio(ticker_weights: dict):
-        """
-        Method to plot the final portfolio weights.
-
-        Parameters
-        ----------
-        ticker_weights : dict
-            Final ticker weight allocations.
-        """
-        if not ticker_weights:
-            print("No weights to plot.")
-            return
-
-        sorted_items = sorted(ticker_weights.items(), key=lambda x: x[1], reverse=True)
-        labels, weights = zip(*sorted_items)
-
-        plt.figure(figsize=(10, 10))
-        plt.pie(
-            weights,
-            labels=[f"{label} ({w:.2%})" for label, w in zip(labels, weights)],
-            startangle=140,
-            counterclock=False,
-            wedgeprops=dict(edgecolor='w'),
-            textprops={'fontsize': 9}
-        )
-        plt.title("Final Portfolio Composition")
-        plt.axis('equal')
-        plt.tight_layout()
-        utilities.save_plot(filename="portfolio_allocation.png", plot_type="portfolio_allocation", plot_sub_folder="build")
-        plt.close()
-
-
-    @staticmethod
-    def generate_pdf_report(clusters, forecast_data, category_weights, output_path="portfolio_report.pdf"):
-        """
-        Method to generate a pdf report detailing the overall weighting mechanics used to generate the portfolio weights.
-
-        Parameters
-        ----------
-        clusters : dict
-            Dictionary of ticker mapping to cluster IDs.
-        forecast_data : dict
-            Dictionary of ticker mapping to probabilities.
-        category_ weights : dict
-            Dictionary containing cluster weights.
-        """
-        c = canvas.Canvas(output_path, pagesize=letter)
-        width, height = letter
-
-        y = height - inch
-        line_height = 12
-
-        def write_line(text, indent=0):
-            nonlocal y
-            if y < inch:
-                c.showPage()
-                c.setFont("Helvetica", 10)
-                y = height - inch
-
-            c.drawString(inch + indent, y, text)
-            y -= line_height
-
-        c.setFont("Helvetica-Bold", 16)
-        write_line("Portfolio Clustering Report")
-        c.setFont("Helvetica", 10)
-        y -= 10
-
-        write_line("Cluster Breakdown", indent=0)
-        cluster_assets = defaultdict(list)
-        for ticker, cluster in clusters.items():
-            cluster_assets[cluster].append(ticker)
-
-        for cluster_id, tickers in sorted(cluster_assets.items()):
-            write_line(f"Cluster {cluster_id}:", indent=10)
-            for t in tickers:
-                write_line(f"- {t}", indent=20)
-            y -= 4
-
-        y -= 10
-        write_line("Category Weights by Cluster", indent=0)
-
-        for category, cluster_weights in category_weights.items():
-            write_line(f"{category}:", indent=10)
-            for cluster_id, weight in sorted(cluster_weights.items()):
-                write_line(f"- Cluster {cluster_id}: {weight:.2%}", indent=20)
-            y -= 4
-
-        y -= 10
-        write_line("Forecast Distribution by Asset", indent=0)
-        for ticker, forecast_array in forecast_data.items():
-            forecast_dict = forecast_array.item() if isinstance(forecast_array, np.ndarray) else forecast_array
-            write_line(f"{ticker}:", indent=10)
-            for k in ['Bullish', 'Neutral', 'Bearish']:
-                write_line(f"{k}: {forecast_dict.get(k, 0):.2%}", indent=20)
-            y -= 4
-
-        c.save()

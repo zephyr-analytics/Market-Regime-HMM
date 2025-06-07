@@ -22,6 +22,7 @@ from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
 logger = logging.getLogger(__name__)
 
 
+# NOTE shift data trimming to this level to ensure all lower levels data is already trimmed as expected.
 def process_ticker(config: dict, data: pd.DataFrame, ticker: str) -> bool:
     """
     Method to create a Train and Infer pipeline, used by ThreadPoolExecutor.

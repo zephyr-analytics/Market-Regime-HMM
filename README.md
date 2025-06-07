@@ -21,19 +21,23 @@
 -Note: this is used to further filter assets based on being below thier SMA.
 -See: A Quantitative Approach to Tactical Asset Allocation, 2007 Faber, M
 
+## Config types
+-NOTE: Rather than swap tickers around a second argument is used to flag which config file to use.
+`python run.py --test --stock` or `python run.py --test --etf`
+
 ## Train
-`python run.py --train`
+`python run.py --train --etf`
 -Training is utilized to inspect the model performance on identifing states, convergence, and labeling states.
 
 ## Infer
-`python run.py --infer`
+`python run.py --infer --stock`
 -Inferencing is utilized to inspect the model performance on predicted new states and provides checking for identifing new states, labeling predicted states, and propagating probabilities to future t.
 
 ## Build Portfolio
-`python run.py --build`
+`python run.py --build --etf`
 
 ## Test Portfolio
-`python run.py --test`
+`python run.py --test --stock`
 NOTE: currently has failures on timeouts from data handling.
 
 ## Artifacts

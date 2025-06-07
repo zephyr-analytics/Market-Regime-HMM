@@ -9,12 +9,12 @@ import pickle
 from collections import defaultdict
 
 import numpy as np
+import pandas as pd
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import pdist
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
-from hmm.data.data_processor import DataProcessor
 from hmm.results.portfolio_results_processor import PortfolioResultsProcessor
 
 logger = logging.getLogger(__name__)
@@ -24,10 +24,11 @@ class PortfolioProcessor:
     """
     Class to take processed model data and build a portfolio.
     """
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, data: pd.DataFrame):
         self.config = config
         self.start_date = config["start_date"]
         self.end_date = config["current_end"]
+        self.data = data.loc[self.start_date:self.end_date]
 
 
     def process(self):
@@ -45,16 +46,12 @@ class PortfolioProcessor:
             forecast_data=forecast_data, clusters=clusters
         )
 
-        data_process = DataProcessor(config=self.config)
-        price_data = data_process.process()
-        price_data = price_data.loc[self.start_date:self.end_date]
-
         portfolio = self.build_final_portfolio(
             clusters=clusters,
             forecast_data=forecast_data,
             category_weights=category_weights,
             bearish_cutoff=self.config["bearish_cutoff"],
-            price_data=price_data,
+            price_data=self.data,
             sma_lookback=self.config["moving_average"]
         )
         # NOTE possibly use a getter and setter for all results.
@@ -113,6 +110,7 @@ class PortfolioProcessor:
         ----------
         parsed_objects : dict
             Dictionary of loaded pickle files representing persisted inference files.
+
         Returns
         -------
         state_data : dict
@@ -156,6 +154,7 @@ class PortfolioProcessor:
             Dictionary of tickers and cooresponding state data.
         lookback : int
             Integer representing the cutoff lookback period for clustering.
+
         Returns 
         np.ndarray : An array of state sequences.
         """
@@ -187,14 +186,15 @@ class PortfolioProcessor:
         Parameters
         ----------
         sequences : np.ndarray
-
+            Numpy array of state sequences.
         tickers : list
-
+            List of ticker symbols.
         max_clusters : int
+            Upper limit of allowed clusters.
 
         Returns
         -------
-        dict : 
+        dict : Dictionary containing cluster components.
         """
         epsilon = 1e-10
         sequences = np.array(sequences, dtype=np.float64)
@@ -472,17 +472,29 @@ class PortfolioProcessor:
         """
         Constructs a portfolio using discounted 'Bullish' cluster weights,
         where each cluster's weight is multiplied by net bullish sentiment
-        (Bullish - Bearish). Assets are weighted within clusters based on 
-        their net bullish contribution to the cluster total.
+        (Bullish - Bearish). Assets are equally weighted within clusters,
+        with reallocation to SHV as needed.
+
+        Parameters
+        ----------
+        forecast_data : dict
+            Dictionary of ticker to forecast probability dictionaries.
+        clusters : dict
+            Dictionary of ticker to cluster ID mapping.
+        category_weights : dict
+            Dictionary of cluster weights by category.
+        bearish_cutoff : float
+            Threshold beyond which assets are excluded due to bearish outlook.
+        price_data : dict
+            Dictionary mapping tickers to historical price Series (pd.Series).
+        sma_lookback : int
+            Lookback window for SMA calculation.
 
         Returns
         -------
         ticker_weights : dict
             Final portfolio weights per ticker.
         """
-        from collections import defaultdict
-        import numpy as np
-
         ticker_weights = defaultdict(float)
         orphaned_weight = 0.0
 

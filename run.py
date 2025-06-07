@@ -19,13 +19,25 @@ from hmm.data.data_processor import DataProcessor
 from hmm.train.models_training_processor import ModelsTrainingProcessor
 from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
 
-# NOTE dates should be end of month and not at the beginning of the month.
 logger = logging.getLogger(__name__)
 
 
-def process_ticker(config, data, ticker):
+def process_ticker(config: dict, data: pd.DataFrame, ticker: str) -> bool:
     """
-    Train and run inference for a single ticker using its own data.
+    Method to create a Train and Infer pipeline, used by ThreadPoolExecutor.
+
+    Parameters
+    ----------
+    config : dict
+        Dictionary of the config file.
+    data : pd.DataFrame
+        Dataframe of asset_data.
+    ticker : str
+        String representing the ticker symbol.
+
+    Returns
+    -------
+    bool : Bool representing that the ticker has completed the pipeline.
     """
     logger.debug(f"[{ticker}] Starting processing...")
 
@@ -47,14 +59,27 @@ def process_ticker(config, data, ticker):
     return True
 
 
-def run_portfolio_test(config):
+def run_portfolio_test(config) -> dict:
     """
+    Method to handle running a backtest over the time horizon.
+
+    Parameters
+    ----------
+    config : dict
+        Dictionary of the config file.
+
+    Returns
+    -------
+    results : dict
+        Dictionary containing all outcomes from the backtest.
     """
     data_process = DataProcessor(config=config)
     data = data_process.process()
     print(data)
     original_start = datetime.strptime(config["start_date"], "%Y-%m-%d")
     final_end = datetime.strptime(config["end_date"], "%Y-%m-%d")
+
+
 
     test_start = original_start + relativedelta(years=2)
     results = []
@@ -73,12 +98,8 @@ def run_portfolio_test(config):
             for _ in tqdm(futures, desc="Processing tickers", leave=False):
                 _.result()
 
-        # # Use one ticker's data for evaluation (assumes alignment)
-        # data_process = DataProcessor(config=config)
-        # data = data_process.process()
-
         logger.info(f"Building portfolio for {test_start.date()} to {test_window_end.date()}...")
-        build = PortfolioProcessor(config=config)
+        build = PortfolioProcessor(config=config, data=data)
         portfolio = build.process()
 
         return_window_start = test_start
@@ -112,6 +133,7 @@ def run_portfolio_test(config):
 
 def main():
     """
+    Method to handle run pipelines based on terminal commands.
     """
     parser = argparse.ArgumentParser(description="Run Market Regime HMM Model using JSON Config")
     group = parser.add_mutually_exclusive_group(required=True)
@@ -123,14 +145,15 @@ def main():
     args = parser.parse_args()
     config = utilities.load_config()
     tickers = config["tickers"]
+    data_process = DataProcessor(config=config)
+    data = data_process.process()
 
     if args.train or args.infer:
         for ticker in tickers:
             if args.train:
                 logger.info(f"Training model for {ticker}...")
                 config["current_end"] = config["end_date"]
-                data_process = DataProcessor(config=config)
-                data = data_process.process()
+
                 model = ModelsTrainingProcessor(config=config, data=data, ticker=ticker)
                 training = model.process()
                 file_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}.pkl")
@@ -151,7 +174,7 @@ def main():
     elif args.build:
         logger.info("Building single portfolio...")
         config["current_end"] = config["end_date"]
-        build = PortfolioProcessor(config=config)
+        build = PortfolioProcessor(config=config, data=data)
         portfolio = build.process()
         logger.info(f"Built portfolio: {portfolio}")
 

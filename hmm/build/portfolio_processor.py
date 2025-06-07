@@ -15,7 +15,6 @@ from scipy.spatial.distance import pdist
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
-from hmm.data.data_processor import DataProcessor
 from hmm.results.portfolio_results_processor import PortfolioResultsProcessor
 
 logger = logging.getLogger(__name__)

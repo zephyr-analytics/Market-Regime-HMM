@@ -65,7 +65,7 @@ def run_portfolio_test(config):
     final_end = datetime.strptime(config["end_date"], "%Y-%m-%d")
 
     # Start testing 1 year after the original start date
-    test_start = original_start + relativedelta(years=1)
+    test_start = original_start + relativedelta(years=2)
 
     results = []
 

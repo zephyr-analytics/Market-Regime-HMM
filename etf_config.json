@@ -1,0 +1,21 @@
+{
+    "tickers": [
+        "BND", "BNDX", "EMB",
+        "SHV", "SHY", "IEI", "IEF", "TLH", "TLT",
+        "IAU", "DBC", "VNQ", "VNQI",
+        "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
+        "IUSV", "IUSG", "EFV", "EFG", "VWO"
+    ],
+    "momentum_intervals": [
+        21, 63, 126, 189, 252
+    ],
+    "volatility_interval": 21,
+    "train_test_split": 0.70,
+    "bearish_cutoff" : 0.10,
+    "start_date": "2014-01-01",
+    "end_date": "2025-06-05",
+    "max_retries": 20,
+    "moving_average": 168,
+    "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
+    "persist": false
+}

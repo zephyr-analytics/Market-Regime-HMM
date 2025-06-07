@@ -79,8 +79,6 @@ def run_portfolio_test(config) -> dict:
     original_start = datetime.strptime(config["start_date"], "%Y-%m-%d")
     final_end = datetime.strptime(config["end_date"], "%Y-%m-%d")
 
-
-
     test_start = original_start + relativedelta(years=2)
     results = []
 
@@ -136,14 +134,22 @@ def main():
     Method to handle run pipelines based on terminal commands.
     """
     parser = argparse.ArgumentParser(description="Run Market Regime HMM Model using JSON Config")
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--train", action="store_true", help="Train the model")
-    group.add_argument("--infer", action="store_true", help="Run inference using the model")
-    group.add_argument("--build", action="store_true", help="Build portfolios")
-    group.add_argument("--test", action="store_true", help="Test rolling portfolio performance")
+
+    # Model operation modes
+    mode_group = parser.add_mutually_exclusive_group(required=True)
+    mode_group.add_argument("--train", action="store_true", help="Train the model")
+    mode_group.add_argument("--infer", action="store_true", help="Run inference using the model")
+    mode_group.add_argument("--build", action="store_true", help="Build portfolios")
+    mode_group.add_argument("--test", action="store_true", help="Test rolling portfolio performance")
+
+    # Asset type selection (stock vs ETF)
+    asset_group = parser.add_mutually_exclusive_group(required=True)
+    asset_group.add_argument("--etf", action="store_true", help="Use ETF config")
+    asset_group.add_argument("--stock", action="store_true", help="Use stock config")
 
     args = parser.parse_args()
-    config = utilities.load_config()
+
+    config = utilities.load_config(etf=args.etf, stocks=args.stock)
     tickers = config["tickers"]
     data_process = DataProcessor(config=config)
     data = data_process.process()

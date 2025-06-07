@@ -27,11 +27,14 @@ def compound_return(series: pd.Series, window: int) -> pd.Series:
     return daily_returns.rolling(window).apply(lambda x: x.prod() - 1, raw=True)
 
 
-def load_config():
+def load_config(etf, stocks):
     """
     Method to load the config file.
     """
-    config_path = os.path.join(os.getcwd(), "config.json")
+    if etf:
+        config_path = os.path.join(os.getcwd(), "configs", "etf_config.json")
+    elif stocks:
+        config_path = os.path.join(os.getcwd(), "configs", "stock_config.json")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
     with open(config_path, 'r') as f:

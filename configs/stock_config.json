@@ -1,0 +1,40 @@
+{
+    "tickers": [
+        "BND", "BNDX", "EMB",
+        "SHV", "SHY", "IEI", "IEF", "TLH", "TLT",
+        "IAU", "DBC", "VNQ", "VNQI",
+        "MSFT", "NVDA", "AAPL", "AVGO", "ORCL", "CRM", "CSCO", "IBM", "INTU", "NOW",
+        "TSM", "SAP", "ASML", "ACN", "SONY", "SHOP", "INFY", "NXPI", "TEL", "GRMN",
+        "AMZN", "TSLA", "HD", "MCD", "BKNG", "LOW", "MELI", "SBUX", "NKE", "ORLY",
+        "BABA", "TM", "JD", "HMC", "TCOM", "LULU", "STLA", "QSR", "IHG",
+        "GOOGL", "META", "NFLX", "TMUS", "DIS", "T", "VZ", "CMCSA", "CHTR", "TTWO",
+        "NTES", "AMX", "CHT", "TEF", "TU", "VOD", "BIDU", "BCE", "TLK", "VIV",
+        "XOM", "CVX", "COP", "WMB", "EPD", "KMI", "EOG", "ET", "LNG", "MPLX",
+        "SHEL", "TTE", "ENB", "BP", "EQNR", "CNQ", "TRP", "SU", "E", "PBR",
+        "BRK-B", "JPM", "V", "MA", "BAC", "WFC", "AXP", "MS", "GS", "BX",
+        "HSBC", "HDB", "RY", "MUFG", "TD", "IBN", "SAN", "CB", "UBS", "SMFG",
+        "GE", "RTX", "CAT", "BA", "HON", "DE", "UNP", "LMT", "WM", "CTAS",
+        "ETN", "RELX", "TT", "TRI", "CP", "JCI", "CNI", "WCN", "FER", "AER",
+        "SHW", "SCCO", "ECL", "CRH", "APD", "FCX", "NEM", "VMC", "MLM", "NUE",
+        "BHP", "RIO", "AEM", "VALE", "WPM", "B", "FNV", "AU", "MT", "GFI",
+        "PLD", "WELL", "AMT", "EQIX", "VTR", "SPG", "DLR", "PSA", "O", "CCI",
+        "LLY", "JNJ", "ABBV", "UNH", "ABT", "ISRG", "MRK", "AMGN", "TMO", "BSX",
+        "NVO", "AZN", "NVS", "SNY", "MDT", "GSK", "TAK", "STE", "PHG", "TEVA",
+        "WMT", "COST", "PG", "KO", "PM", "PEP", "MO", "MDLZ", "CL", "MNST",
+        "UL", "BUD", "BTI", "DEO", "CCEP", "ABEV", "FMX",
+        "NEE", "SO", "DUK", "AEP", "SRE", "D", "EXC", "PEG", "XEL", "ED",
+        "NGG", "FTS", "BIP", "EBR", "SBS", "KEP", "EMA"
+    ],
+    "momentum_intervals": [
+        21, 63, 126, 189, 252
+    ],
+    "volatility_interval": 21,
+    "train_test_split": 0.70,
+    "bearish_cutoff" : 0.10,
+    "start_date": "2017-01-01",
+    "end_date": "2025-06-01",
+    "max_retries": 20,
+    "moving_average": 168,
+    "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
+    "persist": false
+}

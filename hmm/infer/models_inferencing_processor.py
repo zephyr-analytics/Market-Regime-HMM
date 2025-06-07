@@ -1,13 +1,18 @@
 """
 Module for inferencing models.
 """
+
 import joblib
+import logging
 import os
+
 import numpy as np
 
 import hmm.utilities as utilities
 from hmm.infer.models_inferencing import ModelsInferencing
 from hmm.results import InferencingResultsProcessor
+
+logger = logging.getLogger(__name__)
 
 
 class ModelsInferenceProcessor:
@@ -18,8 +23,10 @@ class ModelsInferenceProcessor:
         self.config = config
         self.ticker = ticker
         self.start_date = config["start_date"]
-        self.end_date = config["end_date"]
+        self.end_date = config["current_end"]
         self.forecast_distribution = {}
+        self.persist = config["persist"]
+
 
     def process(self):
         """
@@ -35,10 +42,15 @@ class ModelsInferenceProcessor:
 
         self.label_states(inferencing=inferencing)
         self.predict_future_state(inferencing=inferencing)
-        results = InferencingResultsProcessor(inferencing=inferencing)
-        results.process()
+        if self.persist:
+            results = InferencingResultsProcessor(inferencing=inferencing)
+            results.process()
 
-        return inferencing
+            return inferencing
+        else:
+
+            return inferencing
+
 
     @staticmethod
     def initialize_models_inferencing(ticker: str, start_date: str, end_date: str) -> ModelsInferencing:
@@ -61,6 +73,7 @@ class ModelsInferenceProcessor:
 
         return inferencing
 
+
     @staticmethod
     def load_model(inferencing: ModelsInferencing):
         """
@@ -80,6 +93,7 @@ class ModelsInferenceProcessor:
 
         inferencing.model = model
 
+
     @staticmethod
     def load_training(inferencing: ModelsInferencing):
         """
@@ -98,6 +112,7 @@ class ModelsInferenceProcessor:
         inferencing.test_data = training.test_data
         inferencing.train_states = training.train_states
 
+
     @staticmethod
     def infer_states(inferencing: ModelsInferencing):
         """
@@ -109,10 +124,10 @@ class ModelsInferenceProcessor:
             ModelsInferencing instances.
         """
         model = inferencing.model
-
-        test_data = inferencing.test_data[['Momentum', 'Volatility']].values
+        test_data = inferencing.test_data[['Momentum', 'Volatility', "Short_Rates"]].values.copy()
         test_states = model.predict(test_data)
         inferencing.test_states = test_states
+
 
     @staticmethod
     def label_states(inferencing: ModelsInferencing):
@@ -126,8 +141,7 @@ class ModelsInferenceProcessor:
         """
         state_label_dict = utilities.label_states(inferencing=inferencing)
         inferencing.state_labels = state_label_dict
-        print(f"{inferencing.state_labels}")
-        print(f"{inferencing.ticker}: {state_label_dict}")
+
 
     @staticmethod
     def predict_future_state(inferencing: ModelsInferencing, n_steps: int = 21):

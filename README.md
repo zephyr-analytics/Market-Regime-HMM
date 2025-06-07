@@ -23,12 +23,18 @@
 
 ## Train
 `python run.py --train`
+-Training is utilized to inspect the model performance on identifing states, convergence, and labeling states.
 
 ## Infer
 `python run.py --infer`
+-Inferencing is utilized to inspect the model performance on predicted new states and provides checking for identifing new states, labeling predicted states, and propagating probabilities to future t.
 
 ## Build Portfolio
 `python run.py --build`
+
+## Test Portfolio
+`python run.py --test`
+NOTE: currently has failures on timeouts from data handling.
 
 ## Artifacts
 -Artifacts are located within each sub directory of hmm directory.

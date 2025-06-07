@@ -1,33 +1,39 @@
 """
 Module for training models.
 """
+
 import joblib
+import logging
 import os
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
 from hmmlearn.hmm import GaussianHMM
-from sklearn.preprocessing import StandardScaler
 from sklearn.cluster._kmeans import KMeans
+from sklearn.preprocessing import StandardScaler
 
 import hmm.utilities as utilities
 from hmm.train.models_training import ModelsTraining
 from hmm.results import TrainingResultsProcessor
+
+logger = logging.getLogger(__name__)
 
 
 class ModelsTrainingProcessor:
     """
     Class for training Gaussian HMM.
     """
-    def __init__(self, config: dict, ticker: str):
+    def __init__(self, config: dict, data: pd.DataFrame, ticker: str):
         self.ticker = ticker
+        self.config = config
         self.start_date = config["start_date"]
-        self.end_date = config["end_date"]
+        self.end_date = config["current_end"]
         self.max_retries = config["max_retries"]
         self.n_states = 3
         self.momentum_intervals = config["momentum_intervals"]
         self.volatility_interval = config["volatility_interval"]
+        self.persist = config["persist"]
+        self.data = data.loc[self.start_date:self.end_date]
 
     def process(self):
         """
@@ -36,21 +42,21 @@ class ModelsTrainingProcessor:
         training = self.initialize_models_training(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
-        self._load_data(training=training)
+        self._load_data(training=training, data=self.data)
 
         for attempt in range(1, self.max_retries + 1):
-            print(f"\n[{self.ticker}] Training attempt {attempt}...")
             self.prepare_data(
                 training=training,
                 momentum_intervals=self.momentum_intervals,
-                volatility_interval=self.volatility_interval
+                volatility_interval=self.volatility_interval,
+                split=self.config["train_test_split"],
+                data=self.data
             )
 
             converged = self._fit_model(
                 n_states=self.n_states, training=training, max_retries=self.max_retries
             )
             if not converged:
-                print(f"[{self.ticker}] Retrying model training due to non-convergence...")
                 continue
 
             self._label_states(training=training)
@@ -58,16 +64,17 @@ class ModelsTrainingProcessor:
             is_stable = self._evaluate_model_quality(training=training)
             if is_stable:
                 break
-            elif attempt < self.max_retries:
-                print(f"[{self.ticker}] Retrying model training due to instability...")
-            else:
-                print(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
 
         self._save_model(training=training)
-        results = TrainingResultsProcessor(training=training)
-        results.process()
+        if self.persist:
+            results = TrainingResultsProcessor(training=training)
+            results.process()
 
-        return training
+            return training
+        else:
+
+            return training
+
 
     @staticmethod
     def initialize_models_training(ticker: str, start_date: str, end_date: str) -> ModelsTraining:
@@ -90,8 +97,9 @@ class ModelsTrainingProcessor:
 
         return training
 
+
     @staticmethod
-    def _load_data(training: ModelsTraining):
+    def _load_data(training: ModelsTraining, data: pd.DataFrame):
         """
         Method to load data for preparation.
 
@@ -101,53 +109,58 @@ class ModelsTrainingProcessor:
             ModelsTraining instance.
         """
         ticker = training.ticker
-        adj_close = yf.download(
-            tickers=ticker,
-            start=training.start_date,
-            end=training.end_date,
-            group_by='ticker',
-            auto_adjust=False,
-            progress=False,
-            threads=True,
-        )
-
-        if isinstance(adj_close.columns, pd.MultiIndex):
-            series = adj_close[ticker]["Adj Close"].dropna()
-        else:
-            series = adj_close["Adj Close"].dropna()
-
+        series = pd.Series(data[f"{ticker}"])
         training.data = series
+
 
     @staticmethod
     def prepare_data(
-        training: ModelsTraining, momentum_intervals: list, volatility_interval: int
+        training: ModelsTraining,
+        momentum_intervals: list,
+        volatility_interval: int,
+        split: float,
+        data: pd.DataFrame
     ):
         """
-        Prepare data for model fitting/training using StandardScaler for normalization.
+        Method to prepare data for model fitting/training using StandardScaler for normalization, except for short rates.
 
         Parameters
         ----------
         training : ModelsTraining
             ModelsTraining instance.
+        momentum_intervals : list
+            List of integers representing the momentum time horizons.
+        volatility_inverval : int
+            Integer representing the volatility time horizon.
+        split : float
+            Float representing the percent of train and test splitting.
+        data : pd.DataFrame
+            DataFrame raw price and interest rate data.
         """
         training_data = training.data.copy()
+        short_rate = data["DFF"]
 
-        ret_1m = utilities.compounded_return(training_data, momentum_intervals[0])
-        ret_3m = utilities.compounded_return(training_data, momentum_intervals[1])
-        ret_6m = utilities.compounded_return(training_data, momentum_intervals[2])
-        ret_9m = utilities.compounded_return(training_data, momentum_intervals[3])
-        momentum = (ret_1m + ret_3m + ret_6m + ret_9m) / 5
+        returns = [
+            utilities.compound_return(
+                training_data.copy(), interval
+            ) for interval in momentum_intervals[:4]
+        ]
+        momentum = sum(returns) / len(returns)
 
         rolling_vol_1 = training_data.pct_change().rolling(window=volatility_interval).std()
 
-        features = pd.concat([momentum, rolling_vol_1], axis=1).dropna()
-        features.columns = ['Momentum', 'Volatility']
+        features = pd.concat([momentum, rolling_vol_1, short_rate], axis=1).dropna()
+        features.columns = ['Momentum', 'Volatility', "Short_Rates"]
 
         scaler = StandardScaler()
-        scaled = scaler.fit_transform(features)
-        scaled_features = pd.DataFrame(scaled, index=features.index, columns=features.columns)
+        scaled_part = scaler.fit_transform(features[['Momentum', 'Volatility']])
+        scaled_features = pd.DataFrame(
+            scaled_part, index=features.index, columns=['Momentum', 'Volatility']
+        )
 
-        split_index = int(len(scaled_features) * 0.5)
+        scaled_features['Short_Rates'] = features['Short_Rates']
+
+        split_index = int(len(scaled_features) * split)
         training.train_data = scaled_features.iloc[:split_index]
         training.test_data = scaled_features.iloc[split_index:]
         training.features = scaled_features
@@ -167,7 +180,7 @@ class ModelsTrainingProcessor:
         max_retries : int
             Number of retries to train the model.
         """
-        X = training.train_data[['Momentum', 'Volatility']].values
+        X = training.train_data[['Momentum', 'Volatility', "Short_Rates"]].values.copy()
 
         kmeans = KMeans(n_clusters=n_states, random_state=42)
         labels = kmeans.fit_predict(X)
@@ -185,7 +198,7 @@ class ModelsTrainingProcessor:
             model = GaussianHMM(
                 n_components=n_states,
                 covariance_type="diag",
-                tol=0.00001,
+                tol=1e-5,
                 n_iter=10000,
                 verbose=False,
                 params="stmc",
@@ -200,14 +213,10 @@ class ModelsTrainingProcessor:
             model.fit(X)
 
             if model.monitor_.converged:
-                print(f"[{training.ticker}] Model converged on attempt {attempt}")
                 training.model = model
                 training.train_states = model.predict(X)
                 return True
-            else:
-                print(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
 
-        print(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
         training.model = model
         training.train_states = model.predict(X)
 
@@ -226,7 +235,7 @@ class ModelsTrainingProcessor:
         """
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
-        print(f"{training.ticker}: {state_label_dict}")
+
 
     @staticmethod
     def _evaluate_model_quality(training: ModelsTraining):
@@ -239,16 +248,12 @@ class ModelsTrainingProcessor:
             ModelsTraining instance.
         """
         result = utilities.evaluate_state_stability(training.train_states)
-        print(f"[{training.ticker}] Model stability evaluation:")
-        print(f"  - Transition rate: {result['transition_rate']}")
-        print(f"  - Transition windows: {result['transitions']}")
 
         if result["is_unstable"]:
-            print(f"  - WARNING: Model is unstable. Reason: {result['reason']}")
             return False
         else:
-            print("  - Model is stable.")
             return True
+
 
     @staticmethod
     def _save_model(training: ModelsTraining):

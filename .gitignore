@@ -3,3 +3,7 @@
 *.pyc
 */__pycache__
 *.pdf
+portfolio_test_results.csv
+*.log
+*/logs
+asset_data.csv

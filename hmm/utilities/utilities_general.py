@@ -32,9 +32,9 @@ def load_config(etf, stocks):
     Method to load the config file.
     """
     if etf:
-        config_path = os.path.join(os.getcwd(), "etf_config.json")
+        config_path = os.path.join(os.getcwd(), "configs", "etf_config.json")
     elif stocks:
-        config_path = os.path.join(os.getcwd(), "stock_config.json")
+        config_path = os.path.join(os.getcwd(), "configs", "stock_config.json")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
     with open(config_path, 'r') as f:

@@ -47,7 +47,7 @@ class ModelsTrainingProcessor:
         self._load_data(training=training, data=self.data)
 
         for attempt in range(1, self.max_retries + 1):
-            logger.info(f"\n[{self.ticker}] Training attempt {attempt}...")
+            # logger.info(f"\n[{self.ticker}] Training attempt {attempt}...")
             self.prepare_data(
                 training=training,
                 momentum_intervals=self.momentum_intervals,
@@ -59,7 +59,7 @@ class ModelsTrainingProcessor:
                 n_states=self.n_states, training=training, max_retries=self.max_retries
             )
             if not converged:
-                logger.info(f"[{self.ticker}] Retrying model training due to non-convergence...")
+                # logger.info(f"[{self.ticker}] Retrying model training due to non-convergence...")
                 continue
 
             self._label_states(training=training)
@@ -67,10 +67,10 @@ class ModelsTrainingProcessor:
             is_stable = self._evaluate_model_quality(training=training)
             if is_stable:
                 break
-            elif attempt < self.max_retries:
-                logger.info(f"[{self.ticker}] Retrying model training due to instability...")
-            else:
-                logger.info(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
+            # elif attempt < self.max_retries:
+            #     # logger.info(f"[{self.ticker}] Retrying model training due to instability...")
+            # else:
+            #     # logger.info(f"[{self.ticker}] Maximum retries reached. Proceeding with last model.")
 
         self._save_model(training=training)
         if self.persist:
@@ -143,7 +143,7 @@ class ModelsTrainingProcessor:
             rate.fillna(method="ffill", inplace=True)
             short_rate = rate
         except Exception as e:
-            logger.error(f"Failed to load FRED short rate series '{series}': {e}")
+            # logger.error(f"Failed to load FRED short rate series '{series}': {e}")
             short_rate = None
 
         training_data = training.data.copy()
@@ -187,7 +187,7 @@ class ModelsTrainingProcessor:
         max_retries : int
             Number of retries to train the model.
         """
-        X = training.train_data[['Momentum', 'Volatility', "Short_Rates"]].values
+        X = training.train_data[['Momentum', 'Volatility', "Short_Rates"]].values.copy()
 
         kmeans = KMeans(n_clusters=n_states, random_state=42)
         labels = kmeans.fit_predict(X)
@@ -220,14 +220,14 @@ class ModelsTrainingProcessor:
             model.fit(X)
 
             if model.monitor_.converged:
-                logger.info(f"[{training.ticker}] Model converged on attempt {attempt}")
+                # logger.info(f"[{training.ticker}] Model converged on attempt {attempt}")
                 training.model = model
                 training.train_states = model.predict(X)
                 return True
-            else:
-                logger.info(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
+        #     else:
+        #         logger.info(f"[{training.ticker}] WARNING: Model did not converge on attempt {attempt}")
 
-        logger.info(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
+        # logger.info(f"[{training.ticker}] ERROR: Failed to converge after {max_retries} attempts.")
         training.model = model
         training.train_states = model.predict(X)
 
@@ -246,7 +246,7 @@ class ModelsTrainingProcessor:
         """
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
-        logger.info(f"{training.ticker}: {state_label_dict}")
+        # logger.info(f"{training.ticker}: {state_label_dict}")
 
 
     @staticmethod

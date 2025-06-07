@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import yfinance as yf
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import hmm.utilities as utilities
 
@@ -35,8 +35,20 @@ class DataProcessor:
         )
         return data
 
-    @staticmethod
-    def pull_data(tickers, file_path, start_date):
+
+    def get_latest_trading_day():
+        """
+        """
+        today = datetime.today()
+        # If today is Saturday (5) or Sunday (6), back up to Friday
+        if today.weekday() == 5:  # Saturday
+            today -= timedelta(days=1)
+        elif today.weekday() == 6:  # Sunday
+            today -= timedelta(days=2)
+        return today.strftime('%Y-%m-%d')
+
+
+    def pull_data(self, tickers, file_path, start_date):
         """
         Pulls historical price data for tickers. If a file exists, verifies the tickers and date range.
         If any condition fails, pulls fresh data using `load_price_data()` and saves to file.
@@ -44,10 +56,10 @@ class DataProcessor:
         Returns
         -------
         pd.DataFrame
-            DataFrame of adjusted close prices.
+            DataFrame of adjusted close prices for all tickers.
         """
         tickers = [tickers] if isinstance(tickers, str) else tickers
-        today = datetime.today().strftime('%Y-%m-%d')
+        today = self.get_latest_trading_day()
 
         def refresh_data():
             price_data = utilities.load_price_data(tickers, start_date, today)
@@ -73,7 +85,7 @@ class DataProcessor:
             if start_date and pd.to_datetime(start_date) < data.index.min():
                 return refresh_data()
 
-            return data[tickers] if len(tickers) > 1 else data[tickers[0]]
+            return data
 
         except Exception:
             return refresh_data()

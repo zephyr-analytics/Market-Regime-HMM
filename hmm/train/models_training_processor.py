@@ -26,7 +26,6 @@ class ModelsTrainingProcessor:
     def __init__(self, config: dict, data: pd.DataFrame, ticker: str):
         self.ticker = ticker
         self.config = config
-        self.data = data
         self.start_date = config["start_date"]
         self.end_date = config["current_end"]
         self.max_retries = config["max_retries"]
@@ -34,6 +33,7 @@ class ModelsTrainingProcessor:
         self.momentum_intervals = config["momentum_intervals"]
         self.volatility_interval = config["volatility_interval"]
         self.persist = config["persist"]
+        self.data = data.loc[self.start_date:self.end_date]
 
     def process(self):
         """
@@ -69,7 +69,7 @@ class ModelsTrainingProcessor:
         if self.persist:
             results = TrainingResultsProcessor(training=training)
             results.process()
-            
+
             return training
         else:
 
@@ -109,9 +109,7 @@ class ModelsTrainingProcessor:
             ModelsTraining instance.
         """
         ticker = training.ticker
-        start_date = training.start_date
-        end_date = training.end_date
-        series = pd.Series(data[f"{ticker}"]).loc[start_date:end_date]
+        series = pd.Series(data[f"{ticker}"])
         training.data = series
 
 
@@ -139,12 +137,7 @@ class ModelsTrainingProcessor:
         data : pd.DataFrame
             DataFrame raw price and interest rate data.
         """
-        start = training.start_date
-        end = training.end_date
-
         training_data = training.data.copy()
-
-        data = data.loc[start:end]
         short_rate = data["DFF"]
 
         returns = [

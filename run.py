@@ -22,7 +22,6 @@ from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
 logger = logging.getLogger(__name__)
 
 
-# NOTE shift data trimming to this level to ensure all lower levels data is already trimmed as expected.
 def process_ticker(config: dict, data: pd.DataFrame, ticker: str) -> bool:
     """
     Method to create a Train and Infer pipeline, used by ThreadPoolExecutor.
@@ -79,6 +78,8 @@ def run_portfolio_test(config) -> dict:
     print(data)
     original_start = datetime.strptime(config["start_date"], "%Y-%m-%d")
     final_end = datetime.strptime(config["end_date"], "%Y-%m-%d")
+
+
 
     test_start = original_start + relativedelta(years=2)
     results = []

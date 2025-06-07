@@ -28,7 +28,7 @@ class PortfolioProcessor:
         self.config = config
         self.start_date = config["start_date"]
         self.end_date = config["current_end"]
-        self.data = data
+        self.data = data.loc[self.start_date:self.end_date]
 
 
     def process(self):
@@ -46,14 +46,12 @@ class PortfolioProcessor:
             forecast_data=forecast_data, clusters=clusters
         )
 
-        data = self.data.loc[self.start_date:self.end_date]
-
         portfolio = self.build_final_portfolio(
             clusters=clusters,
             forecast_data=forecast_data,
             category_weights=category_weights,
             bearish_cutoff=self.config["bearish_cutoff"],
-            price_data=data,
+            price_data=self.data,
             sma_lookback=self.config["moving_average"]
         )
         # NOTE possibly use a getter and setter for all results.

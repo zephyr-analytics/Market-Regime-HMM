@@ -1,10 +1,15 @@
+#Patterns
 *.png
 *.pkl
 *.pyc
-*/__pycache__
 *.pdf
-portfolio_test_results.csv
 *.log
+
+# Directories
+*/__pycache__
 */logs
-asset_data.csv
 */configs
+
+# Files
+portfolio_test_results.csv
+asset_data.csv

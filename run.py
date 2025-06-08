@@ -22,7 +22,9 @@ from hmm.results.final_portfolio_results import FinalResultsPortfolio
 
 logger = logging.getLogger(__name__)
 
-
+# TODO this needs a factory to clean up the code.
+# TODO put in place a training cut off when testing, after n years the model keeps inferencing with the same model. 
+# NOTE also test performance with lagging data by a year.
 def process_ticker(config: dict, data: pd.DataFrame, ticker: str) -> bool:
     """
     Method to create a Train and Infer pipeline, used by ThreadPoolExecutor.

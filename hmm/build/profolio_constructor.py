@@ -8,25 +8,33 @@ import numpy as np
 # TODO create new methods for different weighting mechanics.
 class PortfolioConstructor:
 
-    @staticmethod
-    def build_final_portfolio(
-        clusters: dict, forecast_data: dict, category_weights: dict, 
+    def __init__(
+            self, clusters: dict, forecast_data: dict, category_weights: dict,
+            bearish_cutoff: float, price_data: dict, sma_lookback: int
+        ):
+        pass
+
+
+    def process(
+        self, clusters: dict, forecast_data: dict, category_weights: dict, 
         bearish_cutoff: float, price_data: dict, sma_lookback: int
     ):
+        """
+        """
         ticker_weights = defaultdict(float)
 
         # Step 1: Adjust cluster weights by net Bullish sentiment
-        adjusted_cluster_weights = PortfolioConstructor._adjust_cluster_weights(
+        adjusted_cluster_weights = self._adjust_cluster_weights(
             clusters, forecast_data, category_weights
         )
 
         # Step 2: Normalize cluster weights
-        normalized_cluster_weights = PortfolioConstructor._normalize_weights(adjusted_cluster_weights)
+        normalized_cluster_weights = self._normalize_weights(adjusted_cluster_weights)
         if not normalized_cluster_weights:
             return {'SHV': 1.0}
 
         # Step 3: Allocate weights within clusters based on net sentiment
-        ticker_weights, orphaned_weight = PortfolioConstructor._allocate_within_clusters(
+        ticker_weights, orphaned_weight = self._allocate_within_clusters(
             normalized_cluster_weights, clusters, forecast_data, bearish_cutoff
         )
 
@@ -37,7 +45,7 @@ class PortfolioConstructor:
             ticker_weights['SHV'] += orphaned_weight
 
         # Step 5: Apply SMA-based momentum filter
-        filtered_weights = PortfolioConstructor._apply_sma_filter(
+        filtered_weights = self._apply_sma_filter(
             ticker_weights, price_data, sma_lookback
         )
 
@@ -46,8 +54,11 @@ class PortfolioConstructor:
 
         return filtered_weights
 
+
     @staticmethod
     def _adjust_cluster_weights(clusters, forecast_data, category_weights):
+        """
+        """
         bullish_clusters = category_weights.get("Bullish", {})
         adjusted = {}
 
@@ -69,15 +80,21 @@ class PortfolioConstructor:
 
         return adjusted
 
+
     @staticmethod
     def _normalize_weights(weight_dict):
+        """
+        """
         total = sum(weight_dict.values())
         if total == 0:
             return {}
         return {k: v / total for k, v in weight_dict.items()}
 
+
     @staticmethod
     def _allocate_within_clusters(cluster_weights, clusters, forecast_data, bearish_cutoff):
+        """
+        """
         ticker_weights = defaultdict(float)
         orphaned_weight = 0.0
 
@@ -106,8 +123,11 @@ class PortfolioConstructor:
 
         return ticker_weights, orphaned_weight
 
+
     @staticmethod
     def _apply_sma_filter(ticker_weights, price_data, lookback):
+        """
+        """
         filtered = {}
         total = 0.0
 

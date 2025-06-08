@@ -144,30 +144,37 @@ class ModelsInferenceProcessor:
 
 
     @staticmethod
-    def predict_future_state(inferencing: ModelsInferencing, n_steps: int = 21):
+    def predict_future_state(inferencing: ModelsInferencing, n_steps: int=21, n_days: int=63):
         """
-        Method to predict future states based on n number of timesteps forward.
+        Predict future state probabilities by computing an exponentially weighted average
+        of posterior probabilities over the last `n_days`, and projecting them forward
+        using the model's transition matrix.
 
         Parameters
         ----------
         inferencing : ModelsInferencing
-            ModelsInferencing instances.
-        n_steps : int
-            The number of time steps to predict forward.
+            The inference object containing the trained HMM, state labels, and test data.
+        n_steps : int, default=21
+            Number of time steps to forecast forward.
+        n_days : int, default=21
+            Number of most recent observations to use for computing initial state distribution.
         """
-        last_state = inferencing.test_states[-1]
-        state_labels = inferencing.state_labels.copy()
+        # Step 1: Get all posterior probabilities from the model
+        posteriors = inferencing.model.predict_proba(inferencing.test_data)
+
+        # Step 2: Apply exponential weighting to the last n_days posteriors
+        raw_weights = np.exp(np.linspace(-2, 0, n_days))  # Recent days get higher weight
+        weights = raw_weights / raw_weights.sum()
+        pi_t = np.average(posteriors[-n_days:], axis=0, weights=weights)
+
+        # Step 3: Forecast forward using transition matrix
         A = inferencing.model.transmat_
-        n_states = inferencing.model.n_components
-
-        pi_t = np.zeros(n_states)
-        pi_t[last_state] = 1.0
-
         for _ in range(n_steps):
             pi_t = np.dot(pi_t, A)
 
+        # Step 4: Label and store the result
         labeled_distribution = {
-            state_labels.get(i, f"State {i}"): round(prob, 4)
+            inferencing.state_labels.get(i, f"State {i}"): round(prob, 4)
             for i, prob in enumerate(pi_t)
         }
 

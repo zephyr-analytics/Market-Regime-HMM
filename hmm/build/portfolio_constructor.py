@@ -1,31 +1,38 @@
 """
+Module for handling final portfolio construction.
 """
 
 from collections import defaultdict
 
 import numpy as np
 
-# TODO create new methods for different weighting mechanics.
+
 class PortfolioConstructor:
-
+    """
+    Constructor class for portfolio.
+    """
     def __init__(
-            self, clusters: dict, forecast_data: dict, category_weights: dict,
-            bearish_cutoff: float, price_data: dict, sma_lookback: int
+            self, config: dict, clusters: dict, forecast_data: dict, category_weights: dict, price_data: dict
         ):
-        pass
+        self.config = config
+        self.clusters = clusters
+        self.forecast_data = forecast_data
+        self.category_weights = category_weights
+        self.price_data = price_data
+        self.bearish_cutoff = config["bearish_cutoff"]
+        self.sma_lookback = config["moving_average"]
+        self.max_assets_per_cluster = config["max_assets_per_cluster"]
 
 
-    def process(
-        self, clusters: dict, forecast_data: dict, category_weights: dict, 
-        bearish_cutoff: float, price_data: dict, sma_lookback: int
-    ):
+    def process(self):
         """
+        Method to process through the PortfolioConstructor.
         """
         ticker_weights = defaultdict(float)
 
         # Step 1: Adjust cluster weights by net Bullish sentiment
         adjusted_cluster_weights = self._adjust_cluster_weights(
-            clusters, forecast_data, category_weights
+            self.clusters, self.forecast_data, self.category_weights
         )
 
         # Step 2: Normalize cluster weights
@@ -35,7 +42,7 @@ class PortfolioConstructor:
 
         # Step 3: Allocate weights within clusters based on net sentiment
         ticker_weights, orphaned_weight = self._allocate_within_clusters(
-            normalized_cluster_weights, clusters, forecast_data, bearish_cutoff
+            normalized_cluster_weights, self.clusters, self.forecast_data, self.bearish_cutoff
         )
 
         # Step 4: Assign leftover weight to SHV
@@ -46,13 +53,24 @@ class PortfolioConstructor:
 
         # Step 5: Apply SMA-based momentum filter
         filtered_weights = self._apply_sma_filter(
-            ticker_weights, price_data, sma_lookback
+            ticker_weights, self.price_data, self.sma_lookback
         )
 
         if not filtered_weights:
             return {'SHV': 1.0}
 
-        return filtered_weights
+        # Step 6: Retain only top-N tickers per cluster (unless using equal weight)
+        if self.config["use_equal_weight"]:
+            return filtered_weights
+
+        top_filtered_weights = self._filter_top_assets_per_cluster(
+            filtered_weights, self.clusters, top_n=self.max_assets_per_cluster
+        )
+
+        if not top_filtered_weights:
+            return {'SHV': 1.0}
+
+        return top_filtered_weights
 
 
     @staticmethod
@@ -149,3 +167,27 @@ class PortfolioConstructor:
             return {}
 
         return normalized
+
+    @staticmethod
+    def _filter_top_assets_per_cluster(filtered_weights, clusters, top_n):
+        """
+        Retain only the top N assets within each cluster based on final weight.
+        """
+        cluster_to_tickers = defaultdict(list)
+
+        for tkr, weight in filtered_weights.items():
+            cluster_id = clusters.get(tkr)
+            if cluster_id is not None:
+                cluster_to_tickers[cluster_id].append((tkr, weight))
+
+        final_filtered = {}
+        for cluster_id, tickers in cluster_to_tickers.items():
+            top_tickers = sorted(tickers, key=lambda x: x[1], reverse=True)[:top_n]
+            for tkr, weight in top_tickers:
+                final_filtered[tkr] = weight
+
+        total = sum(final_filtered.values())
+        if total == 0.0:
+            return {}
+
+        return {tkr: w / total for tkr, w in final_filtered.items()}

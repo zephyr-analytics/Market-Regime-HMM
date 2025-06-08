@@ -88,7 +88,8 @@ def run_portfolio_test(config) -> dict:
     while test_start + relativedelta(months=1) <= final_end:
         test_window_end = test_start + relativedelta(months=1)
         logger.info(f"\n=== TEST WINDOW: {test_start.date()} to {test_window_end.date()} ===")
-
+        print(f"{original_start}")
+        print(f"{test_start}")
         config["current_start"] = original_start.strftime("%Y-%m-%d")
         config["current_end"] = test_start.strftime("%Y-%m-%d")
         tickers = config["tickers"]

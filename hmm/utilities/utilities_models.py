@@ -131,10 +131,8 @@ def label_states(training=None, inferencing=None) -> dict:
         states = training.train_states.copy()
         returns = training.train_data.copy()
     elif inferencing:
-        states = inferencing.test_states.copy()
-        returns = inferencing.test_data.copy()
-    else:
-        raise ValueError("Either training or inferencing must be provided.")
+        states = np.concatenate([inferencing.train_states, inferencing.test_states])
+        returns = pd.concat([inferencing.train_data, inferencing.test_data], ignore_index=False)
 
     returns = returns['Momentum'].reset_index(drop=True)
 
@@ -153,34 +151,8 @@ def label_states(training=None, inferencing=None) -> dict:
     label_order = ['Bearish', 'Neutral', 'Bullish']
     label_map = {}
 
-    n_states = len(sorted_states)
-
-    if n_states >= 3:
-        for i, label in enumerate(label_order):
-            state = sorted_states[i]
-            label_map[state] = label
-    elif n_states == 2:
-        label_map[sorted_states[0]] = 'Bearish'
-        label_map[sorted_states[1]] = 'Bullish'
-        if sorted_states[1] not in label_map:
-            label_map[sorted_states[1]] = 'Neutral'
-        else:
-            label_map[sorted_states[1]] = 'Bullish'
-            label_map[sorted_states[0]] = 'Neutral'
-    elif n_states == 1:
-        only_state = sorted_states[0]
-        label_map[only_state] = 'Bearish'
-
-        label_map = {
-            only_state: 'Bearish'
-        }
-
-        label_coverage = {
-            'Bearish': only_state,
-            'Neutral': only_state,
-            'Bullish': only_state
-        }
-
-        label_map = {v: k for k, v in label_coverage.items()}
+    for i, label in enumerate(label_order):
+        state = sorted_states[i]
+        label_map[state] = label
 
     return label_map

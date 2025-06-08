@@ -26,7 +26,7 @@ class ModelsTrainingProcessor:
     def __init__(self, config: dict, data: pd.DataFrame, ticker: str):
         self.ticker = ticker
         self.config = config
-        self.start_date = config["start_date"]
+        self.start_date = config["current_start"]
         self.end_date = config["current_end"]
         self.max_retries = config["max_retries"]
         self.n_states = 3
@@ -34,6 +34,7 @@ class ModelsTrainingProcessor:
         self.volatility_interval = config["volatility_interval"]
         self.persist = config["persist"]
         self.data = data.loc[self.start_date:self.end_date]
+
 
     def process(self):
         """

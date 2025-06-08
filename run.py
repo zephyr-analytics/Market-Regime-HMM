@@ -18,10 +18,13 @@ from hmm.build.portfolio_processor import PortfolioProcessor
 from hmm.data.data_processor import DataProcessor
 from hmm.train.models_training_processor import ModelsTrainingProcessor
 from hmm.infer.models_inferencing_processor import ModelsInferenceProcessor
+from hmm.results.final_portfolio_results import FinalResultsPortfolio
 
 logger = logging.getLogger(__name__)
 
-
+# TODO this needs a factory to clean up the code.
+# TODO put in place a training cut off when testing, after n years the model keeps inferencing with the same model. 
+# NOTE also test performance with lagging data by a year.
 def process_ticker(config: dict, data: pd.DataFrame, ticker: str) -> bool:
     """
     Method to create a Train and Infer pipeline, used by ThreadPoolExecutor.
@@ -79,7 +82,7 @@ def run_portfolio_test(config) -> dict:
     original_start = datetime.strptime(config["start_date"], "%Y-%m-%d")
     final_end = datetime.strptime(config["end_date"], "%Y-%m-%d")
 
-    test_start = original_start + relativedelta(years=2)
+    test_start = original_start + relativedelta(years=config["model_warmup"])
     results = []
 
     while test_start + relativedelta(months=1) <= final_end:
@@ -187,6 +190,8 @@ def main():
     elif args.test:
         results = run_portfolio_test(config)
         df = pd.DataFrame(results)
+        processor = FinalResultsPortfolio(results=results)
+        processor.process()
         df.to_csv("portfolio_test_results.csv", index=False)
         logger.info("\nSaved test results to portfolio_test_results.csv")
 

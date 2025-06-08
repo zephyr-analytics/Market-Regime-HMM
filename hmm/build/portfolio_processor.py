@@ -15,6 +15,7 @@ from scipy.spatial.distance import pdist
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
+from hmm.build.portfolio_constructor import PortfolioConstructor
 from hmm.results.portfolio_results_processor import PortfolioResultsProcessor
 
 logger = logging.getLogger(__name__)
@@ -28,12 +29,13 @@ class PortfolioProcessor:
         self.config = config
         self.start_date = config["start_date"]
         self.end_date = config["current_end"]
+        self.persist = config["persist"]
         self.data = data.loc[self.start_date:self.end_date]
 
 
     def process(self):
         """
-        Method to process through the BuildProcessor.
+        Method to process through the PortfolioProcessor.
         """
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
         parsed_objects = self.load_models_inference(directory=file_path, tickers=self.config["tickers"])
@@ -45,25 +47,26 @@ class PortfolioProcessor:
         category_weights = self.compute_categorical_weights_by_cluster(
             forecast_data=forecast_data, clusters=clusters
         )
-
-        portfolio = self.build_final_portfolio(
-            clusters=clusters,
-            forecast_data=forecast_data,
-            category_weights=category_weights,
-            bearish_cutoff=self.config["bearish_cutoff"],
-            price_data=self.data,
-            sma_lookback=self.config["moving_average"]
+        
+        constructor = PortfolioConstructor(
+            config=self.config, clusters=clusters, forecast_data=forecast_data, category_weights=category_weights, price_data=self.data
         )
-        # NOTE possibly use a getter and setter for all results.
-        results_process = PortfolioResultsProcessor(
-            config=self.config,
-            Z=results["linkage_matrix"],
-            n_clusters=results["n_clusters"],
-            portfolio=portfolio
-        )
-        results_process.process()
+        portfolio = constructor.process()
 
-        return portfolio
+        if self.persist:
+            # NOTE possibly use a getter and setter for all results.
+            results_process = PortfolioResultsProcessor(
+                config=self.config,
+                Z=results["linkage_matrix"],
+                n_clusters=results["n_clusters"],
+                portfolio=portfolio
+            )
+            results_process.process()
+
+            return portfolio
+        else:
+
+            return portfolio
 
 
     @staticmethod
@@ -347,234 +350,3 @@ class PortfolioProcessor:
                 category_weights[cat] = {cid: 0.0 for cid in weighted}
 
         return category_weights
-
-# Equal Weight
-    # @staticmethod
-    # def build_final_portfolio(
-    #     clusters: dict, forecast_data: dict, category_weights: dict, 
-    #     bearish_cutoff: float, price_data: dict, sma_lookback: int
-    # ):
-    #     """
-    #     Constructs a portfolio using discounted 'Bullish' cluster weights,
-    #     where each cluster's weight is multiplied by net bullish sentiment
-    #     (Bullish - Bearish). Assets are equally weighted within clusters,
-    #     with reallocation to SHV as needed.
-
-    #     Parameters
-    #     ----------
-    #     forecast_data : dict
-    #         Dictionary of ticker to forecast probability dictionaries.
-    #     clusters : dict
-    #         Dictionary of ticker to cluster ID mapping.
-    #     category_weights : dict
-    #         Dictionary of cluster weights by category.
-    #     bearish_cutoff : float
-    #         Threshold beyond which assets are excluded due to bearish outlook.
-    #     price_data : dict
-    #         Dictionary mapping tickers to historical price Series (pd.Series).
-    #     sma_lookback : int
-    #         Lookback window for SMA calculation.
-
-    #     Returns
-    #     -------
-    #     ticker_weights : dict
-    #         Final portfolio weights per ticker.
-    #     """
-    #     ticker_weights = defaultdict(float)
-    #     orphaned_weight = 0.0
-
-    #     # Use only Bullish category cluster weights
-    #     bullish_clusters = category_weights.get("Bullish", {})
-
-    #     # Step 1: Compute adjusted (discounted) weights
-    #     adjusted_cluster_weights = {}
-    #     for cluster_id, weight in bullish_clusters.items():
-    #         tickers_in_cluster = [tkr for tkr, cid in clusters.items() if cid == cluster_id]
-    #         cluster_bullish = 0.0
-    #         cluster_bearish = 0.0
-
-    #         for tkr in tickers_in_cluster:
-    #             forecast = forecast_data.get(tkr)
-    #             if isinstance(forecast, np.ndarray):
-    #                 forecast = forecast.item()
-    #             if not forecast or not isinstance(forecast, dict):
-    #                 continue
-    #             cluster_bullish += forecast.get("Bullish", 0.0)
-    #             cluster_bearish += forecast.get("Bearish", 0.0)
-
-    #         adjusted_score = max(cluster_bullish - cluster_bearish, 0.0)
-    #         adjusted_cluster_weights[cluster_id] = weight * adjusted_score
-
-    #     # Step 2: Normalize adjusted cluster weights
-    #     total_weight = sum(adjusted_cluster_weights.values())
-    #     if total_weight == 0:
-    #         return {'SHV': 1.0}
-    #     for cid in adjusted_cluster_weights:
-    #         adjusted_cluster_weights[cid] /= total_weight
-
-    #     # Step 3: Distribute weights equally within valid assets per cluster
-    #     for cluster_id, cluster_weight in adjusted_cluster_weights.items():
-    #         tickers_in_cluster = [tkr for tkr, cid in clusters.items() if cid == cluster_id]
-
-    #         valid_tickers = []
-    #         for tkr in tickers_in_cluster:
-    #             forecast = forecast_data.get(tkr)
-    #             if isinstance(forecast, np.ndarray):
-    #                 forecast = forecast.item()
-    #             if not forecast or not isinstance(forecast, dict):
-    #                 continue
-
-    #             if forecast.get("Bearish", 0.0) <= bearish_cutoff:
-    #                 valid_tickers.append(tkr)
-
-    #         if not valid_tickers:
-    #             orphaned_weight += cluster_weight
-    #             continue
-
-    #         equal_weight = cluster_weight / len(valid_tickers)
-    #         for tkr in valid_tickers:
-    #             ticker_weights[tkr] += equal_weight
-
-    #     # Step 4: Handle SHV fallback
-    #     if not ticker_weights:
-    #         return {'SHV': 1.0}
-    #     if orphaned_weight > 0:
-    #         ticker_weights['SHV'] += orphaned_weight
-
-    #     # Step 5: SMA filter
-    #     filtered_weights = {}
-    #     total_valid_weight = 0.0
-    #     for tkr, weight in ticker_weights.items():
-    #         prices = price_data.get(tkr)
-    #         if prices is None or len(prices) < sma_lookback:
-    #             continue
-    #         sma = prices[-sma_lookback:].mean()
-    #         if prices.iloc[-1] >= sma and prices.iloc[-2] >= sma:
-    #             filtered_weights[tkr] = weight
-    #             total_valid_weight += weight
-
-    #     if not filtered_weights or total_valid_weight == 0:
-    #         return {'SHV': 1.0}
-
-    #     filtered_weights = {tkr: w / total_valid_weight for tkr, w in filtered_weights.items()}
-
-    #     if any(np.isnan(w) or w <= 0 for w in filtered_weights.values()):
-    #         return {'SHV': 1.0}
-
-    #     return filtered_weights
-
-#Bullish Wegiht
-    @staticmethod
-    def build_final_portfolio(
-        clusters: dict, forecast_data: dict, category_weights: dict, 
-        bearish_cutoff: float, price_data: dict, sma_lookback: int
-    ):
-        """
-        Constructs a portfolio using discounted 'Bullish' cluster weights,
-        where each cluster's weight is multiplied by net bullish sentiment
-        (Bullish - Bearish). Assets are equally weighted within clusters,
-        with reallocation to SHV as needed.
-
-        Parameters
-        ----------
-        forecast_data : dict
-            Dictionary of ticker to forecast probability dictionaries.
-        clusters : dict
-            Dictionary of ticker to cluster ID mapping.
-        category_weights : dict
-            Dictionary of cluster weights by category.
-        bearish_cutoff : float
-            Threshold beyond which assets are excluded due to bearish outlook.
-        price_data : dict
-            Dictionary mapping tickers to historical price Series (pd.Series).
-        sma_lookback : int
-            Lookback window for SMA calculation.
-
-        Returns
-        -------
-        ticker_weights : dict
-            Final portfolio weights per ticker.
-        """
-        ticker_weights = defaultdict(float)
-        orphaned_weight = 0.0
-
-        # Step 1: Adjust cluster weights by net Bullish sentiment
-        bullish_clusters = category_weights.get("Bullish", {})
-        adjusted_cluster_weights = {}
-
-        for cluster_id, weight in bullish_clusters.items():
-            tickers_in_cluster = [tkr for tkr, cid in clusters.items() if cid == cluster_id]
-            cluster_bullish = 0.0
-            cluster_bearish = 0.0
-
-            for tkr in tickers_in_cluster:
-                forecast = forecast_data.get(tkr)
-                if isinstance(forecast, np.ndarray):
-                    forecast = forecast.item()
-                if not forecast or not isinstance(forecast, dict):
-                    continue
-                cluster_bullish += forecast.get("Bullish", 0.0)
-                cluster_bearish += forecast.get("Bearish", 0.0)
-
-            adjusted_score = max(cluster_bullish - cluster_bearish, 0.0)
-            adjusted_cluster_weights[cluster_id] = weight * adjusted_score
-
-        # Step 2: Normalize cluster weights
-        total_weight = sum(adjusted_cluster_weights.values())
-        if total_weight == 0:
-            return {'SHV': 1.0}
-        for cid in adjusted_cluster_weights:
-            adjusted_cluster_weights[cid] /= total_weight
-
-        # Step 3: Distribute weights by (Bullish - Bearish) within each cluster
-        for cluster_id, cluster_weight in adjusted_cluster_weights.items():
-            tickers_in_cluster = [tkr for tkr, cid in clusters.items() if cid == cluster_id]
-
-            valid_tickers = {}
-            for tkr in tickers_in_cluster:
-                forecast = forecast_data.get(tkr)
-                if isinstance(forecast, np.ndarray):
-                    forecast = forecast.item()
-                if not forecast or not isinstance(forecast, dict):
-                    continue
-
-                if forecast.get("Bearish", 0.0) <= bearish_cutoff:
-                    contribution = max(forecast.get("Bullish", 0.0) - forecast.get("Bearish", 0.0), 0.0)
-                    if contribution > 0:
-                        valid_tickers[tkr] = contribution
-
-            total_contribution = sum(valid_tickers.values())
-            if total_contribution == 0:
-                orphaned_weight += cluster_weight
-                continue
-
-            for tkr, contribution in valid_tickers.items():
-                ticker_weights[tkr] += cluster_weight * (contribution / total_contribution)
-
-        # Step 4: Handle SHV fallback
-        if not ticker_weights:
-            return {'SHV': 1.0}
-        if orphaned_weight > 0:
-            ticker_weights['SHV'] += orphaned_weight
-
-        # Step 5: SMA filter
-        filtered_weights = {}
-        total_valid_weight = 0.0
-        for tkr, weight in ticker_weights.items():
-            prices = price_data.get(tkr)
-            if prices is None or len(prices) < sma_lookback:
-                continue
-            sma = prices[-sma_lookback:].mean()
-            if prices.iloc[-1] >= sma and prices.iloc[-2] >= sma:
-                filtered_weights[tkr] = weight
-                total_valid_weight += weight
-
-        if not filtered_weights or total_valid_weight == 0:
-            return {'SHV': 1.0}
-
-        filtered_weights = {tkr: w / total_valid_weight for tkr, w in filtered_weights.items()}
-
-        if any(np.isnan(w) or w <= 0 for w in filtered_weights.values()):
-            return {'SHV': 1.0}
-
-        return filtered_weights

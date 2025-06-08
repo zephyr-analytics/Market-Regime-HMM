@@ -3,6 +3,7 @@
 import json
 import os
 import pickle
+from datetime import datetime
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -116,6 +117,31 @@ def persist_to_pickle(file, file_path: str):
     """
     with open(file_path, 'wb') as f:
         pickle.dump(file, f)
+
+
+def save_html(fig, filename):
+    """
+    Save the HTML file to the 'artifacts' directory within the current working directory.
+
+    Parameters:
+    fig : plotly.graph_objects.Figure
+        The figure object to save as an HTML file.
+    filename : str
+        The name of the HTML file.
+    weights_filename : str
+        The name of the directory for weights.
+    processing_type : str
+        The type of processing to include in the file path.
+    """
+    current_directory = os.getcwd()
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+    artifacts_directory = os.path.join(
+        current_directory, "artifacts"
+    )
+    os.makedirs(artifacts_directory, exist_ok=True)
+
+    file_path = os.path.join(artifacts_directory, f"{timestamp}_{filename}.html")
+    fig.write_html(file_path)
 
 
 def save_plot(filename: str, plot_type: str, plot_sub_folder: str):

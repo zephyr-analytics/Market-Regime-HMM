@@ -46,13 +46,16 @@ class PortfolioProcessor:
             forecast_data=forecast_data, clusters=clusters
         )
 
+        max_assets_per_cluster = self.config.get("max_assets_per_cluster", None)
+
         portfolio = self.build_final_portfolio(
             clusters=clusters,
             forecast_data=forecast_data,
             category_weights=category_weights,
             bearish_cutoff=self.config["bearish_cutoff"],
             price_data=self.data,
-            sma_lookback=self.config["moving_average"]
+            sma_lookback=self.config["moving_average"],
+            max_assets_per_cluster=max_assets_per_cluster
         )
         # NOTE possibly use a getter and setter for all results.
         results_process = PortfolioResultsProcessor(

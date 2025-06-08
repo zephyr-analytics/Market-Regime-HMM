@@ -3,7 +3,6 @@
 
 from collections import defaultdict
 
-import numpy as np
 import matplotlib.pyplot as plt
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch

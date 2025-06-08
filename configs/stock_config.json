@@ -29,10 +29,12 @@
         21, 63, 126, 189, 252
     ],
     "volatility_interval": 21,
+    "max_assets_per_cluster": 5,
     "train_test_split": 0.70,
     "bearish_cutoff" : 0.10,
-    "start_date": "2017-01-01",
+    "start_date": "2014-01-01",
     "end_date": "2025-06-01",
+    "model_warmup": 2,
     "max_retries": 20,
     "moving_average": 168,
     "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",

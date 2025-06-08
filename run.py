@@ -163,7 +163,7 @@ def main():
             if args.train:
                 logger.info(f"Training model for {ticker}...")
                 config["current_end"] = config["end_date"]
-
+                config["current_start"] = config["start_date"]
                 model = ModelsTrainingProcessor(config=config, data=data, ticker=ticker)
                 training = model.process()
                 file_path = os.path.join(os.getcwd(), "hmm", "train", "artifacts", "training", f"{ticker}.pkl")
@@ -174,6 +174,7 @@ def main():
             elif args.infer:
                 logger.info(f"Running inference for {ticker}...")
                 config["current_end"] = config["end_date"]
+                config["current_start"] = config["start_date"]
                 model = ModelsInferenceProcessor(config=config, ticker=ticker)
                 inferencing = model.process()
                 file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing", f"{ticker}.pkl")

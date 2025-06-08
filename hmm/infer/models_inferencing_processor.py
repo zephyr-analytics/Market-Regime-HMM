@@ -41,7 +41,7 @@ class ModelsInferenceProcessor:
         self.infer_states(inferencing=inferencing)
 
         self.label_states(inferencing=inferencing)
-        self.predict_future_state(inferencing=inferencing)
+        self.collect_current_state_probability(inferencing=inferencing)
         if self.persist:
             results = InferencingResultsProcessor(inferencing=inferencing)
             results.process()
@@ -143,6 +143,31 @@ class ModelsInferenceProcessor:
         inferencing.state_labels = state_label_dict
 
 
+    @staticmethod
+    def collect_current_state_probability(inferencing: ModelsInferencing):
+        """
+        Get the model's current estimate of state probabilities (posterior at the latest time point).
+
+        Parameters
+        ----------
+        inferencing : ModelsInferencing
+            The inference object containing the trained HMM, state labels, and test data.
+        """
+        # Step 1: Get all posterior probabilities from the model
+        posteriors = inferencing.model.predict_proba(inferencing.test_data)
+
+        # Step 2: Use the most recent posterior probability as current state distribution
+        pi_t = posteriors[-1]
+
+        # Step 3: Label and store the result
+        labeled_distribution = {
+            inferencing.state_labels.get(i, f"State {i}"): round(prob, 4)
+            for i, prob in enumerate(pi_t)
+        }
+
+        inferencing.forecast_distribution = labeled_distribution
+
+# NOTE this is still being tested, keep until final testing finished.
     # @staticmethod
     # def predict_future_state(inferencing: ModelsInferencing, n_steps: int=21, n_days: int=21):
     #     """
@@ -179,28 +204,3 @@ class ModelsInferenceProcessor:
     #     }
 
     #     inferencing.forecast_distribution = labeled_distribution
-
-
-    @staticmethod
-    def predict_future_state(inferencing: ModelsInferencing):
-        """
-        Get the model's current estimate of state probabilities (posterior at the latest time point).
-
-        Parameters
-        ----------
-        inferencing : ModelsInferencing
-            The inference object containing the trained HMM, state labels, and test data.
-        """
-        # Step 1: Get all posterior probabilities from the model
-        posteriors = inferencing.model.predict_proba(inferencing.test_data)
-
-        # Step 2: Use the most recent posterior probability as current state distribution
-        pi_t = posteriors[-1]
-
-        # Step 3: Label and store the result
-        labeled_distribution = {
-            inferencing.state_labels.get(i, f"State {i}"): round(prob, 4)
-            for i, prob in enumerate(pi_t)
-        }
-
-        inferencing.forecast_distribution = labeled_distribution

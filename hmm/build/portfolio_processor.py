@@ -47,8 +47,6 @@ class PortfolioProcessor:
         category_weights = self.compute_categorical_weights_by_cluster(
             forecast_data=forecast_data, clusters=clusters
         )
-
-        # max_assets_per_cluster = self.config.get("max_assets_per_cluster", None)
         
         constructor = PortfolioConstructor(
             config=self.config, clusters=clusters, forecast_data=forecast_data, category_weights=category_weights, price_data=self.data

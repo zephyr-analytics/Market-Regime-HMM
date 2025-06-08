@@ -10,7 +10,7 @@
         21, 63, 126, 189, 252
     ],
     "volatility_interval": 21,
-    "use_equal_weight": false,
+    "use_equal_weight": true,
     "max_assets_per_cluster": 4,
     "train_test_split": 0.70,
     "bearish_cutoff" : 0.10,

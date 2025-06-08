@@ -5,6 +5,7 @@ Module for handling final portfolio construction.
 from collections import defaultdict
 
 import numpy as np
+import pandas as pd
 
 
 class PortfolioConstructor:
@@ -74,7 +75,7 @@ class PortfolioConstructor:
 
 
     @staticmethod
-    def _adjust_cluster_weights(clusters, forecast_data, category_weights):
+    def _adjust_cluster_weights(clusters: dict, forecast_data: dict, category_weights: dict) -> dict:
         """
         """
         bullish_clusters = category_weights.get("Bullish", {})
@@ -100,7 +101,7 @@ class PortfolioConstructor:
 
 
     @staticmethod
-    def _normalize_weights(weight_dict):
+    def _normalize_weights(weight_dict: dict) -> dict:
         """
         """
         total = sum(weight_dict.values())
@@ -110,7 +111,9 @@ class PortfolioConstructor:
 
 
     @staticmethod
-    def _allocate_within_clusters(cluster_weights, clusters, forecast_data, bearish_cutoff):
+    def _allocate_within_clusters(
+        cluster_weights: dict, clusters: dict, forecast_data: dict, bearish_cutoff: int
+    ) -> dict:
         """
         """
         ticker_weights = defaultdict(float)
@@ -143,7 +146,7 @@ class PortfolioConstructor:
 
 
     @staticmethod
-    def _apply_sma_filter(ticker_weights, price_data, lookback):
+    def _apply_sma_filter(ticker_weights: dict, price_data: pd.DataFrame, lookback: int) -> dict:
         """
         """
         filtered = {}
@@ -169,7 +172,7 @@ class PortfolioConstructor:
         return normalized
 
     @staticmethod
-    def _filter_top_assets_per_cluster(filtered_weights, clusters, top_n):
+    def _filter_top_assets_per_cluster(filtered_weights: dict, clusters: dict, top_n: int) -> dict:
         """
         Retain only the top N assets within each cluster based on final weight.
         """

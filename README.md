@@ -1,6 +1,7 @@
 # Market-HMM
 -Built with Python 3.10.1
 -Install requirements with `pip install -r requirements.txt`
+-Adjust the "data_file_path" of the config to match the repo.
 
 ## Configuration
 -"tickers":

@@ -20,9 +20,11 @@
 -"max_retries": an int for max number of retries of training a model.
 -Note: If training fails beyond nth retries for convergence and on jitter of states then an assessment of the underlying data is necessary.
 
--"moving_average": simple moving average lookback window (trading days)
--Note: this is used to further filter assets based on being below thier SMA.
+-"moving_average": Simple moving average lookback window (trading days).
+-Note: This is used to further filter assets based on being below thier SMA.
 -See: A Quantitative Approach to Tactical Asset Allocation, 2007 Faber, M
+
+-"data_file_path": Path to the repo for storage of data file.
 
 ## Config types
 -NOTE: Rather than swap tickers around a second argument is used to flag which config file to use.

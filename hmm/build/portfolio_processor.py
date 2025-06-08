@@ -28,6 +28,7 @@ class PortfolioProcessor:
         self.config = config
         self.start_date = config["start_date"]
         self.end_date = config["current_end"]
+        self.persist = config["persist"]
         self.data = data.loc[self.start_date:self.end_date]
 
 
@@ -56,16 +57,20 @@ class PortfolioProcessor:
             price_data=self.data,
             sma_lookback=self.config["moving_average"]
         )
-        # NOTE possibly use a getter and setter for all results.
-        results_process = PortfolioResultsProcessor(
-            config=self.config,
-            Z=results["linkage_matrix"],
-            n_clusters=results["n_clusters"],
-            portfolio=portfolio
-        )
-        results_process.process()
+        if self.persist:
+            # NOTE possibly use a getter and setter for all results.
+            results_process = PortfolioResultsProcessor(
+                config=self.config,
+                Z=results["linkage_matrix"],
+                n_clusters=results["n_clusters"],
+                portfolio=portfolio
+            )
+            results_process.process()
 
-        return portfolio
+            return portfolio
+        else:
+
+            return portfolio
 
 
     @staticmethod

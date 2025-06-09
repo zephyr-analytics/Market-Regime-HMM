@@ -35,11 +35,9 @@ class ModelsInferenceProcessor:
         inferencing = self.initialize_models_inferencing(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
-
         self.load_model(inferencing=inferencing)
         self.load_training(inferencing=inferencing)
         self.infer_states(inferencing=inferencing)
-
         self.label_states(inferencing=inferencing)
         self.collect_current_state_probability(inferencing=inferencing)
         if self.persist:

@@ -177,7 +177,7 @@ class PortfolioProcessor:
             encoded = encoder.transform(trimmed)
             sequences.append(encoded)
             tickers.append(ticker)
-
+        print(sequences)
         return np.array(sequences), tickers
 
 
@@ -271,9 +271,6 @@ class PortfolioProcessor:
                 if "Bullish" not in forecast:
                     mapped_forecast = {}
                     for k, v in forecast.items():
-                        if k in {"State 0", "State 1", "State 2"}:
-                            mapped_forecast["Bullish"] = mapped_forecast.get("Bullish", 0.0) + v
-                        else:
                             mapped_forecast[k] = v
                     forecast_data[ticker] = np.asarray(mapped_forecast)
                 else:

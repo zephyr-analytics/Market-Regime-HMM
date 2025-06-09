@@ -177,7 +177,7 @@ class PortfolioProcessor:
             encoded = encoder.transform(trimmed)
             sequences.append(encoded)
             tickers.append(ticker)
-        print(sequences)
+
         return np.array(sequences), tickers
 
 

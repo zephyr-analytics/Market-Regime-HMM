@@ -5,6 +5,10 @@
 
 ## Configuration
 The config files are stored within the configs directory of the repository. 
+The config files are by portfolio construction.
+`--global_macro`
+`--global_stock`
+`--us_macro`
 
 -"tickers": (list of str), List of tickers that will represent the portfolio the model is working with.
 

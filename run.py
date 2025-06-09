@@ -21,13 +21,13 @@ def main():
 
     # Asset type selection (stock vs ETF)
     asset_group = parser.add_mutually_exclusive_group(required=True)
-    asset_group.add_argument("--etf", action="store_true", help="Use ETF config")
-    asset_group.add_argument("--stock", action="store_true", help="Use stock config")
-
+    asset_group.add_argument("--global_macro", action="store_true", help="Use Global Macro config")
+    asset_group.add_argument("--gloabl_stock", action="store_true", help="Use Global Stock config")
+    asset_group.add_argument("--us_macro", action="store_true", help="Use US Macro config")
     args = parser.parse_args()
 
     # Load config
-    config = utilities.load_config(etf=args.etf, stocks=args.stock)
+    config = utilities.load_config(global_macro=args.global_macro, gloabl_stocks=args.gloabl_stock, us_macro=args.us_macro)
 
     # Process data
     data = DataProcessor(config=config).process()

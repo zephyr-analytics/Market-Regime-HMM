@@ -47,69 +47,6 @@ def calculate_portfolio_return(
     return portfolio_return
 
 
-def evaluate_state_stability(
-        states, overall_threshold=0.2, window_size=20, flip_threshold=5, flip_window_limit=5
-    ) -> dict:
-    """
-    Evaluates the temporal stability of a sequence of hidden states to assess model quality.
-    This function calculates the rate of state transitions and detects regions of frequent switching within a sliding windows.
-
-    Parameters
-    ----------
-    states : np.ndarray
-        A sequence of inferred hidden states (e.g., from an HMM) over time.
-    overall_threshold : float
-        The maximum acceptable overall transition rate (fraction of time steps where state changes),
-        above which the sequence is considered unstable. Default is 0.2.
-    window_size : int
-        The number of time steps in each sliding window used to assess local instability. Default is 20.
-    flip_threshold : int
-        The minimum number of state changes within a window to count it as a flip-flop window. Default is 5.
-    flip_window_limit : int
-        The maximum allowable number of flip-flop windows before flagging instability. Default is 5.
-
-    Returns
-    -------
-    dict : 
-        A dictionary containing:
-        - "transition_rate" (float or None): Fraction of transitions across the full sequence.
-        - "transitions" (int or None): Number of windows with excessive state changes.
-        - "is_unstable" (bool): Whether the state sequence is considered unstable.
-        - "reason" (str): Explanation for instability, or "Stable" if none detected.
-    """
-    if len(states) < window_size + 1:
-        return {
-            "transition_rate": None,
-            "flip_flop_windows": None,
-            "is_unstable": True,
-            "reason": "Not enough data to evaluate stability."
-        }
-
-    num_transitions = sum(states[i] != states[i + 1] for i in range(len(states) - 1))
-    transition_rate = num_transitions / (len(states) - 1)
-
-    flip_flop_windows = 0
-    for i in range(len(states) - window_size):
-        window = states[i:i + window_size]
-        changes = sum(window[j] != window[j + 1] for j in range(len(window) - 1))
-        if changes >= flip_threshold:
-            flip_flop_windows += 1
-
-    is_unstable = (transition_rate > overall_threshold) or (flip_flop_windows > flip_window_limit)
-    reason = []
-    if transition_rate > overall_threshold:
-        reason.append(f"High transition rate ({transition_rate:.2f})")
-    if flip_flop_windows > flip_window_limit:
-        reason.append(f"Flip-flopping in {flip_flop_windows} windows")
-
-    return {
-        "transition_rate": transition_rate,
-        "transitions": flip_flop_windows,
-        "is_unstable": is_unstable,
-        "reason": "; ".join(reason) if reason else "Stable"
-    }
-
-
 def label_states(training=None, inferencing=None) -> dict:
     """
     Assigns labels 'Bearish', 'Neutral', 'Bullish' to HMM state IDs based on z-score of returns.

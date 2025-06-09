@@ -62,10 +62,6 @@ class ModelsTrainingProcessor:
 
             self._label_states(training=training)
 
-            is_stable = self._evaluate_model_quality(training=training)
-            if is_stable:
-                break
-
         self._save_model(training=training)
         if self.persist:
             results = TrainingResultsProcessor(training=training)
@@ -236,24 +232,6 @@ class ModelsTrainingProcessor:
         """
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
-
-
-    @staticmethod
-    def _evaluate_model_quality(training: ModelsTraining):
-        """
-        Method to evaluate quality of the model and retrain if necessary.
-
-        Parameters
-        ----------
-        training : ModelsTraining
-            ModelsTraining instance.
-        """
-        result = utilities.evaluate_state_stability(training.train_states)
-
-        if result["is_unstable"]:
-            return False
-        else:
-            return True
 
 
     @staticmethod

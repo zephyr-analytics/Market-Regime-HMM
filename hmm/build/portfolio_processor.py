@@ -47,7 +47,7 @@ class PortfolioProcessor:
         self.prepare_state_sequences(state_data, lookback=126)
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
 
-        clusters = self.cluster_forecast_distributions_auto(forecast_data, max_clusters=10)
+        clusters = self.cluster_forecast_distributions_auto(forecast_data, max_clusters=15)
 
         category_weights = self.compute_categorical_weights_by_cluster(
             forecast_data=forecast_data, clusters=clusters
@@ -245,7 +245,7 @@ class PortfolioProcessor:
         category_weights = {cat: {} for cat in valid_categories}
         for cat in valid_categories:
             weighted = {
-                cid: weight * max(cluster_adjusted_bullish.get(cid, 0.0), 0.0)
+                cid: weight
                 for cid, weight in raw_weights[cat].items()
             }
             total = sum(weighted.values())
@@ -255,6 +255,7 @@ class PortfolioProcessor:
                 }
             else:
                 category_weights[cat] = {cid: 0.0 for cid in weighted}
+        # print(category_weights)
         return category_weights
 
 
@@ -307,7 +308,7 @@ class PortfolioProcessor:
         pd.Series
             Series mapping tickers to their assigned cluster ID.
         """
-        print(forecast_data)
+        # print(forecast_data)
         states = ['Bullish', 'Bearish', 'Neutral']
         tickers = list(forecast_data.keys())
 
@@ -325,7 +326,7 @@ class PortfolioProcessor:
             model = AgglomerativeClustering(n_clusters=k, metric='euclidean')
             labels = model.fit_predict(matrix)
             labels_dict[k] = labels
-
+            # print(model.__dict__)
         scores, valid_ks = PortfolioProcessor.evaluate_scores(matrix, labels_dict)
         scores[:, 2] = -scores[:, 2]
         scaled_scores = MinMaxScaler().fit_transform(scores)

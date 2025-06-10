@@ -7,6 +7,7 @@ import logging
 import os
 
 import numpy as np
+import pandas as pd
 
 import hmm.utilities as utilities
 from hmm.infer.models_inferencing import ModelsInferencing
@@ -38,7 +39,7 @@ class ModelsInferenceProcessor:
         self.load_model(inferencing=inferencing)
         self.load_training(inferencing=inferencing)
         self.infer_states(inferencing=inferencing)
-        self.label_states(inferencing=inferencing)
+        # self.label_states(inferencing=inferencing)
         self.collect_current_state_probability(inferencing=inferencing)
         if self.persist:
             results = InferencingResultsProcessor(inferencing=inferencing)
@@ -109,6 +110,7 @@ class ModelsInferenceProcessor:
         inferencing.train_data = training.train_data
         inferencing.test_data = training.test_data
         inferencing.train_states = training.train_states
+        inferencing.state_labels = training.state_labels
 
 
     @staticmethod
@@ -128,20 +130,6 @@ class ModelsInferenceProcessor:
 
 
     @staticmethod
-    def label_states(inferencing: ModelsInferencing):
-        """
-        Method to label states based on inferencing.
-
-        Parameters
-        ----------
-        inferencing : ModelsInferencing
-            ModelsInferencing instances.
-        """
-        state_label_dict = utilities.label_states(inferencing=inferencing)
-        inferencing.state_labels = state_label_dict
-
-
-    @staticmethod
     def collect_current_state_probability(inferencing: ModelsInferencing):
         """
         Get the model's forecasted state probabilities 21 steps ahead using the transition matrix.
@@ -151,6 +139,8 @@ class ModelsInferenceProcessor:
         inferencing : ModelsInferencing
             The inference object containing the trained HMM, state labels, and test data.
         """
+        # NOTE since this is being forward propagated the new states path over the period need to be
+        # appended to the states.
         posteriors = inferencing.model.predict_proba(inferencing.test_data.copy())
 
         pi_t = posteriors[-1]

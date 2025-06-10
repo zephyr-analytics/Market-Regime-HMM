@@ -20,8 +20,6 @@ class PortfolioConstructor:
         self.forecast_data = forecast_data
         self.category_weights = category_weights
         self.price_data = price_data
-        self.bearish_cutoff = config["bearish_cutoff"]
-        self.bullish_cutoff = 0.6
         self.sma_lookback = config["moving_average"]
         self.max_assets_per_cluster = config["max_assets_per_cluster"]
 
@@ -39,18 +37,22 @@ class PortfolioConstructor:
         # Step 1: Adjust each cluster's weight by its net Bullish sentiment
         if self.config["equal_cluster_weight"]:
             adjusted_cluster_weights = self._equal_weight_clusters(
-                self.clusters, self.forecast_data, self.category_weights, bullish_cutoff=self.bullish_cutoff, bearish_cutoff=self.bearish_cutoff
+                self.clusters,
+                self.forecast_data,
+                self.category_weights
             )
         else:
             adjusted_cluster_weights = self._adjust_cluster_weights(
-                self.clusters, self.forecast_data, self.category_weights,
-                bullish_cutoff=self.bullish_cutoff, bearish_cutoff=self.bearish_cutoff
+                self.clusters,
+                self.forecast_data,
+                self.category_weights
             )
 
         # Step 3: Allocate intra-cluster weights based on net Bullish-Bearish contribution
         ticker_weights, orphaned_weight = self._allocate_within_clusters(
-            adjusted_cluster_weights, self.clusters, self.forecast_data,
-            self.bearish_cutoff, self.bullish_cutoff
+            adjusted_cluster_weights,
+            self.clusters,
+            self.forecast_data
         )
 
         # Step 4: Redirect unused cluster weight to SHV if nothing passed the filter
@@ -70,10 +72,12 @@ class PortfolioConstructor:
         # Step 6: Optionally restrict to top-N assets per cluster
         if self.config["equal_asset_weight"]:
             return filtered_weights
-
-        top_filtered_weights = self._filter_top_assets_per_cluster(
-            filtered_weights, self.clusters, top_n=self.max_assets_per_cluster
-        )
+        else:
+            top_filtered_weights = self._filter_top_assets_per_cluster(
+                filtered_weights,
+                self.clusters,
+                top_n=self.max_assets_per_cluster
+            )
 
         if not top_filtered_weights:
             return {'SHV': 1.0}
@@ -85,9 +89,7 @@ class PortfolioConstructor:
     def _adjust_cluster_weights(
         clusters: dict,
         forecast_data: dict,
-        category_weights: dict,
-        bullish_cutoff: float,
-        bearish_cutoff: float
+        category_weights: dict
     ) -> dict:
         """
         Adjusts each cluster's weight based on the net Bullish sentiment of 
@@ -122,8 +124,8 @@ class PortfolioConstructor:
                 neutral = forecast.get("Neutral", 0.0)
 
                 # Only include if it passes bullish or bearish cutoff
-                if bearish < bearish_cutoff or bullish > bullish_cutoff:
-                    net = max(bullish - bearish, 0.0)
+                if bullish > bearish and bullish > neutral:
+                    net = max(bullish, 0.0)
                     if net > 0:
                         net_sum += net
 
@@ -142,9 +144,7 @@ class PortfolioConstructor:
     def _equal_weight_clusters(
         clusters: dict,
         forecast_data: dict,
-        category_weights: dict,
-        bullish_cutoff: float,
-        bearish_cutoff: float
+        category_weights: dict
     ) -> dict:
         """
         Assigns equal weight to each cluster, adjusted only by the net Bullish sentiment
@@ -160,50 +160,23 @@ class PortfolioConstructor:
             dict: Dictionary with cluster IDs as keys and unnormalized net Bullish sentiment
                 as values (equal weight treatment). Caller can normalize afterward.
         """
-        bullish_clusters = category_weights.get("Bullish", {})
-        adjusted = {}
+        unique_clusters = set(clusters.values())
+        num_clusters = len(unique_clusters)
 
-        for cluster_id, _ in bullish_clusters.items():
-            tickers = [tkr for tkr, cid in clusters.items() if cid == cluster_id]
-            net_sum = 0.0
+        if num_clusters == 0:
+            return {}
 
-            for tkr in tickers:
-                forecast = forecast_data.get(tkr)
-                if isinstance(forecast, np.ndarray):
-                    forecast = forecast.item()
-                if not isinstance(forecast, dict):
-                    continue
-
-                bullish = forecast.get("Bullish", 0.0)
-                bearish = forecast.get("Bearish", 0.0)
-                neutral = forecast.get("Neutral", 0.0)
-
-                # Include only if cutoff criteria is met
-                if bearish < bearish_cutoff or bullish > bullish_cutoff:
-                    net = max(bullish - bearish, 0.0)
-                    if net > 0:
-                        net_sum += net
-
-            if net_sum > 0:
-                adjusted[cluster_id] = net_sum
-
-        # Equal weight among clusters that had net > 0
-        qualifying_clusters = list(adjusted.keys())
-        num_clusters = len(qualifying_clusters)
-
-        if num_clusters > 0:
-            equal_weight = 1.0 / num_clusters
-            adjusted = {cid: equal_weight for cid in qualifying_clusters}
-        else:
-            adjusted = {}
-        print(adjusted)
+        equal_weight = 1.0 / num_clusters
+        adjusted =  {cluster_id: equal_weight for cluster_id in unique_clusters}
+        # print(adjusted)
         return adjusted
 
 
     @staticmethod
     def _allocate_within_clusters(
-        cluster_weights: dict, clusters: dict, forecast_data: dict, 
-        bearish_cutoff: float, bullish_cutoff: float
+        cluster_weights: dict,
+        clusters: dict,
+        forecast_data: dict
     ) -> dict:
         """
         Allocates weights to individual tickers within each cluster using
@@ -232,14 +205,14 @@ class PortfolioConstructor:
                     forecast = forecast.item()
                 if not isinstance(forecast, dict):
                     continue
-                
+
                 bullish = forecast.get("Bullish", 0.0)
                 bearish = forecast.get("Bearish", 0.0)
                 neutral = forecast.get("Neutral", 0.0)
 
                 # Only include if meets bullish/bearish cutoff
-                if bearish < bearish_cutoff or bullish > bullish_cutoff:
-                    net = max(bullish - bearish, 0.0)
+                if bullish > bearish and bullish > neutral:
+                    net = max(bullish, 0.0)
                     if net > 0:
                         contributions[tkr] = net
 
@@ -251,7 +224,7 @@ class PortfolioConstructor:
             # Allocate cluster weight proportionally by net sentiment
             for tkr, contribution in contributions.items():
                 ticker_weights[tkr] += weight * (contribution / total_contribution)
-
+        print(f"Within cluster weight sum:{sum(ticker_weights.values())}")
         return ticker_weights, orphaned_weight
 
 
@@ -260,38 +233,45 @@ class PortfolioConstructor:
         """
         Filters tickers using simple moving average momentum criteria:
         Price must be above its SMA for last two observations.
+        Orphaned weights are reassigned to SHV.
 
         Args:
             ticker_weights (dict): Pre-filtered ticker weights.
-            price_data (dict): Price history for each ticker (pandas Series).
+            price_data (pd.DataFrame): Price history for each ticker (each column is a ticker).
             lookback (int): Lookback period for SMA.
 
         Returns:
-            dict: Filtered and re-normalized ticker weights.
+            dict: Adjusted ticker weights with SHV absorbing rejected weights.
         """
         filtered = {}
-        total = 0.0
+        orphaned_weight = 0.0
 
         for tkr, weight in ticker_weights.items():
             prices = price_data.get(tkr)
             if prices is None or len(prices) < lookback:
+                orphaned_weight += weight
                 continue
 
             sma = prices[-lookback:].mean()
-            # Price must be above SMA for two most recent points
-            if prices.iloc[-1] >= sma and prices.iloc[-2] >= sma:
+            if prices.iloc[-1] > sma and prices.iloc[-2] > sma:
                 filtered[tkr] = weight
-                total += weight
+            else:
+                orphaned_weight += weight
 
-        if total == 0.0:
-            return {}
+        total_valid_weight = sum(filtered.values())
+        adjusted_weights = {}
 
-        # Normalize remaining weights to sum to 1
-        normalized = {tkr: w / total for tkr, w in filtered.items()}
-        if any(np.isnan(w) or w <= 0 for w in normalized.values()):
-            return {}
+        if total_valid_weight > 0.0:
+            for tkr, weight in filtered.items():
+                adjusted_weights[tkr] = weight / total_valid_weight * (1.0 - orphaned_weight)
 
-        return normalized
+        if orphaned_weight > 0.0:
+            if "SHV" in adjusted_weights.keys():
+                adjusted_weights["SHV"] += orphaned_weight
+            else:
+                adjusted_weights["SHV"] = orphaned_weight
+        print(f"SMA weight sum:{sum(adjusted_weights.values())}")
+        return adjusted_weights
 
 
     @staticmethod

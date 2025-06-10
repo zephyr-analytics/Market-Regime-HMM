@@ -38,7 +38,6 @@ class InferencingResultsProcessor(ResultsProcessor):
         """
         price_series = self._download_price_series()
         plt.figure(figsize=(15, 5))
-
         # Plot training data
         for state in np.unique(self.train_states):
             idx = self.train_states == state

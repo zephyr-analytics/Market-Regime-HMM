@@ -50,7 +50,7 @@ def calculate_portfolio_return(
     return portfolio_return
 
 
-def label_states(training=None, inferencing=None) -> dict:
+def label_states(training) -> dict:
     """
     Assigns labels 'Bearish', 'Neutral', 'Bullish' to HMM state IDs based on z-score of returns.
     Ensures all three labels are present by assigning duplicate labels to existing states if needed.
@@ -67,12 +67,8 @@ def label_states(training=None, inferencing=None) -> dict:
     label_map : dict
         Dictionary with keys as HMM state IDs and values as labels.
     """
-    if training:
-        states = training.train_states.copy()
-        returns = training.train_data.copy()
-    elif inferencing:
-        states = np.concatenate([inferencing.train_states, inferencing.test_states])
-        returns = pd.concat([inferencing.train_data, inferencing.test_data], ignore_index=False)
+    states = training.train_states.copy()
+    returns = training.train_data.copy()
 
     returns = returns['Momentum'].reset_index(drop=True)
 

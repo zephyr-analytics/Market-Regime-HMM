@@ -21,6 +21,7 @@ from hmm.results.portfolio_results_processor import PortfolioResultsProcessor
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import pairwise_distances
+from failed_models.hierarchical_clustering import cluster_sequences
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +45,11 @@ class PortfolioProcessor:
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
         parsed_objects = self.load_models_inference(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
-        self.prepare_state_sequences(state_data, lookback=126)
+        sequences, tickers = self.prepare_state_sequences(state_data, lookback=126)
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
-
-        clusters = self.cluster_forecast_distributions_auto(forecast_data, max_clusters=15)
+        results = cluster_sequences(sequences=sequences, tickers=tickers)
+        clusters = results["clusters"]
+        # clusters = self.cluster_forecast_distributions_auto(forecast_data, max_clusters=15)
 
         category_weights = self.compute_categorical_weights_by_cluster(
             forecast_data=forecast_data, clusters=clusters
@@ -61,7 +63,7 @@ class PortfolioProcessor:
         if self.persist:
             results_process = PortfolioResultsProcessor(
                 config=self.config,
-                n_clusters=clusters.nunique(),
+                n_clusters=results["n_clusters"],
                 portfolio=portfolio
             )
             results_process.process()
@@ -98,6 +100,7 @@ class PortfolioProcessor:
                     objects.append(obj)
             if objects:
                 parsed_objects[ticker] = objects if len(objects) > 1 else objects[0]
+
         return parsed_objects
 
 
@@ -133,6 +136,7 @@ class PortfolioProcessor:
                     'raw': combined_states,
                     'labels': labeled_states
                 }
+
         return state_data
 
 
@@ -165,6 +169,7 @@ class PortfolioProcessor:
             encoded = encoder.transform(trimmed)
             sequences.append(encoded)
             tickers.append(ticker)
+
         return np.array(sequences), tickers
 
 
@@ -194,6 +199,7 @@ class PortfolioProcessor:
                     forecast_data[ticker] = np.asarray(mapped_forecast)
                 else:
                     forecast_data[ticker] = np.asarray(forecast)
+
         return forecast_data
 
 
@@ -217,7 +223,7 @@ class PortfolioProcessor:
         """
         valid_categories = ['Bullish', 'Neutral', 'Bearish']
         cluster_scores = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
-        cluster_adjusted_bullish = defaultdict(float)
+
         for ticker, forecast_array in forecast_data.items():
             cluster_id = clusters.get(ticker)
             if cluster_id is None:
@@ -228,11 +234,11 @@ class PortfolioProcessor:
             bullish = forecast_dict.get("Bullish", 0.0)
             bearish = forecast_dict.get("Bearish", 0.0)
             neutral = forecast_dict.get("Neutral", 0.0)
-            adjusted_bullish = bullish - bearish
+
             cluster_scores[cluster_id]["Bullish"] += bullish
             cluster_scores[cluster_id]["Neutral"] += neutral
             cluster_scores[cluster_id]["Bearish"] += bearish
-            cluster_adjusted_bullish[cluster_id] += adjusted_bullish
+
         total_per_category = {cat: 0.0 for cat in valid_categories}
         for cluster_vals in cluster_scores.values():
             for cat in valid_categories:
@@ -255,7 +261,7 @@ class PortfolioProcessor:
                 }
             else:
                 category_weights[cat] = {cid: 0.0 for cid in weighted}
-        # print(category_weights)
+
         return category_weights
 
 
@@ -287,6 +293,7 @@ class PortfolioProcessor:
                 scores.append([sil, ch, db])
             except:
                 scores.append([0, 0, np.inf])
+
         return np.array(scores), valid_ks
 
 

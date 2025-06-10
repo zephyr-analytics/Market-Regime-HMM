@@ -22,6 +22,8 @@ from hmm.train.models_training_processor import ModelsTrainingProcessor
 logger = logging.getLogger(__name__)
 
 def process_ticker(config, data, ticker):
+    """
+    """
     logger.debug(f"[{ticker}] Starting processing...")
     trainer = ModelsTrainingProcessor(config=config, data=data, ticker=ticker)
     training = trainer.process()
@@ -41,16 +43,36 @@ class TestRunner(BaseRunner):
     def run(self):
         original_start = datetime.strptime(self.config["start_date"], "%Y-%m-%d")
         final_end = datetime.strptime(self.config["end_date"], "%Y-%m-%d")
-        test_start = original_start + relativedelta(years=self.config["model_warmup"])
+
+        initial_train_years = 2
+        max_train_years = 8
+        years_before_drop = 8
+
+        # First test point: after 2 years of data
+        test_start = original_start + relativedelta(years=initial_train_years)
+        first_test_start = test_start
 
         results = []
         while test_start + relativedelta(months=1) <= final_end:
             test_window_end = test_start + relativedelta(months=1)
-            logger.info(f"\n=== TEST WINDOW: {test_start.date()} to {test_window_end.date()} ===")
-            self.config["current_start"] = original_start.strftime("%Y-%m-%d")
-            self.config["current_end"] = test_start.strftime("%Y-%m-%d")
-            tickers = self.config["tickers"]
 
+            # Calculate how long we've been testing
+            months_tested = (test_start.year - first_test_start.year) * 12 + (test_start.month - first_test_start.month)
+
+            # Determine training window length
+            if months_tested < years_before_drop * 12:
+                training_start = original_start
+            else:
+                # Start dropping from the front to maintain max_train_years
+                training_start = test_start - relativedelta(years=max_train_years)
+
+            self.config["current_start"] = training_start.strftime("%Y-%m-%d")
+            self.config["current_end"] = test_start.strftime("%Y-%m-%d")
+
+            logger.info(f"\n=== TEST WINDOW: {test_start.date()} to {test_window_end.date()} ===")
+            logger.info(f"Training window: {training_start.date()} to {test_start.date()}")
+
+            tickers = self.config["tickers"]
             with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as executor:
                 futures = [executor.submit(process_ticker, self.config, self.data, ticker) for ticker in tickers]
                 for _ in tqdm(futures, desc="Processing tickers", leave=False):
@@ -67,8 +89,9 @@ class TestRunner(BaseRunner):
                 end_date=test_window_end
             )
             logger.info(f"Return: {portfolio_return * 100:.2f}%")
+
             results.append({
-                "train_start": original_start.date(),
+                "train_start": training_start.date(),
                 "train_end": test_start.date(),
                 "test_start": test_start.date(),
                 "test_end": test_window_end.date(),

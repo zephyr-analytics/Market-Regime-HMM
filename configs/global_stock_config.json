@@ -1,0 +1,42 @@
+{
+    "tickers": [
+        "SHV", "SHY", "IEI", "IEF", "TLT",
+        "IAU", "DBC",
+        "MSFT", "NVDA", "AAPL", "ORCL", "CSCO",
+        "TSM", "SAP", "ASML", "ACN", "SONY",
+        "AMZN", "HD", "MCD", "BKNG", "TJX",
+        "TM", "HMC", "TCOM", "STLA", "IHG",
+        "GOOGL", "NFLX", "DIS", "T", "VZ",
+        "NTES", "AMX", "CHT", "TEF", "TU",
+        "XOM", "CVX", "COP", "WMB", "EPD",
+        "SHEL", "TTE", "ENB", "BP", "EQNR",
+        "BRK-B", "JPM", "BAC", "WFC", "MSFT",
+        "HSBC", "HDB", "RY", "MUFG", "TD",
+        "GE", "RTX", "CAT", "BA", "HON",
+        "ETN", "RELX", "TT", "TRI", "CP",
+        "SHW", "SCCO", "ECL", "CRH", "APD",
+        "BHP", "RIO", "AEM", "VALE", "WPM",
+        "PLD", "AMT", "WELL", "EQIX", "VTR",
+        "LLY", "JNJ", "UNH", "ABT", "MRK",
+        "NVO", "AZN", "NVS", "SNY", "MDT",
+        "WMT", "COST", "PG", "KO", "PEP",
+        "UL", "BTI", "DEO", "CCEP", "FMX",
+        "NEE", "SO", "DUK", "AEP", "SRE",
+        "NGG", "FTS", "KEP", "EBR", "SBS"
+    ],
+    "momentum_intervals": [
+        21, 63, 126, 189, 252
+    ],
+    "volatility_interval": 21,
+    "use_equal_weight": true,
+    "max_assets_per_cluster": 6,
+    "train_test_split": 0.70,
+    "bearish_cutoff" : 0.08,
+    "start_date": "2010-01-01",
+    "end_date": "2025-06-01",
+    "model_warmup": 2,
+    "max_retries": 20,
+    "moving_average": 168,
+    "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
+    "persist": false
+}

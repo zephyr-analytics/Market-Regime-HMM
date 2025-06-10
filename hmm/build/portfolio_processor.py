@@ -10,11 +10,11 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from scipy.cluster.hierarchy import linkage, fcluster
-from scipy.spatial.distance import pdist
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+
+
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
+import hmm.utilities as utilities
 from hmm.build.portfolio_constructor import PortfolioConstructor
 from hmm.results.portfolio_results_processor import PortfolioResultsProcessor
 
@@ -145,7 +145,8 @@ class PortfolioProcessor:
 
         return state_data
 
-
+# Though the rest of sequence cluster is being scraped relabeling states to be all the same is important. 
+# This should be shifted into the inference processor.
     @staticmethod
     def prepare_state_sequences(state_data: dict, lookback: int) -> np.ndarray:
         """
@@ -167,7 +168,7 @@ class PortfolioProcessor:
             all_labels.update(trimmed)
 
         encoder = LabelEncoder()
-        encoder.fit(list(filter(None, all_labels)))
+        encoder.fit(list(all_labels))
 
         sequences = []
         tickers = []
@@ -181,71 +182,7 @@ class PortfolioProcessor:
         return np.array(sequences), tickers
 
 
-    @staticmethod
-    def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int = 15) -> dict:
-        """
-        Method to cluster state sequences to determine portfolio categories.
-
-        Parameters
-        ----------
-        sequences : np.ndarray
-            Numpy array of state sequences.
-        tickers : list
-            List of ticker symbols.
-        max_clusters : int
-            Upper limit of allowed clusters.
-
-        Returns
-        -------
-        dict : Dictionary containing cluster components.
-        """
-        epsilon = 1e-10
-        sequences = np.array(sequences, dtype=np.float64)
-        sequences = np.nan_to_num(sequences, nan=0.0)
-        row_norms = np.linalg.norm(sequences, axis=1)
-        zero_mask = row_norms == 0
-        sequences[zero_mask] = epsilon
-
-        distance_matrix = pdist(sequences, metric='cosine')
-
-        Z = linkage(distance_matrix, method='average')
-
-        scores = []
-        label_map = {}
-
-        for k in range(2, min(max_clusters + 1, len(sequences))):
-            labels = fcluster(Z, k, criterion='maxclust')
-            try:
-                sil = silhouette_score(sequences, labels)
-                ch = calinski_harabasz_score(sequences, labels)
-                db = davies_bouldin_score(sequences, labels)
-                scores.append([sil, ch, db])
-                label_map[k] = labels
-            except Exception:
-                continue
-
-        if not scores:
-            raise ValueError("No valid clustering results found.")
-
-        scores = np.array(scores)
-        scores[:, 2] = -scores[:, 2]
-
-        scaler = MinMaxScaler()
-        scaled_scores = scaler.fit_transform(scores)
-
-        mean_scores = scaled_scores.mean(axis=1)
-        best_idx = np.argmax(mean_scores)
-        best_k = list(label_map.keys())[best_idx]
-        best_labels = label_map[best_k]
-
-        cluster_map = dict(zip(tickers, best_labels))
-
-        return {
-            'linkage_matrix': Z,
-            'clusters': cluster_map,
-            'labels': best_labels,
-            'n_clusters': best_k
-        }
+# TODO Fill with new clustering based on state probability.
 
 
     @staticmethod

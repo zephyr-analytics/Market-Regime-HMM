@@ -1,7 +1,7 @@
 {
     "tickers": [
-        "IGSB", "IGIB", "IGLB",
-        "SHV", "SHY", "IEI", "IEF", "TLH", "TLT",
+        "AGG", "LQD",
+        "SHV", "SHY", "IEI", "IEF", "TLT",
         "IAU", "DBC",
         "VGT", "VCR", "VOX", "VFH", "VIS", "VAW", "VDE", "VHT", "VDC", "VPU", "VNQ",
         "IWF", "IWD", "IWB", "IWP", "IWS", "IWR", "IWO", "IWN", "IWM"
@@ -14,11 +14,11 @@
     "max_assets_per_cluster": 3,
     "train_test_split": 0.70,
     "bearish_cutoff" : 0.15,
-    "start_date": "2014-01-01",
+    "start_date": "2006-01-01",
     "end_date": "2025-06-01",
     "model_warmup": 2,
     "max_retries": 20,
     "moving_average": 168,
-    "data_file_path": "/Users/monic/Documents/HMM_Model/asset_data.csv",
+    "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
     "persist": false
 }

@@ -1,7 +1,7 @@
 {
     "tickers": [
         "BND", "EMB", "BNDX",
-        "SHV", "SHY", "IEI", "IEF", "TLH", "TLT",
+        "SHV", "SHY", "IEI", "IEF", "TLT",
         "IAU", "DBC", "VNQ", "VNQI",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
         "IUSV", "IUSG", "EFV", "EFG", "VWO"
@@ -10,10 +10,10 @@
         21, 63, 126, 189, 252
     ],
     "volatility_interval": 21,
-    "use_equal_weight": false,
+    "use_equal_weight": true,
     "max_assets_per_cluster": 3,
     "train_test_split": 0.70,
-    "bearish_cutoff" : 0.05,
+    "bearish_cutoff" : 0.15,
     "start_date": "2014-01-01",
     "end_date": "2025-06-01",
     "model_warmup": 2,

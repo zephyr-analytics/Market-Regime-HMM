@@ -10,8 +10,8 @@ import numpy as np
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import pdist
 from sklearn.preprocessing import MinMaxScaler
-
-import hmm.utilities as utilities
+from scipy.cluster.hierarchy import fcluster
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int=15
     distance_matrix = pdist(sequences, metric='euclidean')
     Z = linkage(distance_matrix, method='ward')
 
-    scores, label_map = utilities.evaluate_clustering_scores(
+    scores, label_map = evaluate_clustering_scores(
         sequences, Z, min_clusters, min(max_clusters, len(sequences))
     )
 
@@ -72,3 +72,38 @@ def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int=15
         'labels': best_labels,
         'n_clusters': best_k
     }
+
+@staticmethod
+def evaluate_clustering_scores(sequences: np.ndarray, linkage_matrix, min_clusters: int, max_clusters: int) -> tuple:
+    """
+    Evaluate clustering performance metrics across a range of cluster counts.
+
+    Parameters
+    ----------
+    sequences : np.ndarray
+        The data to be clustered.
+    linkage_matrix : np.ndarray
+        The hierarchical clustering linkage matrix.
+    min_clusters : int
+        Minimum number of clusters to test.
+    max_clusters : int
+        Maximum number of clusters to test.
+
+    Returns
+    -------
+    tuple
+        scores : np.ndarray of shape (n_k, 3) with [silhouette, calinski_harabasz, -davies_bouldin]
+        label_map : dict of {k: labels}
+    """
+    scores = []
+    label_map = {}
+
+    for k in range(min_clusters, max_clusters + 1):
+        labels = fcluster(linkage_matrix, k, criterion='maxclust')
+        sil = silhouette_score(sequences, labels)
+        ch = calinski_harabasz_score(sequences, labels)
+        db = davies_bouldin_score(sequences, labels)
+        scores.append([sil, ch, db])
+        label_map[k] = labels
+
+    return np.array(scores), label_map

@@ -21,6 +21,7 @@ class PortfolioConstructor:
         self.category_weights = category_weights
         self.price_data = price_data
         self.bearish_cutoff = config["bearish_cutoff"]
+        self.bullish_cutoff = 0.75
         self.sma_lookback = config["moving_average"]
         self.max_assets_per_cluster = config["max_assets_per_cluster"]
 
@@ -43,7 +44,7 @@ class PortfolioConstructor:
 
         # Step 3: Allocate weights within clusters based on net sentiment
         ticker_weights, orphaned_weight = self._allocate_within_clusters(
-            normalized_cluster_weights, self.clusters, self.forecast_data, self.bearish_cutoff
+            normalized_cluster_weights, self.clusters, self.forecast_data, self.bearish_cutoff, self.bullish_cutoff
         )
 
         # Step 4: Assign leftover weight to SHV
@@ -112,7 +113,7 @@ class PortfolioConstructor:
 
     @staticmethod
     def _allocate_within_clusters(
-        cluster_weights: dict, clusters: dict, forecast_data: dict, bearish_cutoff: int
+        cluster_weights: dict, clusters: dict, forecast_data: dict, bearish_cutoff: float, bullish_cutoff: float
     ) -> dict:
         """
         """
@@ -129,10 +130,14 @@ class PortfolioConstructor:
                     forecast = forecast.item()
                 if not isinstance(forecast, dict):
                     continue
-                if forecast.get("Bearish", 0.0) <= bearish_cutoff:
-                    net = max(forecast.get("Bullish", 0.0) - forecast.get("Bearish", 0.0), 0.0)
-                    if net > 0:
-                        contributions[tkr] = net
+                
+                bullish = forecast.get("Bullish", 0.0)
+                bearish = forecast.get("Bearish", 0.0)
+
+            if bearish <= bearish_cutoff or bullish >= bullish_cutoff:
+                net = max(bullish - bearish, 0.0)
+                if net > 0:
+                    contributions[tkr] = net
 
             total_contribution = sum(contributions.values())
             if total_contribution == 0:

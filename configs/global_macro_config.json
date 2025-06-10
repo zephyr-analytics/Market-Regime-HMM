@@ -13,7 +13,7 @@
     "use_equal_weight": true,
     "max_assets_per_cluster": 3,
     "train_test_split": 0.70,
-    "bearish_cutoff" : 0.15,
+    "bearish_cutoff" : 0.03,
     "start_date": "2014-01-01",
     "end_date": "2025-06-01",
     "model_warmup": 2,

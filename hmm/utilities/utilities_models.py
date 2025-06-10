@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 from scipy.stats import zscore
+import numpy as np
 from scipy.cluster.hierarchy import fcluster
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 
@@ -47,42 +48,6 @@ def calculate_portfolio_return(
     portfolio_return = (returns * weights).sum()
 
     return portfolio_return
-
-
-@staticmethod
-def evaluate_clustering_scores(sequences: np.ndarray, linkage_matrix, min_clusters: int, max_clusters: int) -> tuple:
-    """
-    Evaluate clustering performance metrics across a range of cluster counts.
-
-    Parameters
-    ----------
-    sequences : np.ndarray
-        The data to be clustered.
-    linkage_matrix : np.ndarray
-        The hierarchical clustering linkage matrix.
-    min_clusters : int
-        Minimum number of clusters to test.
-    max_clusters : int
-        Maximum number of clusters to test.
-
-    Returns
-    -------
-    tuple
-        scores : np.ndarray of shape (n_k, 3) with [silhouette, calinski_harabasz, -davies_bouldin]
-        label_map : dict of {k: labels}
-    """
-    scores = []
-    label_map = {}
-
-    for k in range(min_clusters, max_clusters + 1):
-        labels = fcluster(linkage_matrix, k, criterion='maxclust')
-        sil = silhouette_score(sequences, labels)
-        ch = calinski_harabasz_score(sequences, labels)
-        db = davies_bouldin_score(sequences, labels)
-        scores.append([sil, ch, db])
-        label_map[k] = labels
-
-    return np.array(scores), label_map
 
 
 def label_states(training=None, inferencing=None) -> dict:

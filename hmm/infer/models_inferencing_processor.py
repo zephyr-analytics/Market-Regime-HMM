@@ -144,61 +144,25 @@ class ModelsInferenceProcessor:
     @staticmethod
     def collect_current_state_probability(inferencing: ModelsInferencing):
         """
-        Get the model's current estimate of state probabilities (posterior at the latest time point).
+        Get the model's forecasted state probabilities 21 steps ahead using the transition matrix.
 
         Parameters
         ----------
         inferencing : ModelsInferencing
             The inference object containing the trained HMM, state labels, and test data.
         """
-        # Step 1: Get all posterior probabilities from the model
-        posteriors = inferencing.model.predict_proba(inferencing.test_data)
+        posteriors = inferencing.model.predict_proba(inferencing.test_data.copy())
 
-        # Step 2: Use the most recent posterior probability as current state distribution
         pi_t = posteriors[-1]
 
-        # Step 3: Label and store the result
+        A = inferencing.model.transmat_
+
+        A_t = np.linalg.matrix_power(A, 21)
+        pi_t_forward = pi_t @ A_t
+
         labeled_distribution = {
             inferencing.state_labels.get(i, f"State {i}"): round(prob, 4)
-            for i, prob in enumerate(pi_t)
+            for i, prob in enumerate(pi_t_forward)
         }
 
         inferencing.forecast_distribution = labeled_distribution
-
-# NOTE this is still being tested, keep until final testing finished.
-    # @staticmethod
-    # def predict_future_state(inferencing: ModelsInferencing, n_steps: int=21, n_days: int=21):
-    #     """
-    #     Predict future state probabilities by computing an exponentially weighted average
-    #     of posterior probabilities over the last `n_days`, and projecting them forward
-    #     using the model's transition matrix.
-
-    #     Parameters
-    #     ----------
-    #     inferencing : ModelsInferencing
-    #         The inference object containing the trained HMM, state labels, and test data.
-    #     n_steps : int, default=21
-    #         Number of time steps to forecast forward.
-    #     n_days : int, default=21
-    #         Number of most recent observations to use for computing initial state distribution.
-    #     """
-    #     # Step 1: Get all posterior probabilities from the model
-    #     posteriors = inferencing.model.predict_proba(inferencing.test_data)
-
-    #     # Step 2: Apply exponential weighting to the last n_days posteriors
-    #     raw_weights = np.exp(np.linspace(-2, 0, n_days))  # Recent days get higher weight
-    #     weights = raw_weights / raw_weights.sum()
-    #     pi_t = np.average(posteriors[-n_days:], axis=0, weights=weights)
-
-    #     # Step 3: Forecast forward using transition matrix
-    #     A = inferencing.model.transmat_
-    #     for _ in range(n_steps):
-    #         pi_t = np.dot(pi_t, A)
-
-    #     # Step 4: Label and store the result
-    #     labeled_distribution = {
-    #         inferencing.state_labels.get(i, f"State {i}"): round(prob, 4)
-    #         for i, prob in enumerate(pi_t)
-    #     }
-
-    #     inferencing.forecast_distribution = labeled_distribution

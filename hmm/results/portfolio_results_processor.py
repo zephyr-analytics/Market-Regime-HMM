@@ -16,31 +16,30 @@ class PortfolioResultsProcessor:
     """
     Class to encapsulate all result-related methods from the PortfolioProcessor.
     """
-    def __init__(self, config, Z, n_clusters, portfolio):
+    def __init__(self, config, n_clusters, portfolio):
         self.config = config
-        self.Z = Z
         self.n_clusters = n_clusters
         self.portfolio = portfolio
 
 
     def process(self):
-        self.plot_dendrogram(Z=self.Z, tickers=self.config["tickers"], best_k=self.n_clusters)
+        # self.plot_dendrogram(Z=self.Z, tickers=self.config["tickers"], best_k=self.n_clusters)
         self.plot_portfolio(ticker_weights=self.portfolio)
         # self.generate_pdf_report()
 
 
-    @staticmethod
-    def plot_dendrogram(Z, tickers, best_k):
-        """
-        """
-        plt.figure(figsize=(12, 6))
-        dendrogram(Z, labels=tickers, leaf_rotation=90)
-        plt.title(f"Hierarchical Clustering of Tickers (auto k={best_k})")
-        plt.xlabel("Ticker")
-        plt.ylabel("Distance")
-        plt.tight_layout()
-        utilities.save_plot(filename="cluster_distribution.png", plot_type="cluster_distribution", plot_sub_folder="build")
-        plt.close()
+    # @staticmethod
+    # def plot_dendrogram(Z, tickers, best_k):
+    #     """
+    #     """
+    #     plt.figure(figsize=(12, 6))
+    #     dendrogram(Z, labels=tickers, leaf_rotation=90)
+    #     plt.title(f"Hierarchical Clustering of Tickers (auto k={best_k})")
+    #     plt.xlabel("Ticker")
+    #     plt.ylabel("Distance")
+    #     plt.tight_layout()
+    #     utilities.save_plot(filename="cluster_distribution.png", plot_type="cluster_distribution", plot_sub_folder="build")
+    #     plt.close()
 
 
     @staticmethod

@@ -25,14 +25,13 @@
         "NGG", "FTS", "KEP", "EBR", "SBS"
     ],
     "momentum_intervals": [
-        21, 63, 126, 189, 252
+        21, 63, 126, 189
     ],
     "volatility_interval": 21,
-    "use_equal_weight": true,
-    "max_assets_per_cluster": 6,
+    "equal_asset_weight": true,
+    "max_assets_per_cluster": 3,
     "train_test_split": 0.70,
-    "bearish_cutoff" : 0.08,
-    "start_date": "2010-01-01",
+    "start_date": "2014-01-01",
     "end_date": "2025-06-01",
     "model_warmup": 2,
     "max_retries": 20,

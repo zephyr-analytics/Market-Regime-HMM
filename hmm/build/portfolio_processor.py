@@ -51,13 +51,14 @@ class PortfolioProcessor:
         clusters = results["clusters"]
         # clusters = self.cluster_forecast_distributions_auto(forecast_data, max_clusters=15)
 
-        category_weights = self.compute_categorical_weights_by_cluster(
-            forecast_data=forecast_data, clusters=clusters
-        )
+        # category_weights = self.compute_categorical_weights_by_cluster(
+        #     forecast_data=forecast_data, clusters=clusters
+        # )
 
         constructor = PortfolioConstructor(
-            config=self.config, clusters=clusters, forecast_data=forecast_data, category_weights=category_weights, price_data=self.data
+            config=self.config, clusters=clusters, forecast_data=forecast_data, price_data=self.data
         )
+
         portfolio = constructor.process()
 
         if self.persist:
@@ -203,66 +204,66 @@ class PortfolioProcessor:
         return forecast_data
 
 
-    @staticmethod
-    def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict) -> dict:
-        """
-        Calculate cluster weights for each category based on forecast data,
-        and discount final weights by (Bullish - Bearish) to prioritize net bullish sentiment.
+    # @staticmethod
+    # def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict) -> dict:
+    #     """
+    #     Calculate cluster weights for each category based on forecast data,
+    #     and discount final weights by (Bullish - Bearish) to prioritize net bullish sentiment.
 
-        Parameters
-        ----------
-        forecast_data : dict
-            Dictionary of ticker to forecast probability dictionaries.
-        clusters : dict
-            Dictionary of ticker to cluster ID mapping.
+    #     Parameters
+    #     ----------
+    #     forecast_data : dict
+    #         Dictionary of ticker to forecast probability dictionaries.
+    #     clusters : dict
+    #         Dictionary of ticker to cluster ID mapping.
 
-        Returns
-        -------
-        category_weights : dict
-            Dictionary of cluster weights for each category, normalized and discounted.
-        """
-        valid_categories = ['Bullish', 'Neutral', 'Bearish']
-        cluster_scores = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
+    #     Returns
+    #     -------
+    #     category_weights : dict
+    #         Dictionary of cluster weights for each category, normalized and discounted.
+    #     """
+    #     valid_categories = ['Bullish', 'Neutral', 'Bearish']
+    #     cluster_scores = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
 
-        for ticker, forecast_array in forecast_data.items():
-            cluster_id = clusters.get(ticker)
-            if cluster_id is None:
-                continue
-            forecast_dict = forecast_array.item() if isinstance(forecast_array, np.ndarray) else forecast_array
-            if not isinstance(forecast_dict, dict):
-                continue
-            bullish = forecast_dict.get("Bullish", 0.0)
-            bearish = forecast_dict.get("Bearish", 0.0)
-            neutral = forecast_dict.get("Neutral", 0.0)
+    #     for ticker, forecast_array in forecast_data.items():
+    #         cluster_id = clusters.get(ticker)
+    #         if cluster_id is None:
+    #             continue
+    #         forecast_dict = forecast_array.item() if isinstance(forecast_array, np.ndarray) else forecast_array
+    #         if not isinstance(forecast_dict, dict):
+    #             continue
+    #         bullish = forecast_dict.get("Bullish", 0.0)
+    #         bearish = forecast_dict.get("Bearish", 0.0)
+    #         neutral = forecast_dict.get("Neutral", 0.0)
 
-            cluster_scores[cluster_id]["Bullish"] += bullish
-            cluster_scores[cluster_id]["Neutral"] += neutral
-            cluster_scores[cluster_id]["Bearish"] += bearish
+    #         cluster_scores[cluster_id]["Bullish"] += bullish
+    #         cluster_scores[cluster_id]["Neutral"] += neutral
+    #         cluster_scores[cluster_id]["Bearish"] += bearish
 
-        total_per_category = {cat: 0.0 for cat in valid_categories}
-        for cluster_vals in cluster_scores.values():
-            for cat in valid_categories:
-                total_per_category[cat] += cluster_vals[cat]
-        raw_weights = {cat: {} for cat in valid_categories}
-        for cluster_id, scores in cluster_scores.items():
-            for cat in valid_categories:
-                total = total_per_category[cat]
-                raw_weights[cat][cluster_id] = scores[cat] / total if total > 0 else 0.0
-        category_weights = {cat: {} for cat in valid_categories}
-        for cat in valid_categories:
-            weighted = {
-                cid: weight
-                for cid, weight in raw_weights[cat].items()
-            }
-            total = sum(weighted.values())
-            if total > 0:
-                category_weights[cat] = {
-                    cid: w / total for cid, w in weighted.items()
-                }
-            else:
-                category_weights[cat] = {cid: 0.0 for cid in weighted}
-
-        return category_weights
+    #     total_per_category = {cat: 0.0 for cat in valid_categories}
+    #     for cluster_vals in cluster_scores.values():
+    #         for cat in valid_categories:
+    #             total_per_category[cat] += cluster_vals[cat]
+    #     raw_weights = {cat: {} for cat in valid_categories}
+    #     for cluster_id, scores in cluster_scores.items():
+    #         for cat in valid_categories:
+    #             total = total_per_category[cat]
+    #             raw_weights[cat][cluster_id] = scores[cat] / total if total > 0 else 0.0
+    #     category_weights = {cat: {} for cat in valid_categories}
+    #     for cat in valid_categories:
+    #         weighted = {
+    #             cid: weight
+    #             for cid, weight in raw_weights[cat].items()
+    #         }
+    #         total = sum(weighted.values())
+    #         if total > 0:
+    #             category_weights[cat] = {
+    #                 cid: w / total for cid, w in weighted.items()
+    #             }
+    #         else:
+    #             category_weights[cat] = {cid: 0.0 for cid in weighted}
+    #     print(category_weights)
+    #     return category_weights
 
 
     @staticmethod

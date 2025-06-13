@@ -10,11 +10,9 @@
     "momentum_intervals": [
         21, 63, 126, 189
     ],
+    "volatility_interval": 21,
     "min_clusters": 3,
     "max_clsuters": 15,
-    "volatility_interval": 21,
-    "equal_asset_weight": true,
-    "max_assets_per_cluster": 3,
     "train_test_split": 0.70,
     "start_date": "2014-01-01",
     "end_date": "2025-06-01",

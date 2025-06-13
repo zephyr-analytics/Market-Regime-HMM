@@ -8,22 +8,21 @@ The config files are stored within the configs directory of the repository.
 The config files are by portfolio construction.
 `--global_macro`
 `--global_stock`
-`--us_macro`
 
 -"tickers": (list of str), List of tickers that will represent the portfolio the model is working with.
 
 -"momentum_intervals": (list of int), Intervals used to calculate momentum over a time window (trading days.)
 
+# NOTE: test long and short duartion momentum, adding short as seperate data feature.
+
 -"volatility_interval": (int), Interval used to calculate volatility over a time window (trading days.)
 
--"use_equal_weight": (true or false), this flags whether the portfolio constructor should not alter the original weighting mechanics.
+-"min_clusters": (int, tunable parameter), default number should be based on category of assets in portfolio.
+-Note: Asset categories such as equities, bonds, real assets, and cash.
 
--"max_assets_per_cluster": (int), number of assets to select per cluster.
+-"max_clusters": (int, tunable parameter), default set to 15.
 
 -"train_test_split": (float), percent of data to train with the remainder will be for testing.
-
--"bearish_cutoff": (float), between 0.01 and 0.99.
--Note: This is the cut off probability of a bearish state transition, used to filter assets when building the portfolio.
 
 -"start_date": (str), Start date to begin the model
 -Note: Model needs a warmup period before beginning to train models. See model_warmup
@@ -32,34 +31,36 @@ The config files are by portfolio construction.
 
 -"model_warmup": (int), time period in years for the model to utilize for training dataset.
 
+-"max_train_years": (int, tunable parameter), max time before model begins data dropout.
+
 -"max_retries": (int), max number of retries of training a model.
 -Note: If training fails beyond nth retries for convergence and on jitter of states then an assessment of the underlying data is necessary.
 
--"moving_average": (int), Simple moving average lookback window (trading days).
+-"moving_average": (int, tunable parameter), Simple moving average lookback window (trading days).
 -Note: This is used to further filter assets based on being below thier SMA.
 -See: A Quantitative Approach to Tactical Asset Allocation, 2007 Faber, M
 
 -"data_file_path": (string), Path to the repo for storage of data file.
 
--"persist": (true or false), This should be set to false if running test. Set to true to inspect overall model performance.
+-"persist": (true or false), This should be set to false if running test. Set to true to inspect and calibrate overall model performance.
 
 ## Config types
 -NOTE: Rather than swap tickers around a second argument is used to flag which config file to use.
-`python run.py --test --stock` or `python run.py --test --etf`
+`python run.py --test --global_macro` or `python run.py --test --global_stock`
 
 ## Train
-`python run.py --train --etf`
+`python run.py --train --global_macro`
 -Training is utilized to inspect the model performance on identifing states, convergence, and labeling states.
 
 ## Infer
-`python run.py --infer --stock`
+`python run.py --infer --global_macro`
 -Inferencing is utilized to inspect the model performance on predicted new states and provides checking for identifing new states, labeling predicted states, and propagating probabilities to future t.
 
 ## Build Portfolio
-`python run.py --build --etf`
+`python run.py --build --global_macro`
 
 ## Test Portfolio
-`python run.py --test --stock`
+`python run.py --test --global_macro`
 NOTE: currently has failures on timeouts from data handling.
 
 ## Artifacts

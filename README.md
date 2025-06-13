@@ -22,6 +22,8 @@ The config files are by portfolio construction.
 
 -"max_clusters": (int, tunable parameter), default set to 15.
 
+-"max_assets_per_cluster": (int, tunable parameter), default set to 3.
+
 -"train_test_split": (float), percent of data to train with the remainder will be for testing.
 
 -"start_date": (str), Start date to begin the model

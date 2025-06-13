@@ -10,6 +10,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
+from pandas.tseries.offsets import MonthEnd
 
 import logger_config
 from hmm.runner.base_runner import BaseRunner
@@ -53,40 +54,49 @@ class TestRunner(BaseRunner):
         first_test_start = test_start
 
         results = []
+
         while test_start + relativedelta(months=1) <= final_end:
-            test_window_end = test_start + relativedelta(months=1)
+            # Full test window = one calendar month
+            test_window_end = (test_start + MonthEnd(0))  # Last date of current month
 
-            # Calculate how long we've been testing
+            # Training window logic
             months_tested = (test_start.year - first_test_start.year) * 12 + (test_start.month - first_test_start.month)
-
-            # Determine training window length
             if months_tested < years_before_drop * 12:
                 training_start = original_start
             else:
-                # Start dropping from the front to maintain max_train_years
                 training_start = test_start - relativedelta(years=max_train_years)
 
+            # Update config with full training and test period
             self.config["current_start"] = training_start.strftime("%Y-%m-%d")
-            self.config["current_end"] = test_start.strftime("%Y-%m-%d")
+            self.config["current_end"] = test_window_end.strftime("%Y-%m-%d")
 
             logger.info(f"\n=== TEST WINDOW: {test_start.date()} to {test_window_end.date()} ===")
-            logger.info(f"Training window: {training_start.date()} to {test_start.date()}")
+            logger.info(f"Training window: {training_start.date()} to {test_window_end.date()}")
 
+            # Process tickers with data up to test_window_end
             tickers = self.config["tickers"]
             with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as executor:
                 futures = [executor.submit(process_ticker, self.config, self.data, ticker) for ticker in tickers]
                 for _ in tqdm(futures, desc="Processing tickers", leave=False):
                     _.result()
 
-            logger.info(f"Building portfolio for {test_start.date()} to {test_window_end.date()}...")
+            # Portfolio build occurs using full month's data
+            logger.info(f"Building portfolio at month end: {test_window_end.date()}...")
             builder = PortfolioProcessor(config=self.config, data=self.data)
             portfolio = builder.process()
-            logger.info(f"Portfolio: {portfolio}")
+            logger.info(f"Portfolio to trade on {test_window_end.date()}: {portfolio}")
+
+            # Save trade period (holding next month)
+            trade_window_start = test_window_end
+            trade_window_end = trade_window_start + relativedelta(months=1)
+
+            logger.info(f"Trade window: {trade_window_start.date()} to {trade_window_end.date()}")
+
             portfolio_return = utilities.calculate_portfolio_return(
                 portfolio=portfolio,
                 data=self.data,
-                start_date=test_start,
-                end_date=test_window_end
+                start_date=trade_window_start,
+                end_date=trade_window_end
             )
             logger.info(f"Return: {portfolio_return * 100:.2f}%")
 
@@ -95,8 +105,8 @@ class TestRunner(BaseRunner):
                 "train_end": test_start.date(),
                 "test_start": test_start.date(),
                 "test_end": test_window_end.date(),
-                "return_start": test_start.date(),
-                "return_end": test_window_end.date(),
+                "return_start": trade_window_start.date(),
+                "return_end": trade_window_end.date(),
                 "portfolio_return": portfolio_return
             })
 

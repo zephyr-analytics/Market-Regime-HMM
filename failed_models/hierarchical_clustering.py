@@ -16,7 +16,7 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bo
 logger = logging.getLogger(__name__)
 
 @staticmethod
-def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int=15) -> dict:
+def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int = 15) -> dict:
     """
     Method to cluster state sequences to determine portfolio categories.
 
@@ -35,11 +35,23 @@ def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int=15
     """
     min_clusters = 3
     epsilon = 1e-10
+
     sequences = np.array(sequences, dtype=np.float64)
     sequences = np.nan_to_num(sequences, nan=0.0)
     row_norms = np.linalg.norm(sequences, axis=1)
     zero_mask = row_norms == 0
     sequences[zero_mask] = epsilon
+
+    # 🔒 Safety check for too few items
+    if len(sequences) < 2:
+        fallback_labels = np.ones(len(sequences), dtype=int)
+        cluster_map = dict(zip(tickers, fallback_labels))
+        return {
+            'linkage_matrix': None,
+            'clusters': cluster_map,
+            'labels': fallback_labels,
+            'n_clusters': 1
+        }
 
     distance_matrix = pdist(sequences, metric='euclidean')
     Z = linkage(distance_matrix, method='ward')
@@ -48,7 +60,18 @@ def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int=15
         sequences, Z, min_clusters, min(max_clusters, len(sequences))
     )
 
-    scores[:, 2] = -scores[:, 2]
+    # If all scoring failed, fallback to single cluster
+    if not label_map:
+        fallback_labels = np.ones(sequences.shape[0], dtype=int)
+        cluster_map = dict(zip(tickers, fallback_labels))
+        return {
+            'linkage_matrix': Z,
+            'clusters': cluster_map,
+            'labels': fallback_labels,
+            'n_clusters': 1
+        }
+
+    scores[:, 2] = -scores[:, 2]  # Invert DB index for reward-based scaling
 
     scaler = MinMaxScaler()
     scaled_scores = scaler.fit_transform(scores)
@@ -60,6 +83,16 @@ def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int=15
 
     if best_k < min_clusters:
         k_candidates = valid_ks[valid_ks >= min_clusters]
+        if len(k_candidates) == 0:
+            # Fallback: only one cluster available
+            fallback_labels = np.ones(sequences.shape[0], dtype=int)
+            cluster_map = dict(zip(tickers, fallback_labels))
+            return {
+                'linkage_matrix': Z,
+                'clusters': cluster_map,
+                'labels': fallback_labels,
+                'n_clusters': 1
+            }
         best_k = k_candidates[np.argmax(mean_scores[valid_ks >= min_clusters])]
 
     best_labels = label_map[best_k]
@@ -73,21 +106,11 @@ def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int=15
         'n_clusters': best_k
     }
 
+
 @staticmethod
 def evaluate_clustering_scores(sequences: np.ndarray, linkage_matrix, min_clusters: int, max_clusters: int) -> tuple:
     """
     Evaluate clustering performance metrics across a range of cluster counts.
-
-    Parameters
-    ----------
-    sequences : np.ndarray
-        The data to be clustered.
-    linkage_matrix : np.ndarray
-        The hierarchical clustering linkage matrix.
-    min_clusters : int
-        Minimum number of clusters to test.
-    max_clusters : int
-        Maximum number of clusters to test.
 
     Returns
     -------
@@ -100,10 +123,26 @@ def evaluate_clustering_scores(sequences: np.ndarray, linkage_matrix, min_cluste
 
     for k in range(min_clusters, max_clusters + 1):
         labels = fcluster(linkage_matrix, k, criterion='maxclust')
-        sil = silhouette_score(sequences, labels)
+        unique_labels = np.unique(labels)
+
+        # Skip invalid clustering results (must have at least 2 clusters)
+        if len(unique_labels) < 2:
+            continue
+
+        try:
+            sil = silhouette_score(sequences, labels)
+        except ValueError:
+            continue  # Invalid silhouette computation
+
         ch = calinski_harabasz_score(sequences, labels)
         db = davies_bouldin_score(sequences, labels)
+
         scores.append([sil, ch, db])
         label_map[k] = labels
+
+    if not scores:
+        # Fallback to single cluster if all scoring failed
+        fallback_labels = np.ones(sequences.shape[0], dtype=int)
+        return np.array([[0.0, 0.0, 1.0]]), {1: fallback_labels}
 
     return np.array(scores), label_map

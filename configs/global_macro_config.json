@@ -2,6 +2,7 @@
     "tickers": [
         "BND", "EMB", "BNDX",
         "SHV", "SHY", "IEI", "IEF", "TLT",
+        "SLQD", "LQD", "SHYG", "HYG",
         "IAU", "DBC", "VNQ", "VNQI",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
         "IUSV", "IUSG", "EFV", "EFG", "VWO"

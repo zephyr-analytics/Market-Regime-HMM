@@ -28,7 +28,7 @@ class PortfolioConstructor:
         """
         Constructs the portfolio by filtering and weighting tickers through a
         multi-step process: equal cluster weighting, sentiment-based top asset selection,
-        per-cluster SMA filtering, risk-parity weighting within clusters, and final aggregation.
+        risk-parity weighting within clusters, and final aggregation.
         """
         ticker_weights = defaultdict(float)
         orphaned_weight = 0.0
@@ -37,7 +37,7 @@ class PortfolioConstructor:
         adjusted_cluster_weights = self._equal_weight_clusters(self.clusters)
 
         # Step 2: Allocate top-N assets within clusters using sentiment
-        sentiment_weights, sentiment_orphaned = self._allocate_top_assets_within_clusters(
+        sentiment_weights, sentiment_orphaned = self._allocate_assets_within_clusters(
             cluster_weights=adjusted_cluster_weights,
             clusters=self.clusters,
             forecast_data=self.forecast_data,
@@ -54,7 +54,7 @@ class PortfolioConstructor:
             if tkr in selected_ticker_set
         }
 
-        # Step 4: Apply SMA + Risk Parity within clusters
+        # Step 4: Apply Risk Parity within clusters (SMA filter removed)
         for cluster_id, cluster_weight in adjusted_cluster_weights.items():
             cluster_tickers = [
                 tkr for tkr, cid in self.clusters.items() if cid == cluster_id
@@ -63,19 +63,10 @@ class PortfolioConstructor:
                 orphaned_weight += cluster_weight
                 continue
 
-            pre_filter_weights = {tkr: sentiment_weights[tkr] for tkr in cluster_tickers}
-            filtered_weights = self._apply_sma_filter(
-                pre_filter_weights, self.price_data, self.sma_lookback
-            )
-
-            if not filtered_weights:
-                orphaned_weight += cluster_weight
-                continue
-
             rp_weights = self._risk_parity_weights(
-                tickers=list(filtered_weights.keys()),
+                tickers=cluster_tickers,
                 price_data=self.price_data,
-                lookback=self.config.get("risk_lookback", 126)
+                lookback=self.config.get("risk_lookback", 252)
             )
 
             for tkr, w in rp_weights.items():
@@ -92,7 +83,7 @@ class PortfolioConstructor:
         # Step 6: Final normalization
         total = sum(ticker_weights.values())
         normalized_weights = {tkr: w / total for tkr, w in ticker_weights.items()}
-
+        print(sum(normalized_weights.values()))
         return normalized_weights
 
 
@@ -127,53 +118,7 @@ class PortfolioConstructor:
 
 
     @staticmethod
-    def _apply_sma_filter(ticker_weights: dict, price_data: pd.DataFrame, lookback: int) -> dict:
-        """
-        Filters tickers using simple moving average momentum criteria:
-        Price must be above its SMA for last two observations.
-        Orphaned weights are reassigned to SHV.
-
-        Args:
-            ticker_weights (dict): Pre-filtered ticker weights.
-            price_data (pd.DataFrame): Price history for each ticker (each column is a ticker).
-            lookback (int): Lookback period for SMA.
-
-        Returns:
-            dict: Adjusted ticker weights with SHV absorbing rejected weights.
-        """
-        filtered = {}
-        orphaned_weight = 0.0
-
-        for tkr, weight in ticker_weights.items():
-            prices = price_data.get(tkr)
-            if prices is None or len(prices) < lookback:
-                orphaned_weight += weight
-                continue
-
-            sma = prices[-lookback:].mean()
-            if prices.iloc[-1] > sma and prices.iloc[-2] > sma:
-                filtered[tkr] = weight
-            else:
-                orphaned_weight += weight
-
-        total_valid_weight = sum(filtered.values())
-        adjusted_weights = {}
-
-        if total_valid_weight > 0.0:
-            for tkr, weight in filtered.items():
-                adjusted_weights[tkr] = weight / total_valid_weight * (1.0 - orphaned_weight)
-
-        if orphaned_weight > 0.0:
-            if "SHV" in adjusted_weights.keys():
-                adjusted_weights["SHV"] += orphaned_weight
-            else:
-                adjusted_weights["SHV"] = orphaned_weight
-        # print(f"SMA weight sum:{sum(adjusted_weights.values())}")
-        return adjusted_weights
-
-
-    @staticmethod
-    def _allocate_top_assets_within_clusters(
+    def _allocate_assets_within_clusters(
         cluster_weights: dict,
         clusters: dict,
         forecast_data: dict,
@@ -208,6 +153,8 @@ class PortfolioConstructor:
                     continue
 
                 bullish = forecast.get("Bullish", 0.0)
+                bearish = forecast.get("Bearish", 0.0)
+
                 if bullish > 0:
                     contributions[tkr] = bullish
 
@@ -219,11 +166,11 @@ class PortfolioConstructor:
             top_tickers = sorted(contributions.items(), key=lambda x: x[1], reverse=True)[:top_n]
             top_contributions = dict(top_tickers)
 
+            # Redistribute full cluster weight to top assets only
             total_contribution = sum(top_contributions.values())
             for tkr, contrib in top_contributions.items():
                 ticker_weights[tkr] += weight * (contrib / total_contribution)
 
-        print(f"Within-cluster top-N weight sum: {sum(ticker_weights.values())}")
         return ticker_weights, orphaned_weight
 
 

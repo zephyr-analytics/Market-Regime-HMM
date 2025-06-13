@@ -3,6 +3,7 @@ Getter and setter module for training models.
 """
 
 import pandas as pd
+
 from hmmlearn.hmm import GaussianHMM
 
 

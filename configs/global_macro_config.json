@@ -10,6 +10,8 @@
     "momentum_intervals": [
         21, 63, 126, 189
     ],
+    "min_clusters": 3,
+    "max_clsuters": 15,
     "volatility_interval": 21,
     "equal_asset_weight": true,
     "max_assets_per_cluster": 3,

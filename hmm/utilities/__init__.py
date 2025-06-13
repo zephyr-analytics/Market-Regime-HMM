@@ -1,4 +1,5 @@
 """
+Module to initialize the utilities directory.
 """
 
 from hmm.utilities.utilities_general import *

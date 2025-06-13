@@ -1,4 +1,5 @@
 """
+Module for the BuildRunner.
 """
 
 import logging
@@ -11,6 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class BuildRunner(BaseRunner):
+    """
+    Class for running build tasks.
+    """
     def run(self):
         logger.info("Building single portfolio...")
         self.config["current_end"] = self.config["end_date"]

@@ -1,4 +1,5 @@
 """
+Module for the TestRunner class.
 """
 
 import os
@@ -41,6 +42,9 @@ def process_ticker(config, data, ticker):
 
 
 class TestRunner(BaseRunner):
+    """
+    Class for running test tasks.
+    """
     def run(self):
         original_start = datetime.strptime(self.config["start_date"], "%Y-%m-%d")
         final_end = datetime.strptime(self.config["end_date"], "%Y-%m-%d")

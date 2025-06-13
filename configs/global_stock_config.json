@@ -2,6 +2,7 @@
     "tickers": [
         "SHV", "SHY", "IEI", "IEF", "TLT",
         "IAU", "DBC", "VNQ", "VNQI",
+        "SLQD", "LQD", "SHYG", "HYG", "STIP", "TIP",
         "MSFT", "NVDA", "AAPL", "ORCL", "CSCO",
         "TSM", "SAP", "ASML", "ACN", "SONY",
         "AMZN", "HD", "MCD", "BKNG", "TJX",
@@ -27,6 +28,8 @@
     "momentum_intervals": [
         21, 63, 126, 189
     ],
+    "min_clusters": 3,
+    "max_clsuters": 15,
     "volatility_interval": 21,
     "equal_asset_weight": true,
     "max_assets_per_cluster": 3,

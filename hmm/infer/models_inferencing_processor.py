@@ -7,9 +7,7 @@ import logging
 import os
 
 import numpy as np
-import pandas as pd
 
-import hmm.utilities as utilities
 from hmm.infer.models_inferencing import ModelsInferencing
 from hmm.results import InferencingResultsProcessor
 

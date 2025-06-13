@@ -11,9 +11,10 @@ import numpy as np
 import pandas as pd
 
 from sklearn.preprocessing import LabelEncoder
+
 from hmm.build.portfolio_constructor import PortfolioConstructor
 from hmm.results.portfolio_results_processor import PortfolioResultsProcessor
-from failed_models.hierarchical_clustering import cluster_sequences
+from models.hierarchical_clustering import cluster_sequences
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,8 @@ class PortfolioProcessor:
         self.start_date = config["start_date"]
         self.end_date = config["current_end"]
         self.persist = config["persist"]
+        self.min_clusters = config["min_clusters"]
+        self.max_clusters = config["max_clusters"]
         self.data = data.loc[self.start_date:self.end_date]
 
 
@@ -38,7 +41,6 @@ class PortfolioProcessor:
         parsed_objects = self.load_models_inference(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
 
-        # --- Filter tickers above their SMA before clustering ---
         sma_lookback = self.config["moving_average"]
         valid_tickers = []
         for ticker in state_data.keys():
@@ -53,13 +55,13 @@ class PortfolioProcessor:
             if latest_price > latest_sma:
                 valid_tickers.append(ticker)
 
-        # Filter state_data to include only valid tickers
         state_data = {tkr: state_data[tkr] for tkr in valid_tickers}
 
-        # Proceed to prepare sequences and cluster
         sequences, tickers = self.prepare_state_sequences(state_data, lookback=126)
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
-        results = cluster_sequences(sequences=sequences, tickers=tickers)
+        results = cluster_sequences(
+            sequences=sequences, tickers=tickers, max_clusters=self.max_clusters, min_clusters=self.min_clusters
+        )
         clusters = results["clusters"]
 
         constructor = PortfolioConstructor(

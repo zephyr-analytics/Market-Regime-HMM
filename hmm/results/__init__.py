@@ -1,4 +1,5 @@
 """
+Module to initialize the results directory.
 """
 
 from hmm.results.results_processor import ResultsProcessor

@@ -1,4 +1,5 @@
 """
+Module for the InferRunner class.
 """
 
 import os
@@ -13,6 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class InferRunner(BaseRunner):
+    """
+    Class for running infer tasks.
+    """
     def run(self):
         for ticker in self.config["tickers"]:
             logger.info(f"Running inference for {ticker}")

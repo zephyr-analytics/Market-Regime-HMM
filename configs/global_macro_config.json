@@ -1,22 +1,22 @@
 {
     "tickers": [
         "BND", "EMB", "BNDX",
-        "SHV", "SHY", "IEI", "IEF", "TLH", "TLT",
+        "SHV", "SHY", "IEI", "IEF", "TLT",
+        "SLQD", "LQD", "SHYG", "HYG", "STIP", "TIP",
         "IAU", "DBC", "VNQ", "VNQI",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
         "IUSV", "IUSG", "EFV", "EFG", "VWO"
     ],
     "momentum_intervals": [
-        21, 63, 126, 189, 252
+        21, 63, 126, 189
     ],
     "volatility_interval": 21,
-    "use_equal_weight": true,
-    "max_assets_per_cluster": 4,
+    "equal_asset_weight": true,
+    "max_assets_per_cluster": 3,
     "train_test_split": 0.70,
-    "bearish_cutoff" : 0.10,
-    "start_date": "2013-01-01",
+    "start_date": "2014-01-01",
     "end_date": "2025-06-01",
-    "model_warmup": 4,
+    "model_warmup": 2,
     "max_retries": 20,
     "moving_average": 168,
     "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",

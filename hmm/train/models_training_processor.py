@@ -26,7 +26,7 @@ class ModelsTrainingProcessor:
     def __init__(self, config: dict, data: pd.DataFrame, ticker: str):
         self.ticker = ticker
         self.config = config
-        self.start_date = config["start_date"]
+        self.start_date = config["current_start"]
         self.end_date = config["current_end"]
         self.max_retries = config["max_retries"]
         self.n_states = 3
@@ -35,17 +35,18 @@ class ModelsTrainingProcessor:
         self.persist = config["persist"]
         self.data = data.loc[self.start_date:self.end_date]
 
+
     def process(self):
         """
         Method to process through the training module.
         """
-        training = self.initialize_models_training(
+        training = self._initialize_models_training(
             ticker=self.ticker, start_date=self.start_date, end_date=self.end_date
         )
         self._load_data(training=training, data=self.data)
 
         for attempt in range(1, self.max_retries + 1):
-            self.prepare_data(
+            self._prepare_data(
                 training=training,
                 momentum_intervals=self.momentum_intervals,
                 volatility_interval=self.volatility_interval,
@@ -54,15 +55,10 @@ class ModelsTrainingProcessor:
             )
 
             converged = self._fit_model(
-                n_states=self.n_states, training=training, max_retries=self.max_retries
+                n_states=self.n_states, training=training
             )
-            if not converged:
-                continue
-
-            self._label_states(training=training)
-
-            is_stable = self._evaluate_model_quality(training=training)
-            if is_stable:
+            if converged:
+                self._label_states(training=training)
                 break
 
         self._save_model(training=training)
@@ -70,14 +66,11 @@ class ModelsTrainingProcessor:
             results = TrainingResultsProcessor(training=training)
             results.process()
 
-            return training
-        else:
-
-            return training
+        return training
 
 
     @staticmethod
-    def initialize_models_training(ticker: str, start_date: str, end_date: str) -> ModelsTraining:
+    def _initialize_models_training(ticker: str, start_date: str, end_date: str) -> ModelsTraining:
         """
         Method to initalize ModelsTraining.
 
@@ -114,7 +107,7 @@ class ModelsTrainingProcessor:
 
 
     @staticmethod
-    def prepare_data(
+    def _prepare_data(
         training: ModelsTraining,
         momentum_intervals: list,
         volatility_interval: int,
@@ -138,7 +131,7 @@ class ModelsTrainingProcessor:
             DataFrame raw price and interest rate data.
         """
         training_data = training.data.copy()
-        short_rate = data["DFF"]
+        short_rate = data["DFF"].replace(0, 1e-6)
 
         returns = [
             utilities.compound_return(
@@ -167,7 +160,7 @@ class ModelsTrainingProcessor:
 
 
     @staticmethod
-    def _fit_model(n_states: int, training: ModelsTraining, max_retries: int) -> bool:
+    def _fit_model(n_states: int, training: ModelsTraining) -> bool:
         """
         Fits the HMM model with initialized means and covariances.
 
@@ -182,7 +175,7 @@ class ModelsTrainingProcessor:
         """
         X = training.train_data[['Momentum', 'Volatility', "Short_Rates"]].values.copy()
 
-        kmeans = KMeans(n_clusters=n_states, random_state=42)
+        kmeans = KMeans(n_clusters=n_states, init='k-means++', random_state=42)
         labels = kmeans.fit_predict(X)
         initial_means = kmeans.cluster_centers_
 
@@ -194,33 +187,26 @@ class ModelsTrainingProcessor:
             else:
                 covariances[i] = np.var(X, axis=0) + 1e-4
 
-        for attempt in range(1, max_retries + 1):
-            model = GaussianHMM(
-                n_components=n_states,
-                covariance_type="diag",
-                tol=1e-5,
-                n_iter=10000,
-                verbose=False,
-                params="stmc",
-                init_params=""
-            )
+        model = GaussianHMM(
+            n_components=n_states,
+            covariance_type="diag",
+            tol=1e-6,
+            n_iter=1000,
+            verbose=False,
+            params="stmc",
+            init_params=""
+        )
 
-            model.startprob_ = np.full(n_states, 1.0 / n_states)
-            model.transmat_ = np.full((n_states, n_states), 1.0 / n_states)
-            model.means_ = initial_means
-            model.covars_ = covariances
-
-            model.fit(X)
-
-            if model.monitor_.converged:
-                training.model = model
-                training.train_states = model.predict(X)
-                return True
+        model.startprob_ = np.full(n_states, 1.0 / n_states)
+        model.transmat_ = np.full((n_states, n_states), 1.0 / n_states)
+        model.means_ = initial_means
+        model.covars_ = covariances
+        model.fit(X)
 
         training.model = model
         training.train_states = model.predict(X)
 
-        return False
+        return model.monitor_.converged
 
 
     @staticmethod
@@ -235,24 +221,6 @@ class ModelsTrainingProcessor:
         """
         state_label_dict = utilities.label_states(training=training)
         training.state_labels = state_label_dict
-
-
-    @staticmethod
-    def _evaluate_model_quality(training: ModelsTraining):
-        """
-        Method to evaluate quality of the model and retrain if necessary.
-
-        Parameters
-        ----------
-        training : ModelsTraining
-            ModelsTraining instance.
-        """
-        result = utilities.evaluate_state_stability(training.train_states)
-
-        if result["is_unstable"]:
-            return False
-        else:
-            return True
 
 
     @staticmethod

@@ -5,6 +5,10 @@
 
 ## Configuration
 The config files are stored within the configs directory of the repository. 
+The config files are by portfolio construction.
+`--global_macro`
+`--global_stock`
+`--us_macro`
 
 -"tickers": (list of str), List of tickers that will represent the portfolio the model is working with.
 
@@ -12,7 +16,11 @@ The config files are stored within the configs directory of the repository.
 
 -"volatility_interval": (int), Interval used to calculate volatility over a time window (trading days.)
 
--"model_warmup": (int), time period in years for the model to utilize for training dataset.
+-"use_equal_weight": (true or false), this flags whether the portfolio constructor should not alter the original weighting mechanics.
+
+-"max_assets_per_cluster": (int), number of assets to select per cluster.
+
+-"train_test_split": (float), percent of data to train with the remainder will be for testing.
 
 -"bearish_cutoff": (float), between 0.01 and 0.99.
 -Note: This is the cut off probability of a bearish state transition, used to filter assets when building the portfolio.
@@ -21,6 +29,8 @@ The config files are stored within the configs directory of the repository.
 -Note: Model needs a warmup period before beginning to train models. See model_warmup
 
 -"end_date": (str), End date for the model to finish.
+
+-"model_warmup": (int), time period in years for the model to utilize for training dataset.
 
 -"max_retries": (int), max number of retries of training a model.
 -Note: If training fails beyond nth retries for convergence and on jitter of states then an assessment of the underlying data is necessary.
@@ -55,3 +65,7 @@ NOTE: currently has failures on timeouts from data handling.
 ## Artifacts
 -Artifacts are located within each sub directory of hmm directory.
 -Examples: hmm/train/artifacts, hmm/infer/artifacts, hmm/build/artifacts
+
+## ETF Portfolio:
+
+The ETF portfolio focuses on a global macro approach to asset selection and allocation. Although this strategy focuses on absolute returns on a risk adjusted basis. The benchmark index used for the grading performance is the Bloomberg Macro Hedge Fund Index (BHMACR:IND). This portfolio does not currently use short position in any asset as a long only approach is easy for most retail investors to replicate the performance. Also, this ensures that model can be used across almost any account type where ETFs can be traded.

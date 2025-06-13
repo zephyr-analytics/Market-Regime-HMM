@@ -6,17 +6,14 @@ import glob
 import logging
 import os
 import pickle
-from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from scipy.cluster.hierarchy import linkage, fcluster
-from scipy.spatial.distance import pdist
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
+from sklearn.preprocessing import LabelEncoder
 from hmm.build.portfolio_constructor import PortfolioConstructor
 from hmm.results.portfolio_results_processor import PortfolioResultsProcessor
+from failed_models.hierarchical_clustering import cluster_sequences
 
 logger = logging.getLogger(__name__)
 
@@ -40,32 +37,46 @@ class PortfolioProcessor:
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
         parsed_objects = self.load_models_inference(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
-        seq_matrix, ticker_list = self.prepare_state_sequences(state_data, lookback=126)
-        results = self.cluster_sequences(seq_matrix, ticker_list)
-        clusters = results["clusters"]
+
+        # --- Filter tickers above their SMA before clustering ---
+        sma_lookback = self.config["moving_average"]
+        valid_tickers = []
+        for ticker in state_data.keys():
+            if ticker not in self.data.columns:
+                continue
+            prices = self.data[ticker].dropna()
+            if len(prices) < sma_lookback:
+                continue
+            sma_series = prices.rolling(window=sma_lookback).mean()
+            latest_price = prices.iloc[-1]
+            latest_sma = sma_series.iloc[-1]
+            if latest_price > latest_sma:
+                valid_tickers.append(ticker)
+
+        # Filter state_data to include only valid tickers
+        state_data = {tkr: state_data[tkr] for tkr in valid_tickers}
+
+        # Proceed to prepare sequences and cluster
+        sequences, tickers = self.prepare_state_sequences(state_data, lookback=126)
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
-        category_weights = self.compute_categorical_weights_by_cluster(
-            forecast_data=forecast_data, clusters=clusters
-        )
-        
+        results = cluster_sequences(sequences=sequences, tickers=tickers)
+        clusters = results["clusters"]
+
         constructor = PortfolioConstructor(
-            config=self.config, clusters=clusters, forecast_data=forecast_data, category_weights=category_weights, price_data=self.data
+            config=self.config, clusters=clusters, forecast_data=forecast_data, price_data=self.data
         )
+
         portfolio = constructor.process()
 
         if self.persist:
-            # NOTE possibly use a getter and setter for all results.
             results_process = PortfolioResultsProcessor(
                 config=self.config,
-                Z=results["linkage_matrix"],
                 n_clusters=results["n_clusters"],
                 portfolio=portfolio
             )
             results_process.process()
-
             return portfolio
         else:
-
             return portfolio
 
 
@@ -73,7 +84,7 @@ class PortfolioProcessor:
     def load_models_inference(directory: str, tickers: list) -> dict:
         """
         Method to load the persisted ModelsInference instance for each ticker.
-        
+
         Parameters
         ----------
         directory : str
@@ -87,17 +98,14 @@ class PortfolioProcessor:
             Dictionary of loaded pickle files representing persisted inference files.
         """
         parsed_objects = {}
-
         for ticker in tickers:
             pattern = os.path.join(directory, f'{ticker}.pkl')
             matched_files = glob.glob(pattern)
-
             objects = []
             for file_path in matched_files:
                 with open(file_path, 'rb') as f:
                     obj = pickle.load(f)
                     objects.append(obj)
-
             if objects:
                 parsed_objects[ticker] = objects if len(objects) > 1 else objects[0]
 
@@ -117,27 +125,21 @@ class PortfolioProcessor:
         Returns
         -------
         state_data : dict
-            Dictionary of tickers and cooresponding state data.
+            Dictionary of tickers and corresponding state data.
         """
         state_data = {}
-
         for ticker, obj in parsed_objects.items():
             states = []
-
             train_states = getattr(obj, 'train_states', None)
             test_states = getattr(obj, 'test_states', None)
             state_labels = getattr(obj, 'state_labels', {})
-
             if train_states is not None:
                 states.append(np.asarray(train_states))
             if test_states is not None:
                 states.append(np.asarray(test_states))
-
             if states:
                 combined_states = np.concatenate(states)
-
                 labeled_states = np.vectorize(state_labels.get)(combined_states)
-
                 state_data[ticker] = {
                     'raw': combined_states,
                     'labels': labeled_states
@@ -154,24 +156,22 @@ class PortfolioProcessor:
         Parameters
         ----------
         state_data : dict
-            Dictionary of tickers and cooresponding state data.
+            Dictionary of tickers and corresponding state data.
         lookback : int
             Integer representing the cutoff lookback period for clustering.
 
-        Returns 
+        Returns
+        -------
         np.ndarray : An array of state sequences.
         """
         all_labels = set()
         for data in state_data.values():
             trimmed = data['labels'][-lookback:]
             all_labels.update(trimmed)
-
         encoder = LabelEncoder()
-        encoder.fit(list(filter(None, all_labels)))
-
+        encoder.fit(list(all_labels))
         sequences = []
         tickers = []
-
         for ticker, data in state_data.items():
             trimmed = data['labels'][-lookback:]
             encoded = encoder.transform(trimmed)
@@ -179,73 +179,6 @@ class PortfolioProcessor:
             tickers.append(ticker)
 
         return np.array(sequences), tickers
-
-
-    @staticmethod
-    def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int = 15) -> dict:
-        """
-        Method to cluster state sequences to determine portfolio categories.
-
-        Parameters
-        ----------
-        sequences : np.ndarray
-            Numpy array of state sequences.
-        tickers : list
-            List of ticker symbols.
-        max_clusters : int
-            Upper limit of allowed clusters.
-
-        Returns
-        -------
-        dict : Dictionary containing cluster components.
-        """
-        epsilon = 1e-10
-        sequences = np.array(sequences, dtype=np.float64)
-        sequences = np.nan_to_num(sequences, nan=0.0)
-        row_norms = np.linalg.norm(sequences, axis=1)
-        zero_mask = row_norms == 0
-        sequences[zero_mask] = epsilon
-
-        distance_matrix = pdist(sequences, metric='cosine')
-
-        Z = linkage(distance_matrix, method='average')
-
-        scores = []
-        label_map = {}
-
-        for k in range(2, min(max_clusters + 1, len(sequences))):
-            labels = fcluster(Z, k, criterion='maxclust')
-            try:
-                sil = silhouette_score(sequences, labels)
-                ch = calinski_harabasz_score(sequences, labels)
-                db = davies_bouldin_score(sequences, labels)
-                scores.append([sil, ch, db])
-                label_map[k] = labels
-            except Exception:
-                continue
-
-        if not scores:
-            raise ValueError("No valid clustering results found.")
-
-        scores = np.array(scores)
-        scores[:, 2] = -scores[:, 2]
-
-        scaler = MinMaxScaler()
-        scaled_scores = scaler.fit_transform(scores)
-
-        mean_scores = scaled_scores.mean(axis=1)
-        best_idx = np.argmax(mean_scores)
-        best_k = list(label_map.keys())[best_idx]
-        best_labels = label_map[best_k]
-
-        cluster_map = dict(zip(tickers, best_labels))
-
-        return {
-            'linkage_matrix': Z,
-            'clusters': cluster_map,
-            'labels': best_labels,
-            'n_clusters': best_k
-        }
 
 
     @staticmethod
@@ -264,89 +197,15 @@ class PortfolioProcessor:
             Dictionary of forecast distributions by ticker with keys normalized.
         """
         forecast_data = {}
-
         for ticker, obj in parsed_objects.items():
             forecast = getattr(obj, 'forecast_distribution', None)
             if forecast is not None and isinstance(forecast, dict):
                 if "Bullish" not in forecast:
                     mapped_forecast = {}
                     for k, v in forecast.items():
-                        if k in {"State 0", "State 1", "State 2"}:
-                            mapped_forecast["Bullish"] = mapped_forecast.get("Bullish", 0.0) + v
-                        else:
-                            mapped_forecast[k] = v
+                        mapped_forecast[k] = v
                     forecast_data[ticker] = np.asarray(mapped_forecast)
                 else:
                     forecast_data[ticker] = np.asarray(forecast)
 
         return forecast_data
-
-
-    @staticmethod
-    def compute_categorical_weights_by_cluster(forecast_data: dict, clusters: dict) -> dict:
-        """
-        Calculate cluster weights for each category based on forecast data,
-        and discount final weights by (Bullish - Bearish) to prioritize net bullish sentiment.
-
-        Parameters
-        ----------
-        forecast_data : dict
-            Dictionary of ticker to forecast probability dictionaries.
-        clusters : dict
-            Dictionary of ticker to cluster ID mapping.
-
-        Returns
-        -------
-        category_weights : dict
-            Dictionary of cluster weights for each category, normalized and discounted.
-        """
-        valid_categories = ['Bullish', 'Neutral', 'Bearish']
-        cluster_scores = defaultdict(lambda: {cat: 0.0 for cat in valid_categories})
-        cluster_adjusted_bullish = defaultdict(float)
-
-        for ticker, forecast_array in forecast_data.items():
-            cluster_id = clusters.get(ticker)
-            if cluster_id is None:
-                continue
-
-            forecast_dict = forecast_array.item() if isinstance(forecast_array, np.ndarray) else forecast_array
-            if not isinstance(forecast_dict, dict):
-                continue
-
-            bullish = forecast_dict.get("Bullish", 0.0)
-            bearish = forecast_dict.get("Bearish", 0.0)
-            neutral = forecast_dict.get("Neutral", 0.0)
-            adjusted_bullish = bullish - bearish
-
-            cluster_scores[cluster_id]["Bullish"] += bullish
-            cluster_scores[cluster_id]["Neutral"] += neutral
-            cluster_scores[cluster_id]["Bearish"] += bearish
-            cluster_adjusted_bullish[cluster_id] += adjusted_bullish
-
-        total_per_category = {cat: 0.0 for cat in valid_categories}
-        for cluster_vals in cluster_scores.values():
-            for cat in valid_categories:
-                total_per_category[cat] += cluster_vals[cat]
-
-        raw_weights = {cat: {} for cat in valid_categories}
-        for cluster_id, scores in cluster_scores.items():
-            for cat in valid_categories:
-                total = total_per_category[cat]
-                raw_weights[cat][cluster_id] = scores[cat] / total if total > 0 else 0.0
-
-        # Apply adjusted bullish discounting
-        category_weights = {cat: {} for cat in valid_categories}
-        for cat in valid_categories:
-            weighted = {
-                cid: weight * max(cluster_adjusted_bullish.get(cid, 0.0), 0.0)
-                for cid, weight in raw_weights[cat].items()
-            }
-            total = sum(weighted.values())
-            if total > 0:
-                category_weights[cat] = {
-                    cid: w / total for cid, w in weighted.items()
-                }
-            else:
-                category_weights[cat] = {cid: 0.0 for cid in weighted}
-
-        return category_weights

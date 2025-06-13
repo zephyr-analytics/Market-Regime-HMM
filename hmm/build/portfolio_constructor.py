@@ -3,118 +3,140 @@ Module for handling final portfolio construction.
 """
 
 from collections import defaultdict
-
 import numpy as np
 import pandas as pd
+
+from scipy.optimize import minimize
 
 
 class PortfolioConstructor:
     """
-    Constructor class for portfolio.
+    Class for constructing a final portfolio using sentiment forecasts.
     """
     def __init__(
-            self, config: dict, clusters: dict, forecast_data: dict, category_weights: dict, price_data: dict
-        ):
+        self, config: dict, clusters: dict, forecast_data: dict, price_data: dict
+    ):
         self.config = config
         self.clusters = clusters
         self.forecast_data = forecast_data
-        self.category_weights = category_weights
         self.price_data = price_data
-        self.bearish_cutoff = config["bearish_cutoff"]
         self.sma_lookback = config["moving_average"]
         self.max_assets_per_cluster = config["max_assets_per_cluster"]
 
 
     def process(self):
         """
-        Method to process through the PortfolioConstructor.
+        Constructs the portfolio by filtering and weighting tickers through a
+        multi-step process: equal cluster weighting, sentiment-based top asset selection,
+        risk-parity weighting within clusters, and final aggregation.
         """
         ticker_weights = defaultdict(float)
+        orphaned_weight = 0.0
 
-        # Step 1: Adjust cluster weights by net Bullish sentiment
-        adjusted_cluster_weights = self._adjust_cluster_weights(
-            self.clusters, self.forecast_data, self.category_weights
+        # Step 1: Equal cluster weighting
+        adjusted_cluster_weights = self._equal_weight_clusters(self.clusters)
+
+        # Step 2: Allocate top-N assets within clusters using sentiment
+        sentiment_weights, sentiment_orphaned = self._allocate_assets_within_clusters(
+            cluster_weights=adjusted_cluster_weights,
+            clusters=self.clusters,
+            forecast_data=self.forecast_data,
+            top_n=self.max_assets_per_cluster
         )
 
-        # Step 2: Normalize cluster weights
-        normalized_cluster_weights = self._normalize_weights(adjusted_cluster_weights)
-        if not normalized_cluster_weights:
-            return {'SHV': 1.0}
+        if not sentiment_weights:
+            return {"SHV": 1.0}
 
-        # Step 3: Allocate weights within clusters based on net sentiment
-        ticker_weights, orphaned_weight = self._allocate_within_clusters(
-            normalized_cluster_weights, self.clusters, self.forecast_data, self.bearish_cutoff
-        )
+        # Step 3: Filter clusters post-topN
+        selected_ticker_set = set(sentiment_weights.keys())
+        self.clusters = {
+            tkr: cid for tkr, cid in self.clusters.items()
+            if tkr in selected_ticker_set
+        }
 
-        # Step 4: Assign leftover weight to SHV
-        if not ticker_weights:
-            return {'SHV': 1.0}
+        # Step 4: Apply Risk Parity within clusters (SMA filter removed)
+        for cluster_id, cluster_weight in adjusted_cluster_weights.items():
+            cluster_tickers = [
+                tkr for tkr, cid in self.clusters.items() if cid == cluster_id
+            ]
+            if not cluster_tickers:
+                orphaned_weight += cluster_weight
+                continue
+
+            rp_weights = self._risk_parity_weights(
+                tickers=cluster_tickers,
+                price_data=self.price_data,
+                lookback=self.config.get("risk_lookback", 252)
+            )
+
+            for tkr, w in rp_weights.items():
+                ticker_weights[tkr] += w * cluster_weight
+
+        # Step 5: Reassign orphaned cluster weight to SHV
+        orphaned_weight += sentiment_orphaned
         if orphaned_weight > 0:
-            ticker_weights['SHV'] += orphaned_weight
+            ticker_weights["SHV"] += orphaned_weight
 
-        # Step 5: Apply SMA-based momentum filter
-        filtered_weights = self._apply_sma_filter(
-            ticker_weights, self.price_data, self.sma_lookback
-        )
+        if not ticker_weights:
+            return {"SHV": 1.0}
 
-        if not filtered_weights:
-            return {'SHV': 1.0}
-
-        # Step 6: Retain only top-N tickers per cluster (unless using equal weight)
-        if self.config["use_equal_weight"]:
-            return filtered_weights
-
-        top_filtered_weights = self._filter_top_assets_per_cluster(
-            filtered_weights, self.clusters, top_n=self.max_assets_per_cluster
-        )
-
-        if not top_filtered_weights:
-            return {'SHV': 1.0}
-
-        return top_filtered_weights
+        # Step 6: Final normalization
+        total = sum(ticker_weights.values())
+        normalized_weights = {tkr: w / total for tkr, w in ticker_weights.items()}
+        print(sum(normalized_weights.values()))
+        return normalized_weights
 
 
     @staticmethod
-    def _adjust_cluster_weights(clusters: dict, forecast_data: dict, category_weights: dict) -> dict:
+    def _equal_weight_clusters(
+        clusters: dict
+    ) -> dict:
         """
+        Assigns equal weight to each cluster, adjusted only by the net Bullish sentiment
+        of tickers that meet cutoff conditions.
+
+        Args:
+            clusters (dict): Mapping of tickers to cluster IDs.
+            forecast_data (dict): Forecast sentiment scores for each ticker.
+            bullish_cutoff (float): Minimum Bullish score required to include a ticker.
+            bearish_cutoff (float): Maximum Bearish score allowed to include a ticker.
+
+        Returns:
+            dict: Dictionary with cluster IDs as keys and unnormalized net Bullish sentiment
+                as values (equal weight treatment). Caller can normalize afterward.
         """
-        bullish_clusters = category_weights.get("Bullish", {})
-        adjusted = {}
+        unique_clusters = set(clusters.values())
+        num_clusters = len(unique_clusters)
 
-        for cluster_id, weight in bullish_clusters.items():
-            tickers = [tkr for tkr, cid in clusters.items() if cid == cluster_id]
-            bullish_sum, bearish_sum = 0.0, 0.0
+        if num_clusters == 0:
+            return {}
 
-            for tkr in tickers:
-                forecast = forecast_data.get(tkr)
-                if isinstance(forecast, np.ndarray):
-                    forecast = forecast.item()
-                if not isinstance(forecast, dict):
-                    continue
-                bullish_sum += forecast.get("Bullish", 0.0)
-                bearish_sum += forecast.get("Bearish", 0.0)
-
-            net_bullish = max(bullish_sum - bearish_sum, 0.0)
-            adjusted[cluster_id] = weight * net_bullish
-
+        equal_weight = 1.0 / num_clusters
+        adjusted =  {cluster_id: equal_weight for cluster_id in unique_clusters}
+        # print(adjusted)
         return adjusted
 
 
     @staticmethod
-    def _normalize_weights(weight_dict: dict) -> dict:
+    def _allocate_assets_within_clusters(
+        cluster_weights: dict,
+        clusters: dict,
+        forecast_data: dict,
+        top_n: int
+    ) -> tuple[dict, float]:
         """
-        """
-        total = sum(weight_dict.values())
-        if total == 0:
-            return {}
-        return {k: v / total for k, v in weight_dict.items()}
+        Allocates weights to individual tickers within each cluster using net Bullish sentiment,
+        and retains only the top-N tickers per cluster. Dropped tickers' weights are redistributed
+        within the same cluster. Entire cluster weight is orphaned only if no valid tickers exist.
 
+        Args:
+            cluster_weights (dict): Normalized cluster weights.
+            clusters (dict): Mapping of tickers to cluster IDs.
+            forecast_data (dict): Forecast sentiment data.
+            top_n (int): Max tickers to retain per cluster.
 
-    @staticmethod
-    def _allocate_within_clusters(
-        cluster_weights: dict, clusters: dict, forecast_data: dict, bearish_cutoff: int
-    ) -> dict:
-        """
+        Returns:
+            (dict, float): (Ticker weights, orphaned weight from empty clusters)
         """
         ticker_weights = defaultdict(float)
         orphaned_weight = 0.0
@@ -129,68 +151,75 @@ class PortfolioConstructor:
                     forecast = forecast.item()
                 if not isinstance(forecast, dict):
                     continue
-                if forecast.get("Bearish", 0.0) <= bearish_cutoff:
-                    net = max(forecast.get("Bullish", 0.0) - forecast.get("Bearish", 0.0), 0.0)
-                    if net > 0:
-                        contributions[tkr] = net
 
-            total_contribution = sum(contributions.values())
-            if total_contribution == 0:
+                bullish = forecast.get("Bullish", 0.0)
+                bearish = forecast.get("Bearish", 0.0)
+
+                if bullish > 0:
+                    contributions[tkr] = bullish
+
+            if not contributions:
                 orphaned_weight += weight
                 continue
 
-            for tkr, contribution in contributions.items():
-                ticker_weights[tkr] += weight * (contribution / total_contribution)
+            # Retain top-N assets by bullish score
+            top_tickers = sorted(contributions.items(), key=lambda x: x[1], reverse=True)[:top_n]
+            top_contributions = dict(top_tickers)
+
+            # Redistribute full cluster weight to top assets only
+            total_contribution = sum(top_contributions.values())
+            for tkr, contrib in top_contributions.items():
+                ticker_weights[tkr] += weight * (contrib / total_contribution)
 
         return ticker_weights, orphaned_weight
 
 
     @staticmethod
-    def _apply_sma_filter(ticker_weights: dict, price_data: pd.DataFrame, lookback: int) -> dict:
+    def _risk_parity_weights(tickers: list, price_data: pd.DataFrame, lookback: int) -> dict:
         """
+        Computes risk parity weights for a list of tickers based on return covariance,
+        handling SHV as a fixed-weight component.
+
+        Args:
+            tickers (list): List of ticker symbols.
+            price_data (pd.DataFrame): Price data with tickers as columns.
+            lookback (int): Number of periods to use for calculating returns.
+
+        Returns:
+            dict: Risk parity weights including SHV if present (sum to 1.0).
         """
-        filtered = {}
-        total = 0.0
+        tickers = tickers.copy()
 
-        for tkr, weight in ticker_weights.items():
-            prices = price_data.get(tkr)
-            if prices is None or len(prices) < lookback:
-                continue
+        shv_weight = 0.0
+        if "SHV" in tickers:
+            tickers.remove("SHV")
+            shv_weight = 1.0  # assume SHV had full weight before optimization
 
-            sma = prices[-lookback:].mean()
-            if prices.iloc[-1] >= sma and prices.iloc[-2] >= sma:
-                filtered[tkr] = weight
-                total += weight
+        if not tickers:
+            return {"SHV": 1.0}
 
-        if total == 0.0:
-            return {}
+        returns = price_data[tickers].pct_change().dropna().tail(lookback)
+        cov_matrix = returns.cov().values
+        n = len(tickers)
 
-        normalized = {tkr: w / total for tkr, w in filtered.items()}
-        if any(np.isnan(w) or w <= 0 for w in normalized.values()):
-            return {}
+        def objective(w):
+            port_vol = np.sqrt(w @ cov_matrix @ w)
+            marginal = cov_matrix @ w
+            contrib = w * marginal / port_vol
+            return np.sum((contrib - np.mean(contrib)) ** 2)
 
-        return normalized
+        init = np.ones(n) / n
+        bounds = [(0, 1)] * n
+        constraints = [{'type': 'eq', 'fun': lambda w: np.sum(w) - 1}]
+        result = minimize(objective, init, method='SLSQP', bounds=bounds, constraints=constraints)
 
-    @staticmethod
-    def _filter_top_assets_per_cluster(filtered_weights: dict, clusters: dict, top_n: int) -> dict:
-        """
-        Retain only the top N assets within each cluster based on final weight.
-        """
-        cluster_to_tickers = defaultdict(list)
+        if not result.success:
+            raise ValueError("Risk parity optimization failed: " + result.message)
 
-        for tkr, weight in filtered_weights.items():
-            cluster_id = clusters.get(tkr)
-            if cluster_id is not None:
-                cluster_to_tickers[cluster_id].append((tkr, weight))
+        optimized = dict(zip(tickers, result.x))
 
-        final_filtered = {}
-        for cluster_id, tickers in cluster_to_tickers.items():
-            top_tickers = sorted(tickers, key=lambda x: x[1], reverse=True)[:top_n]
-            for tkr, weight in top_tickers:
-                final_filtered[tkr] = weight
+        # Scale down and reintroduce SHV
+        scaled = {tkr: w * (1 - shv_weight) for tkr, w in optimized.items()}
+        scaled["SHV"] = shv_weight
 
-        total = sum(final_filtered.values())
-        if total == 0.0:
-            return {}
-
-        return {tkr: w / total for tkr, w in final_filtered.items()}
+        return scaled

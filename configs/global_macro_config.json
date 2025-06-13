@@ -2,8 +2,10 @@
     "tickers": [
         "BND", "EMB", "BNDX",
         "SHV", "SHY", "IEI", "IEF", "TLT",
-        "SLQD", "LQD", "SHYG", "HYG", "STIP", "TIP",
-        "IAU", "DBC", "VNQ", "VNQI",
+        "HYG", "HYXU", "EMHY",
+        "IAU", "VNQ", "VNQI",
+        "DBA", "DBB", "DBE", "DBP",
+        "UUP",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
         "IUSV", "IUSG", "EFV", "EFG", "VWO"
     ],
@@ -22,5 +24,11 @@
     "max_retries": 20,
     "moving_average": 168,
     "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
-    "persist": false
+    "persist": false,
+    "grid": {
+        "min_clusters": [2, 3, 4, 5],
+        "max_clusters": [8, 10, 12, 14, 15],
+        "moving_average": [147, 168],
+        "max_assets_per_cluster": [3, 4, 5, 6, 8]
+    }
 }

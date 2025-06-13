@@ -28,7 +28,7 @@ def compound_return(series: pd.Series, window: int) -> pd.Series:
     return daily_returns.rolling(window).apply(lambda x: x.prod() - 1, raw=True)
 
 
-def load_config(global_macro, gloabl_stocks, us_macro):
+def load_config(global_macro, gloabl_stocks):
     """
     Method to load the config file.
     """
@@ -36,8 +36,7 @@ def load_config(global_macro, gloabl_stocks, us_macro):
         config_path = os.path.join(os.getcwd(), "configs", "global_macro_config.json")
     elif gloabl_stocks:
         config_path = os.path.join(os.getcwd(), "configs", "global_stock_config.json")
-    elif us_macro:
-        config_path = os.path.join(os.getcwd(), "configs", "us_macro_config.json")
+
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
     with open(config_path, 'r') as f:

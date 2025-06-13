@@ -18,17 +18,17 @@ def main():
     mode_group.add_argument("--infer", action="store_true", help="Run inference using the model")
     mode_group.add_argument("--build", action="store_true", help="Build portfolios")
     mode_group.add_argument("--test", action="store_true", help="Test rolling portfolio performance")
+    mode_group.add_argument("--tune", action="store_true")
 
     # Asset type selection (stock vs ETF)
     asset_group = parser.add_mutually_exclusive_group(required=True)
     asset_group.add_argument("--global_macro", action="store_true", help="Use Global Macro config")
     asset_group.add_argument("--global_stock", action="store_true", help="Use Global Stock config")
-    asset_group.add_argument("--us_macro", action="store_true", help="Use US Macro config")
     args = parser.parse_args()
 
     # Load config
     config = utilities.load_config(
-        global_macro=args.global_macro, gloabl_stocks=args.global_stock, us_macro=args.us_macro
+        global_macro=args.global_macro, gloabl_stocks=args.global_stock
     )
 
     # Process data
@@ -43,6 +43,8 @@ def main():
         mode = "build"
     elif args.test:
         mode = "test"
+    elif args.tune:
+        mode = "tune"
     else:
         raise ValueError("No valid mode selected")
 

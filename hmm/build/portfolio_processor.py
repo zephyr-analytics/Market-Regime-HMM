@@ -50,7 +50,7 @@ class PortfolioProcessor:
             sma_series = prices.rolling(window=sma_lookback).mean()
             latest_price = prices.iloc[-1]
             latest_sma = sma_series.iloc[-1]
-            if pd.notna(latest_sma) and latest_price > latest_sma:
+            if latest_price > latest_sma:
                 valid_tickers.append(ticker)
 
         # Filter state_data to include only valid tickers

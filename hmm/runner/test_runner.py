@@ -104,13 +104,15 @@ class TestRunner(BaseRunner):
 
             logger.info(f"Trade window: {trade_window_start.date()} to {trade_window_end.date()}")
 
-            portfolio_return = utilities.calculate_portfolio_return(
+            portfolio_return, trade_stats = utilities.calculate_portfolio_return(
                 portfolio=portfolio,
                 data=self.data,
                 start_date=trade_window_start,
                 end_date=trade_window_end
             )
+
             logger.info(f"Return: {portfolio_return * 100:.2f}%")
+            logger.info(f"Trade Counts: {trade_stats}")
 
             results.append({
                 "train_start": training_start.date(),
@@ -119,12 +121,22 @@ class TestRunner(BaseRunner):
                 "test_end": test_window_end.date(),
                 "return_start": trade_window_start.date(),
                 "return_end": trade_window_end.date(),
-                "portfolio_return": portfolio_return
+                "portfolio_return": portfolio_return,
+                "positive_trades": trade_stats["positive"],
+                "negative_trades": trade_stats["negative"],
+                "average_positive_trade": trade_stats["average_gain"],
+                "average_negative_trade": trade_stats["average_loss"]
             })
 
             test_start += relativedelta(months=1)
 
-        pd.DataFrame(results).to_csv("portfolio_test_results.csv", index=False)
+        timestamp = datetime.now().strftime("%Y-%m-%d")
+        file_path = os.path.join(os.getcwd(), "trade_data")
+        os.makedirs(file_path, exist_ok=True)
+        filename = f"portfolio_test_results_{timestamp}.csv"
+        full_path = os.path.join(file_path, filename)
+        pd.DataFrame(results).to_csv(full_path, index=False)
+
         processor = FinalResultsPortfolio(results=results)
         processor.process()
         logger.info("Saved test results to portfolio_test_results.csv")

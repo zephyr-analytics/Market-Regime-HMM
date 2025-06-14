@@ -7,44 +7,99 @@ from scipy.stats import zscore
 
 
 def calculate_portfolio_return(
-        portfolio: dict, data: pd.DataFrame, start_date: str, end_date: str
-    ):
+    portfolio: dict, data: pd.DataFrame, start_date: str, end_date: str
+):
     """
-    Method to calculate portfolio returns. 
+    Calculate portfolio return with same-day stop-loss logic and trade outcome counts.
 
     Parameters
     ----------
     portfolio : dict
         Dictionary of ticker keys and weight values.
     data : pd.DataFrame
-        Dataframe of price data.
+        DataFrame of price data with datetime index.
     start_date : str
-        String representing the start date.
+        Start date in 'YYYY-MM-DD' format.
     end_date : str
-        String representing the end date.
+        End date in 'YYYY-MM-DD' format.
+
+    Returns
+    -------
+    portfolio_return : float
+        Weighted portfolio return with adjusted asset-level exits.
+    trade_counts : dict
+        Dictionary with counts of positive and negative trades.
     """
     if not portfolio:
-        return 0.0
+        return 0.0, {'positive': 0, 'negative': 0}
 
-    start_date = start_date.strftime("%Y-%m-%d")
-    end_date = end_date.strftime("%Y-%m-%d")
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
 
     tickers = list(portfolio.keys())
     weights = pd.Series(portfolio)
 
-    price_df = data[tickers]
+    price_df = data[tickers].copy()
     available_dates = price_df.index
 
-    start_date = available_dates[available_dates >= start_date].min()
-    end_date = available_dates[available_dates <= end_date].max()
+    start_date = available_dates[available_dates >= start_date.strftime("%Y-%m-%d")].min()
+    end_date = available_dates[available_dates <= end_date.strftime("%Y-%m-%d")].max()
 
-    start_prices = price_df.loc[start_date]
-    end_prices = price_df.loc[end_date]
+    price_df = price_df.loc[start_date:end_date]
 
-    returns = (end_prices - start_prices) / start_prices
-    portfolio_return = (returns * weights).sum()
+    adjusted_returns = {}
+    for ticker in tickers:
+        prices = price_df[ticker].dropna()
+        adjusted_returns[ticker] = five_percent_drop_rule(prices)
 
-    return portfolio_return
+    asset_returns = pd.Series(adjusted_returns)
+    portfolio_return = (asset_returns * weights).sum()
+
+    positive_returns = asset_returns[asset_returns > 0]
+    negative_returns = asset_returns[asset_returns < 0]
+
+    trade_stats = {
+        'positive': int(positive_returns.count()),
+        'negative': int(negative_returns.count()),
+        'average_gain': positive_returns.mean() if not positive_returns.empty else 0.0,
+        'average_loss': negative_returns.mean() if not negative_returns.empty else 0.0
+    }
+
+    return portfolio_return, trade_stats
+
+
+def five_percent_drop_rule(prices: pd.Series, threshold: float = -0.05) -> float:
+    """
+    Calculate asset return with same-day stop-loss logic.
+
+    If the asset drops more than the threshold on any day, the trade is
+    closed at the same day's close.
+
+    Parameters
+    ----------
+    prices : pd.Series
+        Series of asset prices indexed by date.
+    threshold : float
+        Daily return threshold to trigger stop-loss (e.g., -0.05 for -5%).
+
+    Returns
+    -------
+    float
+        Adjusted return over the holding period (early exit if threshold breached).
+    """
+    if len(prices) < 2:
+        return 0.0
+
+    daily_returns = prices.pct_change().dropna()
+
+    for i in range(len(daily_returns)):
+        if daily_returns.iloc[i] <= threshold:
+            exit_price = prices.iloc[i + 1] if i + 1 < len(prices) else prices.iloc[i]
+            entry_price = prices.iloc[0]
+
+            return (exit_price - entry_price) / entry_price
+
+    return (prices.iloc[-1] - prices.iloc[0]) / prices.iloc[0]
 
 
 def label_states(training) -> dict:

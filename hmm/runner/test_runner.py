@@ -131,7 +131,7 @@ class TestRunner(BaseRunner):
             test_start += relativedelta(months=1)
 
         timestamp = datetime.now().strftime("%Y-%m-%d")
-        file_path = os.path.join(os.getcwd(), "trade_data")
+        file_path = os.path.join(os.getcwd(), "artifacts", "trade_data")
         os.makedirs(file_path, exist_ok=True)
         filename = f"portfolio_test_results_{timestamp}.csv"
         full_path = os.path.join(file_path, filename)

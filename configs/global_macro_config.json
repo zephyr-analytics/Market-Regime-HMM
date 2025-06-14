@@ -10,7 +10,8 @@
         "DBA", "DBB", "DBE", "DBP", "IAU", 
         "UUP",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
-        "IUSV", "IUSG", "EFV", "EFG", "VWO"
+        "IUSV", "IUSG", "EFV", "EFG", "VWO",
+        "SH", "SJB", "TBF", "TBX", "REK", "EFZ", "EUM"
     ],
     "momentum_intervals": [
         21, 63, 126, 189

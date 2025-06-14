@@ -136,7 +136,7 @@ class ModelsTrainingProcessor:
         returns = [
             utilities.compound_return(
                 training_data.copy(), interval
-            ) for interval in momentum_intervals[:4]
+            ) for interval in momentum_intervals
         ]
         momentum = sum(returns) / len(returns)
 

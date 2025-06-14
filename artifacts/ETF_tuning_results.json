@@ -1,0 +1,902 @@
+[
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.9856024299393319
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.8832450544522029
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.9148787581786684
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.8410094726771138
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.7206616733726807
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.9646331849980144
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.8481063898264882
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.9037631524520583
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.874576835353894
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.8140202479994347
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.7588581548160126
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.7070682218746809
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.7703697122622643
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.7843139834631532
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.7377605589644938
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.8148989931269081
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.7550820570211756
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.8201152936173118
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.8352895854785555
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.7859623722530866
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.7919783008410731
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.7322482976986281
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.793842394786322
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.809478956924885
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.7601988225643136
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.7186221120660844
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.6847141036950462
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.6979750841207878
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.723769394953162
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.6710115304994656
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.6720139077137677
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.6464214586765539
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.6519851082250385
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.6766398419024261
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.6294988239190984
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.673319213185914
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.6454849004035836
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.6567649249617135
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.6859360577952731
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.6471286638734346
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.7215330869338565
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.6892296766477317
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.69604177717211
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.7301721511261123
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.6880226973406983
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.7200578879835821
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.6865873880977602
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.6917216403371579
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.7262914508877869
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.6839223943930897
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.7454425628870001
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.7051858492264339
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.7235636200872333
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.732527460945259
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.700611342894352
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.6890297315297322
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.6547593759175148
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.6676596186553945
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.6865185499072368
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.6618155565021947
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.6880815048164192
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.6507148342551583
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.6674977147384504
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.6912133044293972
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.6755711683168666
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.7391083018188203
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.6966325693732017
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.70893815795551
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.7362394780272895
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.7189268003503632
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.7375699513671554
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.6938780636591657
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.7044308158971038
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.7323078630750891
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.7146792845604252
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.8986941792898853
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.8466965954430969
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.8542508632165745
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.8377671807474975
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.8066851265042687
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.8759936667675179
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.8282682112224776
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.8378867928329373
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.8204930196605149
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.7944987100188776
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.8558820593062129
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.8160178762890183
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.8269409051709413
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.8165481943582128
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 12,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.803627019949261
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.8813303298699713
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.8415855660216643
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.8470988742617924
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.8378941125431888
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 14,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.8229982405509864
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3
+        },
+        "score": -0.879770791829337
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 4
+        },
+        "score": -0.8386552950256654
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 5
+        },
+        "score": -0.8422975560785856
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 6
+        },
+        "score": -0.8339222806109431
+    },
+    {
+        "params": {
+            "min_clusters": 5,
+            "max_clusters": 15,
+            "moving_average": 168,
+            "max_assets_per_cluster": 8
+        },
+        "score": -0.8186993932260284
+    }
+]

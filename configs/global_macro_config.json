@@ -1,10 +1,13 @@
 {
     "tickers": [
         "BND", "EMB", "BNDX",
-        "SHV", "SHY", "IEI", "IEF", "TLT",
+        "IGOV", "VWOB", "GOVT",
+        "IBND", "CEMB", "LQD",
+        "IWM", "SCZ", "EEMS",
+        "SHV", "SHY", "IEF", "TLT",
         "HYG", "HYXU", "EMHY",
-        "IAU", "VNQ", "VNQI",
-        "DBA", "DBB", "DBE", "DBP",
+        "VNQ", "VNQI",
+        "DBA", "DBB", "DBE", "DBP", "IAU", 
         "UUP",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
         "IUSV", "IUSG", "EFV", "EFG", "VWO"
@@ -28,7 +31,7 @@
     "grid": {
         "min_clusters": [2, 3, 4, 5],
         "max_clusters": [8, 10, 12, 14, 15],
-        "moving_average": [147, 168],
+        "moving_average": [168],
         "max_assets_per_cluster": [3, 4, 5, 6, 8]
     }
 }

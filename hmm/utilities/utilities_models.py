@@ -1,10 +1,13 @@
 """
 """
 
+import os
+
 import numpy as np
 import pandas as pd
 from scipy.stats import zscore
 import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
 
 def calculate_portfolio_return(
     portfolio: dict, data: pd.DataFrame, start_date: str, end_date: str
@@ -179,25 +182,22 @@ def label_states(training) -> dict:
     return label_map
 
 
-def plot_cumulative_returns(all_trade_details):
+def plot_cumulative_returns(all_trade_details, output_dir='cumulative_return_plots'):
     """
-    Plots cumulative (compounded) returns over time for each asset from a list of trade details DataFrames.
+    Saves cumulative return plots by ticker as separate PNG files, with Y-axis in percentage.
 
     Parameters:
     - all_trade_details: List[pd.DataFrame]
-        List of DataFrames, each containing trade details for a time window.
-        Expected columns: 'ticker', 'exit_date', 'return' (in decimal form).
+        List of DataFrames, each containing trade details.
+        Expected columns: 'ticker', 'return', 'trade_window_end'
+    - output_dir: str
+        Directory to save the individual plots.
     """
-    # Combine all trade details into one DataFrame
     all_trades_df = pd.concat(all_trade_details, ignore_index=True)
+    all_trades_df['trade_window_end'] = pd.to_datetime(all_trades_df['trade_window_end'])
 
-    # Ensure exit_date is datetime
-    all_trades_df['exit_date'] = pd.to_datetime(all_trades_df['exit_date'])
+    all_trades_df = all_trades_df.sort_values(by='trade_window_end')
 
-    # Sort trades by exit date
-    all_trades_df = all_trades_df.sort_values(by='exit_date')
-
-    # Compute compounded return per ticker
     def compound_returns(group):
         group = group.copy()
         group['cum_return'] = (1 + group['return']).cumprod()
@@ -205,17 +205,17 @@ def plot_cumulative_returns(all_trade_details):
 
     compounded_df = all_trades_df.groupby('ticker').apply(compound_returns).reset_index(drop=True)
 
-    # Plot
-    plt.figure(figsize=(14, 8))  # Increased figure size
+    output_path = os.path.join(os.getcwd(), "artifacts", "Asset Analysis", output_dir)
+    os.makedirs(output_path, exist_ok=True)
+
     for ticker, group in compounded_df.groupby('ticker'):
-        plt.plot(group['exit_date'], group['cum_return'], label=ticker)
-
-    plt.title("Cumulative Returns by Ticker")
-    plt.xlabel("Date")
-    plt.ylabel("Cumulative Return")
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.legend(loc='upper left')  # move legend inside plot
-    plt.tight_layout()
-    plt.ylim(bottom=0)  # make sure Y-axis starts at 0 for better scaling
-
-    plt.show()
+        plt.figure(figsize=(10, 6))
+        plt.plot(group['trade_window_end'], group['cum_return'], label=f'{ticker}')
+        plt.title(f'Cumulative Return: {ticker}')
+        plt.xlabel("Trade Window End")
+        plt.ylabel("Cumulative Return")
+        plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1.0))
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_path, f'cumulative_return_{ticker}.png'), dpi=300)
+        plt.close()

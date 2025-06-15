@@ -136,6 +136,7 @@ class TestRunner(BaseRunner):
             all_trade_details.append(trade_details)
 
             test_start += relativedelta(months=1)
+
         utilities.plot_cumulative_returns(all_trade_details=all_trade_details)
         # Save the results
         timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")

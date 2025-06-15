@@ -13,8 +13,6 @@ The config files are by portfolio construction.
 
 -"momentum_intervals": (list of int), Intervals used to calculate momentum over a time window (trading days.)
 
-# NOTE: test long and short duartion momentum, adding short as seperate data feature.
-
 -"volatility_interval": (int), Interval used to calculate volatility over a time window (trading days.)
 
 -"min_clusters": (int, tunable parameter), default number should be based on category of assets in portfolio.
@@ -42,9 +40,13 @@ The config files are by portfolio construction.
 -Note: This is used to further filter assets based on being below thier SMA.
 -See: A Quantitative Approach to Tactical Asset Allocation, 2007 Faber, M
 
+-"stop_loss": (negative float, tunable parameter), threshold single day loss to exit an assest position.
+
 -"data_file_path": (string), Path to the repo for storage of data file.
 
 -"persist": (true or false), This should be set to false if running test. Set to true to inspect and calibrate overall model performance.
+
+-"grid": (dict), Dictionary of tunable parameter lists.
 
 ## Config types
 -NOTE: Rather than swap tickers around a second argument is used to flag which config file to use.
@@ -63,12 +65,14 @@ The config files are by portfolio construction.
 
 ## Test Portfolio
 `python run.py --test --global_macro`
-NOTE: currently has failures on timeouts from data handling.
+
+## Tune Portfolio
+`python run.py --tune --global_macro`
 
 ## Artifacts
 -Artifacts are located within each sub directory of hmm directory.
 -Examples: hmm/train/artifacts, hmm/infer/artifacts, hmm/build/artifacts
 
-## ETF Portfolio:
-
-The ETF portfolio focuses on a global macro approach to asset selection and allocation. Although this strategy focuses on absolute returns on a risk adjusted basis. The benchmark index used for the grading performance is the Bloomberg Macro Hedge Fund Index (BHMACR:IND). This portfolio does not currently use short position in any asset as a long only approach is easy for most retail investors to replicate the performance. Also, this ensures that model can be used across almost any account type where ETFs can be traded.
+## Asset Analysis
+All trade information is presisted for review after running a test pipeline.
+Plots of asset portfolio contribution are persisted for review by the user. These should only be utilized for adjusting asset exposure or asset swapping due to better performance.

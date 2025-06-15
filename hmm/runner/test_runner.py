@@ -107,7 +107,7 @@ class TestRunner(BaseRunner):
             trade_window_start = test_window_end
             trade_window_end = trade_window_start + relativedelta(months=1)
 
-            logger.info(f"Trade window: {trade_window_start.date()} to {trade_window_end.date()}")
+            logger.info(f"Trade starting:{trade_window_start.date()} and ending:{trade_window_end.date()}")
 
             portfolio_return, trade_stats, trade_details = utilities.calculate_portfolio_return(
                 portfolio=portfolio,

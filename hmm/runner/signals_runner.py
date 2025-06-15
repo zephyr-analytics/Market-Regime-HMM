@@ -56,7 +56,7 @@ class SignalsRunner(BaseRunner):
 
             logger.debug(f"[{ticker}] Finished.")
 
-        logger.info(f"Building portfolio for test date: {test_window_end.date()}...")
+        logger.info(f"Building portfolio for: {test_window_end.date()}...")
         builder = PortfolioProcessor(config=self.config, data=self.data)
         portfolio = builder.process()
         portfolio = {asset: weight for asset, weight in portfolio.items() if weight != 0.0}

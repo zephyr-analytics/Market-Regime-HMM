@@ -78,7 +78,7 @@ class TestRunner(BaseRunner):
         results = []
 
         while test_start + relativedelta(months=1) <= final_end:
-            test_window_end = test_start
+            test_window_end = test_start  + MonthEnd(0)
 
             months_tested = (test_start.year - first_test_start.year) * 12 + (test_start.month - first_test_start.month)
             if months_tested < max_train_years * 12:
@@ -104,7 +104,7 @@ class TestRunner(BaseRunner):
             portfolio = {asset: weight for asset, weight in portfolio.items() if weight != 0.0}
             logger.info(f"Portfolio to trade on {test_window_end.date()}: {portfolio}")
 
-            trade_window_start = test_window_end + MonthEnd(0)
+            trade_window_start = test_window_end
             trade_window_end = trade_window_start + relativedelta(months=1)
 
             logger.info(f"Trade window: {trade_window_start.date()} to {trade_window_end.date()}")

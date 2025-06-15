@@ -38,21 +38,23 @@ class SignalsRunner(BaseRunner):
         logger.info(f"Training window: {training_start.date()} to {test_window_end.date()}")
 
         for ticker in self.config["tickers"]:
-            logger.debug(f"[{ticker}] Starting training...")
+            logger.debug(f"[{ticker}] Starting processing...")
+
             trainer = ModelsTrainingProcessor(config=self.config, data=self.data, ticker=ticker)
             training = trainer.process()
-            training_path = os.path.join("hmm", "train", "artifacts", "training", f"{ticker}.pkl")
-            with open(training_path, 'wb') as f:
+            training_path = os.path.join("hmm", "train", "artifacts", "training")
+            os.makedirs(training_path, exist_ok=True)
+            with open(os.path.join(training_path, f"{ticker}.pkl"), 'wb') as f:
                 pickle.dump(training, f)
-            logger.debug(f"[{ticker}] Training saved to {training_path}")
 
-            logger.debug(f"[{ticker}] Starting inferencing...")
             inferencer = ModelsInferenceProcessor(config=self.config, ticker=ticker)
             inferencing = inferencer.process()
-            inferencing_path = os.path.join("hmm", "infer", "artifacts", "inferencing", f"{ticker}.pkl")
-            with open(inferencing_path, 'wb') as f:
+            inferencing_path = os.path.join("hmm", "infer", "artifacts", "inferencing")
+            os.makedirs(inferencing_path, exist_ok=True)
+            with open(os.path.join(inferencing_path, f"{ticker}.pkl"), 'wb') as f:
                 pickle.dump(inferencing, f)
-            logger.debug(f"[{ticker}] Inferencing saved to {inferencing_path}")
+
+            logger.debug(f"[{ticker}] Finished.")
 
         logger.info(f"Building portfolio for test date: {test_window_end.date()}...")
         builder = PortfolioProcessor(config=self.config, data=self.data)

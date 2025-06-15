@@ -199,6 +199,7 @@ class PortfolioConstructor:
             return {"SHV": 1.0}
 
         returns = price_data[tickers].pct_change().dropna().tail(lookback)
+        # NOTE this might need scaled covariances to have better effect?
         cov_matrix = returns.cov().values
         n = len(tickers)
 

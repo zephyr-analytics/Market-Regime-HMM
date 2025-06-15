@@ -71,6 +71,7 @@ class TestRunner(BaseRunner):
         test_start = original_start + relativedelta(years=initial_train_years)
         first_test_start = test_start
 
+        all_trade_details = []
         results = []
 
         while test_start + relativedelta(months=1) <= final_end:
@@ -97,6 +98,7 @@ class TestRunner(BaseRunner):
             logger.info(f"Building portfolio at month end: {test_window_end.date()}...")
             builder = PortfolioProcessor(config=self.config, data=self.data)
             portfolio = builder.process()
+            portfolio = {asset: weight for asset, weight in portfolio.items() if weight != 0.0}
             logger.info(f"Portfolio to trade on {test_window_end.date()}: {portfolio}")
 
             trade_window_start = test_window_end
@@ -104,7 +106,7 @@ class TestRunner(BaseRunner):
 
             logger.info(f"Trade window: {trade_window_start.date()} to {trade_window_end.date()}")
 
-            portfolio_return, trade_stats = utilities.calculate_portfolio_return(
+            portfolio_return, trade_stats, trade_details = utilities.calculate_portfolio_return(
                 portfolio=portfolio,
                 data=self.data,
                 start_date=trade_window_start,
@@ -128,14 +130,28 @@ class TestRunner(BaseRunner):
                 "average_negative_trade": trade_stats["average_loss"]
             })
 
-            test_start += relativedelta(months=1)
+            # Add trade_window_end to each trade in trade_details
+            trade_details = trade_details.copy()
+            trade_details["trade_window_end"] = trade_window_end
+            all_trade_details.append(trade_details)
 
-        timestamp = datetime.now().strftime("%Y-%m-%d")
+            test_start += relativedelta(months=1)
+        utilities.plot_cumulative_returns(all_trade_details=all_trade_details)
+        # Save the results
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
         file_path = os.path.join(os.getcwd(), "artifacts", "trade_data")
         os.makedirs(file_path, exist_ok=True)
-        filename = f"portfolio_test_results_{timestamp}.csv"
-        full_path = os.path.join(file_path, filename)
-        pd.DataFrame(results).to_csv(full_path, index=False)
+
+        filename_returns = f"portfolio_returns_{timestamp}.csv"
+        filename_trades = f"portfolio_trades_{timestamp}.csv"
+
+        # Save full trade details
+        full_path_trades = os.path.join(file_path, filename_trades)
+        pd.concat(all_trade_details, ignore_index=True).to_csv(full_path_trades, index=False)
+
+        # Save portfolio return summaries
+        full_path_returns = os.path.join(file_path, filename_returns)
+        pd.DataFrame(results).to_csv(full_path_returns, index=False)
 
         processor = FinalResultsPortfolio(results=results)
         processor.process()

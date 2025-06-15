@@ -18,6 +18,8 @@ class TrainRunner(BaseRunner):
     Class for running train tasks.
     """
     def run(self):
+        """
+        """
         for ticker in self.config["tickers"]:
             logger.info(f"Training model for {ticker}")
             self.config["current_end"] = self.config["end_date"]

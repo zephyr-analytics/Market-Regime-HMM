@@ -28,7 +28,7 @@
         "WMT", "COST", "PG", "KO", "PEP",
         "UL", "BTI", "DEO", "CCEP", "FMX",
         "NEE", "SO", "DUK", "AEP", "SRE",
-        "NGG", "FTS", "KEP", "EBR", "SBS"
+        "NGG", "FTS", "KEP", "EBR", "SBS"      
     ],
     "momentum_intervals": [
         21, 63, 126, 189

@@ -4,6 +4,7 @@
 *.pyc
 *.pdf
 *.log
+*.csv
 
 # Directories
 */__pycache__

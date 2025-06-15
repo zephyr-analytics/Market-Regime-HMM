@@ -19,6 +19,7 @@ def main():
     mode_group.add_argument("--build", action="store_true", help="Build portfolios")
     mode_group.add_argument("--test", action="store_true", help="Test rolling portfolio performance")
     mode_group.add_argument("--tune", action="store_true")
+    mode_group.add_argument("--signals", action="store_true")
 
     # Asset type selection (stock vs ETF)
     asset_group = parser.add_mutually_exclusive_group(required=True)
@@ -45,6 +46,8 @@ def main():
         mode = "test"
     elif args.tune:
         mode = "tune"
+    elif args.signals:
+        mode = "signals"
     else:
         raise ValueError("No valid mode selected")
 

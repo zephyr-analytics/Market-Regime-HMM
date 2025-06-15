@@ -4,13 +4,13 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import zscore
-
+import matplotlib.pyplot as plt
 
 def calculate_portfolio_return(
     portfolio: dict, data: pd.DataFrame, start_date: str, end_date: str
 ):
     """
-    Calculate portfolio return with same-day stop-loss logic and trade outcome counts.
+    Calculate portfolio return with same-day stop-loss logic.
 
     Parameters
     ----------
@@ -26,12 +26,14 @@ def calculate_portfolio_return(
     Returns
     -------
     portfolio_return : float
-        Weighted portfolio return with adjusted asset-level exits.
-    trade_counts : dict
-        Dictionary with counts of positive and negative trades.
+        Weighted portfolio return with adjusted exits.
+    trade_stats : dict
+        Dictionary with counts and average returns of trades.
+    asset_details : pd.DataFrame
+        DataFrame with asset, weight, and adjusted return.
     """
     if not portfolio:
-        return 0.0, {'positive': 0, 'negative': 0}
+        return 0.0, {'positive': 0, 'negative': 0}, pd.DataFrame(columns=['ticker', 'weight', 'return'])
 
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
@@ -55,6 +57,31 @@ def calculate_portfolio_return(
     asset_returns = pd.Series(adjusted_returns)
     portfolio_return = (asset_returns * weights).sum()
 
+    trade_stats, asset_details = calculate_trade_stats_and_details(asset_returns, weights)
+
+    return portfolio_return, trade_stats, asset_details
+
+
+def calculate_trade_stats_and_details(
+    asset_returns: pd.Series, weights: pd.Series
+) -> tuple[dict, pd.DataFrame]:
+    """
+    Calculate trade statistics and assemble asset detail DataFrame.
+
+    Parameters
+    ----------
+    asset_returns : pd.Series
+        Series of asset returns.
+    weights : pd.Series
+        Series of asset weights.
+
+    Returns
+    -------
+    trade_stats : dict
+        Dictionary with counts and average returns of trades.
+    asset_details : pd.DataFrame
+        DataFrame with ticker, weight, and return per asset.
+    """
     positive_returns = asset_returns[asset_returns > 0]
     negative_returns = asset_returns[asset_returns < 0]
 
@@ -65,7 +92,13 @@ def calculate_portfolio_return(
         'average_loss': negative_returns.mean() if not negative_returns.empty else 0.0
     }
 
-    return portfolio_return, trade_stats
+    asset_details = pd.DataFrame({
+        'ticker': asset_returns.index,
+        'weight': weights[asset_returns.index],
+        'return': asset_returns.values
+    }).reset_index(drop=True)
+
+    return trade_stats, asset_details
 
 
 def five_percent_drop_rule(prices: pd.Series, threshold: float = -0.05) -> float:
@@ -144,3 +177,45 @@ def label_states(training) -> dict:
         label_map[state] = label
 
     return label_map
+
+
+def plot_cumulative_returns(all_trade_details):
+    """
+    Plots cumulative (compounded) returns over time for each asset from a list of trade details DataFrames.
+
+    Parameters:
+    - all_trade_details: List[pd.DataFrame]
+        List of DataFrames, each containing trade details for a time window.
+        Expected columns: 'ticker', 'exit_date', 'return' (in decimal form).
+    """
+    # Combine all trade details into one DataFrame
+    all_trades_df = pd.concat(all_trade_details, ignore_index=True)
+
+    # Ensure exit_date is datetime
+    all_trades_df['exit_date'] = pd.to_datetime(all_trades_df['exit_date'])
+
+    # Sort trades by exit date
+    all_trades_df = all_trades_df.sort_values(by='exit_date')
+
+    # Compute compounded return per ticker
+    def compound_returns(group):
+        group = group.copy()
+        group['cum_return'] = (1 + group['return']).cumprod()
+        return group
+
+    compounded_df = all_trades_df.groupby('ticker').apply(compound_returns).reset_index(drop=True)
+
+    # Plot
+    plt.figure(figsize=(14, 8))  # Increased figure size
+    for ticker, group in compounded_df.groupby('ticker'):
+        plt.plot(group['exit_date'], group['cum_return'], label=ticker)
+
+    plt.title("Cumulative Returns by Ticker")
+    plt.xlabel("Date")
+    plt.ylabel("Cumulative Return")
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend(loc='upper left')  # move legend inside plot
+    plt.tight_layout()
+    plt.ylim(bottom=0)  # make sure Y-axis starts at 0 for better scaling
+
+    plt.show()

@@ -110,7 +110,8 @@ class TestRunner(BaseRunner):
                 portfolio=portfolio,
                 data=self.data,
                 start_date=trade_window_start,
-                end_date=trade_window_end
+                end_date=trade_window_end,
+                threshold=self.config["stop_loss"]
             )
 
             logger.info(f"Return: {portfolio_return * 100:.2f}%")

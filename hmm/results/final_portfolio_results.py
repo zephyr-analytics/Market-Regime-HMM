@@ -1,12 +1,16 @@
 """
 """
+import logging
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.subplots as sp
 
+import logger_config
 from hmm import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class FinalResultsPortfolio:
@@ -26,17 +30,17 @@ class FinalResultsPortfolio:
         returns.index.name = 'Date'
         returns.name = 'Return'
         portfolio_value = utilities.compute_portfolio_value(returns=returns)
-        print(portfolio_value)
+        print(portfolio_value[-1])
         var, cvar = utilities.calculate_var_cvar(returns=returns)
         print(var, cvar)
         average_annual_return = utilities.calculate_average_annual_return(returns=returns)
-        print(average_annual_return)
+        logger.info(f"Average Annual Return: {average_annual_return * 100:.2f}%")
         max_drawdown = utilities.calculate_max_drawdown(portfolio_value=portfolio_value)
-        print(max_drawdown)
+        logger.info(f"Max Drawdown: {max_drawdown * 100:.2f}%")
 
         self.plot_portfolio_value(dates=returns.index, portfolio_value=portfolio_value)
         self.plot_var_cvar(returns=returns, var=var, cvar=cvar)
-        self.plot_returns_heatmaps(returns=returns)
+        self.plot_returns_heatmaps(returns=returns, average_annual_return=average_annual_return)
 
     @staticmethod
     def plot_portfolio_value(dates, portfolio_value, metrics=None, filename='portfolio_value'):
@@ -128,7 +132,7 @@ class FinalResultsPortfolio:
         utilities.save_html(fig, filename)
 
     @staticmethod
-    def plot_returns_heatmaps(returns, filename='returns_heatmap'):
+    def plot_returns_heatmaps(returns, average_annual_return, filename='returns_heatmap'):
         """
         Plots a combined heatmap of monthly and yearly
         returns with values shown as percentages on each cell.
@@ -152,6 +156,8 @@ class FinalResultsPortfolio:
         yearly_returns_df['Year'] = yearly_returns_df.index.year
         yearly_returns_df = yearly_returns_df.sort_values('Year')
 
+        sharpe_ratio = average_annual_return / yearly_returns_df["Yearly Return"].std()
+        logger.info(f"Sharpe Ratio: {sharpe_ratio * 100:.2f}")
 
         monthly_heatmap_data = monthly_returns_df.pivot('Year', 'Month', 'Monthly Return')
         monthly_heatmap_data = monthly_heatmap_data.reindex(columns=np.arange(1, 13))

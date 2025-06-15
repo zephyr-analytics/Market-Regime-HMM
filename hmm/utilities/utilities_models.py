@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
 
 def calculate_portfolio_return(
-    portfolio: dict, data: pd.DataFrame, start_date: str, end_date: str
+    portfolio: dict, data: pd.DataFrame, start_date: str, end_date: str, threshold: float
 ):
     """
     Calculate portfolio return with same-day stop-loss logic.
@@ -55,7 +55,7 @@ def calculate_portfolio_return(
     adjusted_returns = {}
     for ticker in tickers:
         prices = price_df[ticker].dropna()
-        adjusted_returns[ticker] = five_percent_drop_rule(prices)
+        adjusted_returns[ticker] = stop_loss(prices, threshold=threshold)
 
     asset_returns = pd.Series(adjusted_returns)
     portfolio_return = (asset_returns * weights).sum()
@@ -104,7 +104,7 @@ def calculate_trade_stats_and_details(
     return trade_stats, asset_details
 
 
-def five_percent_drop_rule(prices: pd.Series, threshold: float = -0.05) -> float:
+def stop_loss(prices: pd.Series, threshold: float = -0.05) -> float:
     """
     Calculate asset return with same-day stop-loss logic.
 

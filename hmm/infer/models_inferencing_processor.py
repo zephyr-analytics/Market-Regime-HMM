@@ -37,7 +37,6 @@ class ModelsInferenceProcessor:
         self.load_model(inferencing=inferencing)
         self.load_training(inferencing=inferencing)
         self.infer_states(inferencing=inferencing)
-        # self.label_states(inferencing=inferencing)
         self.collect_current_state_probability(inferencing=inferencing)
         if self.persist:
             results = InferencingResultsProcessor(inferencing=inferencing)
@@ -137,8 +136,6 @@ class ModelsInferenceProcessor:
         inferencing : ModelsInferencing
             The inference object containing the trained HMM, state labels, and test data.
         """
-        # NOTE since this is being forward propagated the new states path over the period need to be
-        # appended to the states.
         posteriors = inferencing.model.predict_proba(inferencing.test_data.copy())
 
         pi_t = posteriors[-1]

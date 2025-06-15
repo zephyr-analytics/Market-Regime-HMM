@@ -23,7 +23,7 @@ class SignalsRunner(BaseRunner):
         max_train_years = self.config["max_train_years"]
 
         test_start = original_start + relativedelta(years=initial_train_years)
-        test_window_end = final_end
+        test_window_end = final_end + MonthEnd(0)
 
         months_available = (test_window_end.year - test_start.year) * 12 + (test_window_end.month - test_start.month)
 

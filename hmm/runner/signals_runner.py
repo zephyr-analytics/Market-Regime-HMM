@@ -12,11 +12,14 @@ from hmm.build.portfolio_processor import PortfolioProcessor
 
 logger = logging.getLogger(__name__)
 
+
 class SignalsRunner(BaseRunner):
     """
     Runner for single-instance model training, inferencing, and portfolio construction.
     """
     def run(self):
+        """
+        """
         original_start = datetime.strptime(self.config["start_date"], "%Y-%m-%d")
         final_end = datetime.strptime(self.config["end_date"], "%Y-%m-%d")
         initial_train_years = self.config["model_warmup"]

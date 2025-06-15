@@ -46,7 +46,7 @@ class TuneRunner(BaseRunner):
         portfolio_values = utilities.compute_portfolio_value(returns=results_df["portfolio_return"])
         cagr = utilities.calculate_cagr(portfolio_value=portfolio_values)
         max_drawdown = utilities.calculate_max_drawdown(portfolio_value=portfolio_values)
-        return abs(cagr / max_drawdown)
+        return cagr / max_drawdown
 
 
     def run(self) -> tuple[dict, list]:

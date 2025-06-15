@@ -30,24 +30,27 @@ def process_ticker(config: dict, data: pd.DataFrame, ticker: str) -> bool:
     Parameters
     ----------
     config : dict
-
     data : pd.DataFrame
-
     ticker : str
 
     Returns
     -------
-    bool: 
+    bool
     """
     logger.debug(f"[{ticker}] Starting processing...")
+
     trainer = ModelsTrainingProcessor(config=config, data=data, ticker=ticker)
     training = trainer.process()
-    with open(os.path.join("hmm", "train", "artifacts", "training", f"{ticker}.pkl"), 'wb') as f:
+    training_path = os.path.join("hmm", "train", "artifacts", "training")
+    os.makedirs(training_path, exist_ok=True)
+    with open(os.path.join(training_path, f"{ticker}.pkl"), 'wb') as f:
         pickle.dump(training, f)
 
     inferencer = ModelsInferenceProcessor(config=config, ticker=ticker)
     inferencing = inferencer.process()
-    with open(os.path.join("hmm", "infer", "artifacts", "inferencing", f"{ticker}.pkl"), 'wb') as f:
+    inferencing_path = os.path.join("hmm", "infer", "artifacts", "inferencing")
+    os.makedirs(inferencing_path, exist_ok=True)
+    with open(os.path.join(inferencing_path, f"{ticker}.pkl"), 'wb') as f:
         pickle.dump(inferencing, f)
 
     logger.debug(f"[{ticker}] Finished.")
@@ -75,7 +78,7 @@ class TestRunner(BaseRunner):
         results = []
 
         while test_start + relativedelta(months=1) <= final_end:
-            test_window_end = (test_start + MonthEnd(0))
+            test_window_end = test_start
 
             months_tested = (test_start.year - first_test_start.year) * 12 + (test_start.month - first_test_start.month)
             if months_tested < max_train_years * 12:
@@ -101,7 +104,7 @@ class TestRunner(BaseRunner):
             portfolio = {asset: weight for asset, weight in portfolio.items() if weight != 0.0}
             logger.info(f"Portfolio to trade on {test_window_end.date()}: {portfolio}")
 
-            trade_window_start = test_window_end
+            trade_window_start = test_window_end + MonthEnd(0)
             trade_window_end = trade_window_start + relativedelta(months=1)
 
             logger.info(f"Trade window: {trade_window_start.date()} to {trade_window_end.date()}")

@@ -124,17 +124,12 @@ def evaluate_clustering_scores(sequences: np.ndarray, linkage_matrix, min_cluste
 
         try:
             sil = silhouette_score(sequences, labels)
+            ch = calinski_harabasz_score(sequences, labels)
+            db = davies_bouldin_score(sequences, labels)
         except ValueError:
             continue
 
-        ch = calinski_harabasz_score(sequences, labels)
-        db = davies_bouldin_score(sequences, labels)
-
         scores.append([sil, ch, db])
         label_map[k] = labels
-
-    if not scores:
-        fallback_labels = np.ones(sequences.shape[0], dtype=int)
-        return np.array([[0.0, 0.0, 1.0]]), {1: fallback_labels}
 
     return np.array(scores), label_map

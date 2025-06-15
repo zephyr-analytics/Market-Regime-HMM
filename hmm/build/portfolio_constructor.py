@@ -66,7 +66,7 @@ class PortfolioConstructor:
             rp_weights = self._risk_parity_weights(
                 tickers=cluster_tickers,
                 price_data=self.price_data,
-                lookback=self.config.get("risk_lookback", 252)
+                lookback=504
             )
 
             for tkr, w in rp_weights.items():
@@ -153,7 +153,6 @@ class PortfolioConstructor:
                     continue
 
                 bullish = forecast.get("Bullish", 0.0)
-                bearish = forecast.get("Bearish", 0.0)
 
                 if bullish > 0:
                     contributions[tkr] = bullish
@@ -193,7 +192,7 @@ class PortfolioConstructor:
         shv_weight = 0.0
         if "SHV" in tickers:
             tickers.remove("SHV")
-            shv_weight = 1.0  # assume SHV had full weight before optimization
+            shv_weight = 1.0
 
         if not tickers:
             return {"SHV": 1.0}

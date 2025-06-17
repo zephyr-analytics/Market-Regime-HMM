@@ -63,34 +63,36 @@ class TestRunner(BaseRunner):
     Class for running test tasks.
     """
     def run(self):
-        """
-        """
         original_start = datetime.strptime(self.config["start_date"], "%Y-%m-%d")
         final_end = datetime.strptime(self.config["end_date"], "%Y-%m-%d")
 
-        initial_train_years = self.config["model_warmup"]
-        max_train_years = self.config["max_train_years"]
+        model_warmup = self.config["model_warmup"]  # e.g. 2
+        max_train_years = self.config["max_train_years"]  # e.g. 5
 
-        test_start = original_start + relativedelta(years=initial_train_years)
-        first_test_start = test_start
+        # Static minimum start of training data
+        full_data_start = original_start - relativedelta(years=model_warmup)
 
+        test_start = original_start
         all_trade_details = []
         results = []
 
-        while test_start + relativedelta(months=1) <= final_end:
-            test_window_end = test_start  + MonthEnd(0)
+        while test_start <= final_end:
+            # Calculate rolling training window start (bounded by max_train_years)
+            rolling_train_start = test_start - relativedelta(years=max_train_years)
 
-            months_tested = (test_start.year - first_test_start.year) * 12 + (test_start.month - first_test_start.month)
-            if months_tested < max_train_years * 12:
-                training_start = original_start
-            else:
-                training_start = test_start - relativedelta(years=max_train_years)
+            # Final training start = whichever is later
+            training_start = max(full_data_start, rolling_train_start)
 
-            self.config["current_start"] = training_start.strftime("%Y-%m-%d")
+            # End of the test window = end of test_start month
+            test_window_end = test_start + MonthEnd(0)
+
+            # These define the full data slice needed: must include training and test
+            self.config["current_start"] = full_data_start.strftime("%Y-%m-%d")
             self.config["current_end"] = test_window_end.strftime("%Y-%m-%d")
 
             logger.info(f"\n=== TEST WINDOW: {test_start.date()} to {test_window_end.date()} ===")
             logger.info(f"Training window: {training_start.date()} to {test_window_end.date()}")
+            logger.info(f"Data slice: {self.config['current_start']} to {self.config['current_end']}")
 
             tickers = self.config["tickers"]
             with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as executor:
@@ -162,3 +164,5 @@ class TestRunner(BaseRunner):
         processor = FinalResultsPortfolio(results=results)
         processor.process()
         logger.info("Saved test results to portfolio_test_results.csv")
+
+        return pd.DataFrame(results)

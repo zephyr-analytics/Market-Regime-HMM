@@ -2,7 +2,10 @@
 """
 
 import argparse
+import datetime
 import logging
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from hmm.data.data_processor import DataProcessor
 from hmm.runner.factory import get_runner
 from hmm import utilities
@@ -31,6 +34,10 @@ def main():
     config = utilities.load_config(
         global_macro=args.global_macro, gloabl_stocks=args.global_stock
     )
+
+    original_start = datetime.strptime(config["start_date"], "%Y-%m-%d")
+    model_warmup = config["model_warmup"]
+    config["current_start"] = original_start - relativedelta(years=model_warmup)
 
     # Process data
     data = DataProcessor(config=config).process()

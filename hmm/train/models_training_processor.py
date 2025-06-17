@@ -35,7 +35,6 @@ class ModelsTrainingProcessor:
         self.persist = config["persist"]
         self.data = data.loc[self.start_date:self.end_date]
 
-
     def process(self):
         """
         Method to process through the training module.

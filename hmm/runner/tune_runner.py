@@ -46,7 +46,8 @@ class TuneRunner(BaseRunner):
         portfolio_values = utilities.compute_portfolio_value(returns=results_df["portfolio_return"])
         cagr = utilities.calculate_cagr(portfolio_value=portfolio_values)
         max_drawdown = utilities.calculate_max_drawdown(portfolio_value=portfolio_values)
-        return cagr / max_drawdown
+
+        return abs(cagr / max_drawdown)
 
 
     def run(self) -> tuple[dict, list]:
@@ -73,21 +74,21 @@ class TuneRunner(BaseRunner):
             config_copy.update(trial_params)
 
             runner = TestRunner(config=config_copy, data=self.data)
-            runner.run()
+            results_df = runner.run()  # ← Must return DataFrame
 
-            if not os.path.exists("portfolio_test_results.csv"):
-                logger.warning("Results file not found. Skipping this config.")
+            if results_df is None or results_df.empty:
+                logger.warning("No results returned. Skipping this config.")
                 continue
 
-            results_df = pd.read_csv("portfolio_test_results.csv")
             score = self.custom_score(results_df)
 
             logger.info(f"Score: {score:.4f}")
             tuning_log.append({
                 "params": trial_params,
-                "score": score
+                "score": float(score)  # Ensure JSON serializable
             })
             print(tuning_log)
+
             if score > best_score:
                 best_score = score
                 best_params = trial_params

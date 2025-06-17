@@ -177,6 +177,7 @@ def label_states(training) -> dict:
 
     for i, label in enumerate(label_order):
         state = sorted_states[i]
+        # NOTE error out on Index error, request more warm up time.
         label_map[state] = label
 
     return label_map

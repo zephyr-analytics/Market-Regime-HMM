@@ -25,13 +25,12 @@ class PortfolioProcessor:
     """
     def __init__(self, config: dict, data: pd.DataFrame):
         self.config = config
-        self.start_date = config["start_date"]
+        self.start_date = config["current_start"]
         self.end_date = config["current_end"]
         self.persist = config["persist"]
         self.min_clusters = config["min_clusters"]
         self.max_clusters = config["max_clusters"]
         self.data = data.loc[self.start_date:self.end_date]
-
 
     def process(self):
         """

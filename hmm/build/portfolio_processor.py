@@ -65,7 +65,7 @@ class PortfolioProcessor:
         if not state_data:
             return {"SHV": 1}
 
-        sequences, tickers = self.prepare_state_sequences(state_data, lookback=126)
+        sequences, tickers = self.prepare_state_sequences(state_data, lookback=63)
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
         results = cluster_sequences(
             sequences=sequences, tickers=tickers, max_clusters=self.max_clusters, min_clusters=self.min_clusters

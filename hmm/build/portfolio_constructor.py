@@ -31,7 +31,7 @@ class PortfolioConstructor:
             cluster_assets[cid].append(tkr)
 
         for cluster_id, tickers in cluster_assets.items():
-            returns = self.price_data[tickers].pct_change().dropna().tail(504)
+            returns = self.price_data[tickers].pct_change().dropna().tail(self.config["risk_lookback_window"])
             if returns.empty:
                 continue
             equal_weights = np.ones(len(tickers)) / len(tickers)
@@ -49,7 +49,7 @@ class PortfolioConstructor:
         top_level_weights = self._risk_parity_weights(
             tickers=cluster_ids,
             price_data=cluster_ret_df,
-            lookback=504
+            lookback=self.config["risk_lookback_window"]
         )
 
         # Step 3: For Each Cluster, Select Top-N by Sentiment and Apply Risk Parity
@@ -80,7 +80,7 @@ class PortfolioConstructor:
             rp_weights = self._risk_parity_weights(
                 tickers=selected_tickers,
                 price_data=self.price_data,
-                lookback=504
+                lookback=self.config["risk_lookback_window"]
             )
 
             cluster_weight = top_level_weights.get(cluster_id, 0.0)

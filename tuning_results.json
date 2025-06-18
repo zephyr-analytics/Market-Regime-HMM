@@ -7,9 +7,10 @@
             "max_assets_per_cluster": 3,
             "stop_loss": -0.05,
             "max_train_years": 8,
-            "use_stop_loss": true
+            "use_stop_loss": false,
+            "risk_lookback_window": 63
         },
-        "score": 1.3898461887475935
+        "score": 1.2596467014834676
     },
     {
         "params": {
@@ -19,8 +20,48 @@
             "max_assets_per_cluster": 3,
             "stop_loss": -0.05,
             "max_train_years": 8,
-            "use_stop_loss": false
+            "use_stop_loss": false,
+            "risk_lookback_window": 126
         },
-        "score": 1.4091757905059854
+        "score": 1.5155683872812478
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3,
+            "stop_loss": -0.05,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback_window": 252
+        },
+        "score": 1.403940832179583
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3,
+            "stop_loss": -0.05,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback_window": 504
+        },
+        "score": 1.4776653058798348
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 10,
+            "moving_average": 168,
+            "max_assets_per_cluster": 3,
+            "stop_loss": -0.05,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback_window": 1008
+        },
+        "score": 2.003405213763521
     }
 ]

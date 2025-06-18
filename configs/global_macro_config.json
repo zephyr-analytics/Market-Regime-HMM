@@ -30,6 +30,7 @@
     "use_stop_loss": false,
     "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
     "persist": false,
+    "risk_lookback_window": 504,
     "grid": {
         "min_clusters": [3],
         "max_clusters": [10],
@@ -37,6 +38,7 @@
         "max_assets_per_cluster": [3],
         "stop_loss": [-0.05],
         "max_train_years": [8],
-        "use_stop_loss": [false]
+        "use_stop_loss": [false],
+        "risk_lookback_window": [63, 126, 252, 504, 1008]
     }
 }

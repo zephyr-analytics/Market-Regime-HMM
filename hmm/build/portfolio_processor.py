@@ -33,28 +33,37 @@ class PortfolioProcessor:
         self.data = data.loc[self.start_date:self.end_date]
 
     def process(self):
-        """
-        Method to process through the PortfolioProcessor.
-        """
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
         parsed_objects = self.load_models_inference(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
 
-        sma_lookback = self.config["moving_average"]
+        lookback = self.config["moving_average"]
         valid_tickers = []
-        for ticker in state_data.keys():
+
+        for ticker in state_data:
             if ticker not in self.data.columns:
                 continue
+
             prices = self.data[ticker].dropna()
-            if len(prices) < sma_lookback:
+            if len(prices) < lookback:
                 continue
-            sma_series = prices.rolling(window=sma_lookback).mean()
-            latest_price = prices.iloc[-1]
-            latest_sma = sma_series.iloc[-1]
-            if latest_price > latest_sma:
+
+            test_data = parsed_objects[ticker].test_data
+            momentum = test_data["Momentum"].iloc[-1]
+
+            # if pd.isna(momentum) or momentum <= 0:
+            #     continue
+
+            # --- Use fixed lookback SMA only ---
+            ma = prices.rolling(window=lookback).mean()
+
+            if prices.iloc[-1] > ma.iloc[-1]:
                 valid_tickers.append(ticker)
 
-        state_data = {tkr: state_data[tkr] for tkr in valid_tickers}
+        state_data = {t: state_data[t] for t in valid_tickers}
+
+        if not state_data:
+            return {"SHV": 1}
 
         sequences, tickers = self.prepare_state_sequences(state_data, lookback=126)
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)

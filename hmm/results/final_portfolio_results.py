@@ -143,14 +143,25 @@ class FinalResultsPortfolio:
             The name of the file to save the plot. Default is 'returns_heatmap.html'.
         """
         monthly_returns = returns.copy()
-        # monthly_returns.index = monthly_returns.index + pd.DateOffset(months=1)
         monthly_returns_df = monthly_returns.to_frame(name='Monthly Return')
         monthly_returns_df['Monthly Return'] *= 100
         monthly_returns_df['Year'] = monthly_returns_df.index.year
         monthly_returns_df['Month'] = monthly_returns_df.index.month
 
-        yearly_returns = returns.copy()
-        yearly_returns = yearly_returns.resample('Y').apply(utilities.compound_returns)
+        # Step 2: Identify the first year in the dataset
+        first_year = monthly_returns_df['Year'].iloc[0]
+
+        # Step 3: Check if the first year is partial (i.e., has fewer than 12 months)
+        month_counts = monthly_returns_df.groupby('Year')['Month'].nunique()
+        if month_counts.get(first_year, 0) < 12:
+            # Remove data from the first year
+            monthly_returns_df = monthly_returns_df[monthly_returns_df['Year'] != first_year]
+
+        # Step 4: Recompute yearly returns from the trimmed monthly returns
+        filtered_returns = monthly_returns_df['Monthly Return'] / 100  # convert back to decimal
+        filtered_returns.index = pd.to_datetime(monthly_returns_df.index)
+
+        yearly_returns = filtered_returns.resample('Y').apply(utilities.compound_returns)
         yearly_returns_df = yearly_returns.to_frame(name='Yearly Return')
         yearly_returns_df['Yearly Return'] *= 100  # Convert to percentage
         yearly_returns_df['Year'] = yearly_returns_df.index.year

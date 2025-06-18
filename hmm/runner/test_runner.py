@@ -87,7 +87,7 @@ class TestRunner(BaseRunner):
             test_window_end = test_start + MonthEnd(0)
 
             # These define the full data slice needed: must include training and test
-            self.config["current_start"] = full_data_start.strftime("%Y-%m-%d")
+            self.config["current_start"] = training_start.strftime("%Y-%m-%d")
             self.config["current_end"] = test_window_end.strftime("%Y-%m-%d")
 
             logger.info(f"\n=== TEST WINDOW: {test_start.date()} to {test_window_end.date()} ===")
@@ -116,7 +116,8 @@ class TestRunner(BaseRunner):
                 data=self.data,
                 start_date=trade_window_start,
                 end_date=trade_window_end,
-                threshold=self.config["stop_loss"]
+                threshold=self.config["stop_loss"],
+                use_stop_loss=self.config["use_stop_loss"]
             )
 
             logger.info(f"Return: {portfolio_return * 100:.2f}%")
@@ -142,8 +143,8 @@ class TestRunner(BaseRunner):
             all_trade_details.append(trade_details)
 
             test_start += relativedelta(months=1)
-        if self.config["persist"]:
-            utilities.plot_cumulative_returns(all_trade_details=all_trade_details)
+        # if self.config["persist"]:
+        utilities.plot_cumulative_returns(all_trade_details=all_trade_details)
 
         # Save the results
         timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")

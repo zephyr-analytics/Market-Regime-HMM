@@ -49,7 +49,7 @@ class PortfolioConstructor:
         top_level_weights = self._risk_parity_weights(
             tickers=cluster_ids,
             price_data=cluster_ret_df,
-            lookback=252
+            lookback=504
         )
 
         # Step 3: For Each Cluster, Select Top-N by Sentiment and Apply Risk Parity
@@ -80,7 +80,7 @@ class PortfolioConstructor:
             rp_weights = self._risk_parity_weights(
                 tickers=selected_tickers,
                 price_data=self.price_data,
-                lookback=252
+                lookback=504
             )
 
             cluster_weight = top_level_weights.get(cluster_id, 0.0)

@@ -42,11 +42,15 @@ The config files are by portfolio construction.
 
 -"stop_loss": (negative float, tunable parameter), threshold single day loss to exit an assest position.
 
+-"use_stop_loss": (true or false, tunable parameter), whether the model implements using the stop_loss parameter.
+
 -"data_file_path": (string), Path to the repo for storage of data file.
 
 -"persist": (true or false), This should be set to false if running test. Set to true to inspect and calibrate overall model performance.
 
--"grid": (dict), Dictionary of tunable parameter lists.
+-"risk_lookback_window": (int), time in trading days to look back for risk parity assessement.
+
+-"param_grid": (dict), Dictionary of tunable parameter lists, for reference see above parameter explaination.
 
 ## Config types
 -NOTE: Rather than swap tickers around a second argument is used to flag which config file to use.

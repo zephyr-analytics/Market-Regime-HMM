@@ -173,7 +173,9 @@ class ModelsTrainingProcessor:
             Number of retries to train the model.
         """
         X = training.train_data[['Momentum', 'Volatility', "Short_Rates"]].values.copy()
-
+        # TODO possibly create a state object that stores current state of asset. 
+        # NOTE I am not certain the impact of this as HMM strives to focus on each new state
+        # being an indepentent event, but the initial guesses from KMeans is lacking.
         kmeans = KMeans(n_clusters=n_states, init='k-means++', random_state=42)
         labels = kmeans.fit_predict(X)
         initial_means = kmeans.cluster_centers_

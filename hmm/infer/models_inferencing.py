@@ -2,6 +2,7 @@
 Getter and setter module for inferencing models.
 """
 
+import numpy as np
 import pandas as pd
 
 from hmmlearn.hmm import GaussianHMM
@@ -13,39 +14,47 @@ class ModelsInferencing:
     """
 
     def __init__(self):
-        self._ticker = None
-        self._start_date = None
-        self._end_date = None
-        self._model = None
-        self._train_data = None
-        self._test_data = None
-        self._train_states = None
-        self._test_states = None
-        self._state_labels = None
-        self._forecast_distribution = None
+        self._ticker: str=None
+        self._start_date: str=None
+        self._end_date: str=None
+        self._model: GaussianHMM=None
+        self._train_data: pd.Series=None
+        self._test_data: pd.Series=None
+        self._train_states: pd.Series=None
+        self._test_states:  np.ndarray=None
+        self._state_labels: dict=None
+        self._forecast_distribution: dict=None
 
     @property
     def ticker(self) -> str:
         """
-        str: The ticker symbol of the financial instrument.
+        Getter method for ticker.
+
+        Returns
+        -------
+        str: The ticker symbol of the financial asset.
         """
         return self._ticker
 
     @ticker.setter
     def ticker(self, value: str):
         """
-        Set the ticker symbol.
+        Setter method for ticker.
 
         Parameters
         ----------
         value : str
-            The ticker symbol of the financial instrument.
+            The ticker symbol of the financial asset.
         """
         self._ticker = value
 
     @property
     def start_date(self) -> str:
         """
+        Getter method for start_date.
+
+        Returns
+        -------
         str: The start date for training data selection (format: 'YYYY-MM-DD').
         """
         return self._start_date
@@ -53,7 +62,7 @@ class ModelsInferencing:
     @start_date.setter
     def start_date(self, value: str):
         """
-        Set the start date for training data selection.
+        Setter method for start date.
 
         Parameters
         ----------
@@ -65,6 +74,8 @@ class ModelsInferencing:
     @property
     def end_date(self) -> str:
         """
+        Getter method for end_date.
+
         str: The end date for training data selection (format: 'YYYY-MM-DD').
         """
         return self._end_date
@@ -72,7 +83,7 @@ class ModelsInferencing:
     @end_date.setter
     def end_date(self, value: str):
         """
-        Set the end date for training data selection.
+        Setter method for end_date.
 
         Parameters
         ----------
@@ -84,57 +95,69 @@ class ModelsInferencing:
     @property
     def model(self) -> GaussianHMM:
         """
-        GaussianHMM: A dictionary representing the trained model or model configuration.
+        Getter method for the GaussianHMM model object.
+
+        Returns
+        -------
+        GaussianHMM : Trained GaussianHMM model object.
         """
         return self._model
 
     @model.setter
     def model(self, value: GaussianHMM):
         """
-        Set the model configuration or trained model.
+        Setter method for the GaussianHMM model object.
 
         Parameters
         ----------
         value : GaussianHMM
-            Dictionary containing model parameters or the model itself.
+            Trained GaussianHMM model object.
         """
         self._model = value
 
     @property
     def train_data(self) -> pd.Series:
         """
-        pd.DataFrame: A string reference or path to the training dataset.
+        Getter method for train_data.
+
+        Returns
+        -------
+        pd.Series : Series of trimmed training data.
         """
         return self._train_data
 
     @train_data.setter
     def train_data(self, value: pd.Series):
         """
-        Set the training data reference or path.
+        Setter method for train_data.
 
         Parameters
         ----------
-        value : pd.DataFrame
-            Reference or path to the training dataset.
+        value : pd.Series
+            Series of trimmed training data.
         """
         self._train_data = value
 
     @property
     def test_data(self) -> pd.Series:
         """
-        pandas.Series: The testing data series.
+        Getter method for test_data.
+
+        Returns
+        -------
+        pd.Series : Series of trimmed test_data.
         """
         return self._test_data
 
     @test_data.setter
     def test_data(self, value: pd.Series):
         """
-        Set the testing data.
+        Setter method for test_data.
 
         Parameters
         ----------
-        value : pandas.Series
-            Time series data used for testing.
+        value : pd.Series
+            Series of trimmed test_data.
         """
         self._test_data = value
 
@@ -179,37 +202,43 @@ class ModelsInferencing:
     @property
     def state_labels(self) -> dict:
         """
-        dict: A dictionary mapping states to labels or interpretations.
+        Getter method for state_labels.
+
+        Returns
+        -------
+        dict : Dictionary containing state label mappings to n_states.
         """
         return self._state_labels
 
     @state_labels.setter
     def state_labels(self, value: dict):
         """
-        Set the state labels.
+        Setter method for state labels.
 
         Parameters
         ----------
         value : dict
-            Dictionary mapping state indices or codes to descriptive labels.
+            Dictionary containing state label mappings to n_states.
         """
         self._state_labels = value
 
     @property
     def forecast_distribution(self) -> dict:
         """
-        dict: A dictionary mapping states to labels or interpretations.
+        Getter method for forecast_distribution.
+
+        dict : Dictionary containing forecasted distributions of states.
         """
         return self._forecast_distribution
 
     @forecast_distribution.setter
     def forecast_distribution(self, value: dict):
         """
-        Set the state labels.
+        Setter method for forecast_distribution.
 
         Parameters
         ----------
         value : dict
-            Dictionary mapping state indices or codes to descriptive labels.
+            Dictionary containing forecasted distributions of states.
         """
         self._forecast_distribution = value

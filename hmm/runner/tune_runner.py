@@ -25,22 +25,28 @@ class TuneRunner(BaseRunner):
         """
         Initialize TuneRunner.
 
-        Args:
-            config (dict): Base configuration including a "grid" entry.
-            data (pd.DataFrame): Market or asset data.
+        Parameters
+        ----------
+        config : dict 
+            Base configuration including a "grid" entry.
+        data : pd.Dataframe
+            Market or asset data.
         """
         super().__init__(config=config, data=data)
-        self.param_grid = config.get("grid", {})
+        self.param_grid = config.get("param_grid", {})
 
-
-    def custom_score(self, results_df: pd.DataFrame) -> float:
+    @staticmethod
+    def custom_score(results_df: pd.DataFrame) -> float:
         """
         Custom scoring logic for evaluating model performance.
 
-        Args:
-            results_df (pd.DataFrame): DataFrame of test results.
+        Parameters
+        ----------
+        results_df : pd.DataFrame: 
+            DataFrame of test results.
 
-        Returns:
+        Returns
+        -------
             float: Score for this configuration.
         """
         portfolio_values = utilities.compute_portfolio_value(returns=results_df["portfolio_return"])
@@ -50,12 +56,16 @@ class TuneRunner(BaseRunner):
         return abs(cagr / max_drawdown)
 
 
-    def run(self) -> tuple[dict, list]:
+    def run(self) -> tuple [dict, dict]:
         """
         Executes tuning over all parameter combinations.
 
-        Returns:
-            tuple: (best_params_dict, list of all tuning logs)
+        Returns
+        -------
+        best_params : dict 
+            Dictionary of configuartions values as keys and params as values.
+        tuning_log : dict
+            Dictionary of all tuning runs and scores of the tuning run.
         """
         tuning_log = []
         best_score = float("-inf")

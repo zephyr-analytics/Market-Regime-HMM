@@ -1,0 +1,28 @@
+[
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 10,
+            "stop_loss": -0.04,
+            "max_train_years": 8,
+            "use_stop_loss": true,
+            "risk_lookback_window": 504
+        },
+        "score": 0.6847231322266223
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 8,
+            "moving_average": 168,
+            "max_assets_per_cluster": 10,
+            "stop_loss": -0.04,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback_window": 504
+        },
+        "score": 1.1442977176788443
+    }
+]

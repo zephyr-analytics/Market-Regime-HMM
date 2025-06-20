@@ -2,6 +2,7 @@
 Getter and setter module for training models.
 """
 
+import numpy as np
 import pandas as pd
 
 from hmmlearn.hmm import GaussianHMM
@@ -13,39 +14,47 @@ class ModelsTraining:
     """
 
     def __init__(self):
-        self._ticker = None
-        self._start_date = None
-        self._end_date = None
-        self._data = None
-        self._train_data = None
-        self._test_data = None
-        self._train_states = None
-        self._features = None
-        self._model = None
-        self._state_labels = None
+        self._ticker: str=None
+        self._start_date: str=None
+        self._end_date: str=None
+        self._data: pd.DataFrame=None
+        self._train_data: pd.Series=None
+        self._test_data: pd.Series=None
+        self._train_states: np.ndarray=None
+        self._features: pd.Series=None
+        self._model: GaussianHMM=None
+        self._state_labels: dict=None
 
     @property
     def ticker(self) -> str:
         """
-        str: The ticker symbol of the financial instrument.
+        Getter method for ticker.
+
+        Returns
+        -------
+        str: The ticker symbol of the financial asset.
         """
         return self._ticker
 
     @ticker.setter
     def ticker(self, value: str):
         """
-        Set the ticker symbol.
+        Setter method for ticker.
 
         Parameters
         ----------
         value : str
-            The ticker symbol of the financial instrument.
+            The ticker symbol of the financial asset.
         """
         self._ticker = value
 
     @property
     def start_date(self) -> str:
         """
+        Getter method for start_date.
+
+        Returns
+        -------
         str: The start date for training data selection (format: 'YYYY-MM-DD').
         """
         return self._start_date
@@ -53,7 +62,7 @@ class ModelsTraining:
     @start_date.setter
     def start_date(self, value: str):
         """
-        Set the start date for training data selection.
+        Setter method for start date.
 
         Parameters
         ----------
@@ -65,6 +74,8 @@ class ModelsTraining:
     @property
     def end_date(self) -> str:
         """
+        Getter method for end_date.
+
         str: The end date for training data selection (format: 'YYYY-MM-DD').
         """
         return self._end_date
@@ -72,7 +83,7 @@ class ModelsTraining:
     @end_date.setter
     def end_date(self, value: str):
         """
-        Set the end date for training data selection.
+        Setter method for end_date.
 
         Parameters
         ----------
@@ -160,19 +171,23 @@ class ModelsTraining:
     @property
     def model(self) -> GaussianHMM:
         """
-        GaussianHMM: A dictionary representing the trained model or model configuration.
+        Getter method for the GaussianHMM model object.
+
+        Returns
+        -------
+        GaussianHMM : Trained GaussianHMM model object.
         """
         return self._model
 
     @model.setter
     def model(self, value: GaussianHMM):
         """
-        Set the model configuration or trained model.
+        Setter method for the GaussianHMM model object.
 
         Parameters
         ----------
         value : GaussianHMM
-            Dictionary containing model parameters or the model itself.
+            Trained GaussianHMM model object.
         """
         self._model = value
 
@@ -198,18 +213,22 @@ class ModelsTraining:
     @property
     def state_labels(self) -> dict:
         """
-        dict: A dictionary mapping states to labels or interpretations.
+        Getter method for state_labels.
+
+        Returns
+        -------
+        dict : Dictionary containing state label mappings to n_states.
         """
         return self._state_labels
 
     @state_labels.setter
     def state_labels(self, value: dict):
         """
-        Set the state labels.
+        Setter method for state labels.
 
         Parameters
         ----------
         value : dict
-            Dictionary mapping state indices or codes to descriptive labels.
+            Dictionary containing state label mappings to n_states.
         """
         self._state_labels = value

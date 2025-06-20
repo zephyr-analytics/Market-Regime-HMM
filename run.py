@@ -13,6 +13,9 @@ from hmm import utilities
 logger = logging.getLogger(__name__)
 
 def main():
+    """
+    Main method for running the program.
+    """
     parser = argparse.ArgumentParser(description="Run Market Regime HMM Model using JSON Config")
 
     # Model operation modes

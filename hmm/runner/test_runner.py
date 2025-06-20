@@ -30,12 +30,14 @@ def process_ticker(config: dict, data: pd.DataFrame, ticker: str) -> bool:
     Parameters
     ----------
     config : dict
+        Dictionary containing configured properties.
     data : pd.DataFrame
+        Dataframe containing data for the run being processed.
     ticker : str
-
+        String representing the ticker being processed.
     Returns
     -------
-    bool
+        bool : Returns of bool of if the ticker was processed through train and infer.
     """
     logger.debug(f"[{ticker}] Starting processing...")
 
@@ -63,6 +65,9 @@ class TestRunner(BaseRunner):
     Class for running test tasks.
     """
     def run(self):
+        """
+        Method for processing the run pipeline.
+        """
         original_start = datetime.strptime(self.config["start_date"], "%Y-%m-%d")
         final_end = datetime.strptime(self.config["end_date"], "%Y-%m-%d")
 
@@ -143,8 +148,9 @@ class TestRunner(BaseRunner):
             all_trade_details.append(trade_details)
 
             test_start += relativedelta(months=1)
-        # if self.config["persist"]:
-        utilities.plot_cumulative_returns(all_trade_details=all_trade_details)
+
+        if self.config["persist"]:
+            utilities.plot_cumulative_returns(all_trade_details=all_trade_details)
 
         # Save the results
         timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")

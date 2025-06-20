@@ -19,6 +19,7 @@ class SignalsRunner(BaseRunner):
     """
     def run(self):
         """
+        Method for processing the run pipeline.
         """
         original_start = datetime.strptime(self.config["start_date"], "%Y-%m-%d")
         final_end = datetime.strptime(self.config["end_date"], "%Y-%m-%d")

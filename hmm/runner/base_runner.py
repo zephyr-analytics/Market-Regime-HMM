@@ -12,4 +12,7 @@ class BaseRunner:
         self.data = data
 
     def run(self):
+        """
+        Method for processing the run pipeline.
+        """
         raise NotImplementedError("Subclasses must implement the run method")

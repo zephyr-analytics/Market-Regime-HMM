@@ -33,10 +33,14 @@ class PortfolioProcessor:
         self.data = data.loc[self.start_date:self.end_date]
 
     def process(self):
+        """
+        Method for processing through the pipeline.
+        """
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
         parsed_objects = self.load_models_inference(directory=file_path, tickers=self.config["tickers"])
         state_data = self.extract_states(parsed_objects=parsed_objects)
-
+        # NOTE moving average needs to be better fitted to the individual asset instead
+        # of an overall moving average for all assets.
         lookback = self.config["moving_average"]
         valid_tickers = []
 
@@ -65,7 +69,7 @@ class PortfolioProcessor:
         if not state_data:
             return {"SHV": 1}
 
-        sequences, tickers = self.prepare_state_sequences(state_data, lookback=63)
+        sequences, tickers = self.prepare_state_sequences(state_data, lookback=self.config["sequence_lookback"])
         forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
         results = cluster_sequences(
             sequences=sequences, tickers=tickers, max_clusters=self.max_clusters, min_clusters=self.min_clusters
@@ -86,7 +90,9 @@ class PortfolioProcessor:
             )
             results_process.process()
             return portfolio
+
         else:
+
             return portfolio
 
 
@@ -159,7 +165,7 @@ class PortfolioProcessor:
 
 
     @staticmethod
-    def prepare_state_sequences(state_data: dict, lookback: int) -> np.ndarray:
+    def prepare_state_sequences(state_data: dict, lookback: int) -> tuple [np.ndarray, list]:
         """
         Method to parse state data into state sequences for clustering.
 
@@ -172,7 +178,10 @@ class PortfolioProcessor:
 
         Returns
         -------
-        np.ndarray : An array of state sequences.
+        sequences: np.ndarray
+            An array of state sequences.
+        tickers : list
+            List of string tickers.
         """
         all_labels = set()
         for data in state_data.values():

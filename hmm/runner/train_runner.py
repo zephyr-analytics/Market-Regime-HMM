@@ -19,6 +19,7 @@ class TrainRunner(BaseRunner):
     """
     def run(self):
         """
+        Method for processing the run pipeline.
         """
         for ticker in self.config["tickers"]:
             logger.info(f"Training model for {ticker}")

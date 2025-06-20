@@ -26,6 +26,8 @@ def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int, m
         List of ticker symbols.
     max_clusters : int
         Upper limit of allowed clusters.
+    min_clusters : int
+        Lower limit of allowed clusters.
 
     Returns
     -------
@@ -102,9 +104,20 @@ def cluster_sequences(sequences: np.ndarray, tickers: list, max_clusters: int, m
 
 
 @staticmethod
-def evaluate_clustering_scores(sequences: np.ndarray, linkage_matrix, min_clusters: int, max_clusters: int) -> tuple:
+def evaluate_clustering_scores(sequences: np.ndarray, linkage_matrix, min_clusters: int, max_clusters: int) -> tuple [list, dict]:
     """
     Evaluate clustering performance metrics across a range of cluster counts.
+
+    Parameters
+    ----------
+    sequences : np.ndarray
+        Array of trimmed state sequences
+    linkage_matrix : 
+        Matrix of linkage between clusters
+    min_clusters : int
+        Lower limit of allowed clusters.
+    max_clusters : int
+        Upper limit of allowed clusters.
 
     Returns
     -------

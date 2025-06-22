@@ -48,7 +48,7 @@ class PortfolioProcessor:
         results = self.cluster_sequences(clustering=clustering)
 
         clusters = results["clusters"]
-
+        clustering.clusters = clusters
         constructor = PortfolioConstructor()
         portfolio = constructor.process(clustering=clustering)
 

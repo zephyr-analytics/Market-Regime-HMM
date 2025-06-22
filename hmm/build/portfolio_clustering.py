@@ -23,7 +23,7 @@ class PortfolioClustering:
         self._forecast_data: dict=None
         self._sequences: list=None
         self._clustering_tickers: list=None
-        self._clsuters: dict=None
+        self._clusters: dict=None
         self._cluster_assets: dict=None
         self._max_assets_per_cluster: int=None
         self._risk_lookback: int=None
@@ -290,7 +290,7 @@ class PortfolioClustering:
         -------
         dict: Dictionary containing cluster data from initial clustering.
         """
-        return self._clustering_tickers
+        return self._clusters
 
     @clusters.setter
     def clusters(self, value: dict):
@@ -336,7 +336,7 @@ class PortfolioClustering:
         -------
         dict : Dictionary containing clusters as keys and returns as values.
         """
-        return self._clustering_tickers
+        return self._cluster_returns
 
     @cluster_returns.setter
     def cluster_returns(self, value: dict):
@@ -382,7 +382,7 @@ class PortfolioClustering:
         -------
         int : Integer representing the risk parity lookback window.
         """
-        return self._max_assets_per_cluster
+        return self._risk_lookback
 
     @risk_lookback.setter
     def risk_lookback(self, value: int):

@@ -31,11 +31,10 @@ class PortfolioConstructor:
         """
         # TODO if possible it might be better to not use compounded returns for the risk component.
         # It might be best to go back to using a raw series of returns. 
-        cluster_assets = self._group_assets_by_cluster(clusters=self.clusters)
-        cluster_returns = self._compute_cluster_returns(
-            cluster_assets=cluster_assets, price_data=self.price_data, lookback=self.config["risk_lookback"]
-        )
+        self._group_assets_by_cluster(clustering=clustering)
+        self._compute_cluster_returns(clustering=clustering)
 
+        cluster_returns = clustering.cluster_returns
         if not cluster_returns:
             return {"SHV": 1.0}
 
@@ -45,13 +44,17 @@ class PortfolioConstructor:
         cluster_weights = self._risk_parity_weights(
             tickers=cluster_ids,
             price_data=cluster_ret_df,
-            lookback=self.config["risk_lookback"]
+            lookback=clustering.risk_lookback
         )
 
         sentiment_weights, orphaned_weight = self._compute_sentiment_weights(
-            cluster_ids=cluster_ids, cluster_weights=cluster_weights, clusters=self.clusters, 
-            forecast_data=self.forecast_data, price_data=self.price_data, lookback=self.config["risk_lookback"], 
-            max_assets=self.clustering.max_assets_per_cluster
+            cluster_ids=cluster_ids, 
+            cluster_weights=cluster_weights, 
+            clusters=clustering.clusters, 
+            forecast_data=clustering.forecast_data, 
+            price_data=clustering.price_data, 
+            lookback=clustering.risk_lookback, 
+            max_assets=clustering.max_assets_per_cluster
         )
 
         if orphaned_weight > 0:
@@ -85,7 +88,7 @@ class PortfolioConstructor:
 
 
     @staticmethod
-    def _compute_cluster_returns(clustering: PortfolioClustering, lookback: int):
+    def _compute_cluster_returns(clustering: PortfolioClustering):
         """
         Method to risk parity clusters.
 
@@ -98,6 +101,7 @@ class PortfolioConstructor:
             Integer representing the lookback window for risk parity.
         """
         cluster_assets = clustering.cluster_assets.copy()
+        lookback = clustering.risk_lookback
         price_data = clustering.price_data.copy()
         cluster_returns = {}
         for cluster_id, tickers in cluster_assets.items():

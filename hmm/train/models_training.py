@@ -32,7 +32,7 @@ class ModelsTraining:
 
         Returns
         -------
-        str: The ticker symbol of the financial asset.
+        str : The ticker symbol of the financial asset.
         """
         return self._ticker
 
@@ -95,6 +95,10 @@ class ModelsTraining:
     @property
     def train_data(self) -> pd.DataFrame:
         """
+        Getter method for train_data.
+
+        Returns
+        -------
         pd.DataFrame: A string reference or path to the training dataset.
         """
         return self._train_data
@@ -102,7 +106,7 @@ class ModelsTraining:
     @train_data.setter
     def train_data(self, value: pd.DataFrame):
         """
-        Set the training data reference or path.
+        Setter method for train_data.
 
         Parameters
         ----------
@@ -114,6 +118,10 @@ class ModelsTraining:
     @property
     def test_data(self) -> pd.Series:
         """
+        Getter method for test_data.
+
+        Returns
+        -------
         pandas.Series: The testing data series.
         """
         return self._test_data
@@ -121,7 +129,7 @@ class ModelsTraining:
     @test_data.setter
     def test_data(self, value: pd.Series):
         """
-        Set the testing data.
+        Setter method for testing data.
 
         Parameters
         ----------
@@ -133,6 +141,10 @@ class ModelsTraining:
     @property
     def features(self) -> list:
         """
+        Getter method for features.
+
+        Returns
+        -------
         list: A list of feature names used for training.
         """
         return self._features
@@ -140,7 +152,7 @@ class ModelsTraining:
     @features.setter
     def features(self, value: list):
         """
-        Set the features used for training.
+        Setter method for features.
 
         Parameters
         ----------
@@ -152,6 +164,10 @@ class ModelsTraining:
     @property
     def data(self) -> pd.Series:
         """
+        Getter method for data.
+
+        Returns
+        -------
         pandas.Series: The complete dataset used for training and testing.
         """
         return self._data
@@ -159,7 +175,7 @@ class ModelsTraining:
     @data.setter
     def data(self, value: pd.Series):
         """
-        Set the complete dataset.
+        Setter method for data.
 
         Parameters
         ----------
@@ -194,6 +210,10 @@ class ModelsTraining:
     @property
     def train_states(self) -> dict:
         """
+        Getter method for train_states
+
+        Returns
+        -------
         dict: A dictionary of training states or results from model fitting.
         """
         return self._train_states
@@ -201,7 +221,7 @@ class ModelsTraining:
     @train_states.setter
     def train_states(self, value: dict):
         """
-        Set the training states.
+        Setter method for train_states.
 
         Parameters
         ----------

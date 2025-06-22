@@ -164,6 +164,10 @@ class ModelsInferencing:
     @property
     def train_states(self) -> dict:
         """
+        Getter method for train_states.
+
+        Returns
+        -------
         dict: A dictionary of training states or results from model fitting.
         """
         return self._train_states
@@ -171,7 +175,7 @@ class ModelsInferencing:
     @train_states.setter
     def train_states(self, value: dict):
         """
-        Set the training states.
+        Setter method the training states.
 
         Parameters
         ----------
@@ -183,6 +187,10 @@ class ModelsInferencing:
     @property
     def test_states(self) -> dict:
         """
+        Getter method for test_states
+
+        Returns
+        -------
         dict: A dictionary of training states or results from model fitting.
         """
         return self._test_states

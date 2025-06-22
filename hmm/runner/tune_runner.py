@@ -49,11 +49,26 @@ class TuneRunner(BaseRunner):
         -------
             float: Score for this configuration.
         """
-        portfolio_values = utilities.compute_portfolio_value(returns=results_df["portfolio_return"])
-        cagr = utilities.calculate_cagr(portfolio_value=portfolio_values)
-        max_drawdown = utilities.calculate_max_drawdown(portfolio_value=portfolio_values)
+        results_df["return_end"] = pd.to_datetime(results_df["return_end"])
 
-        return abs(cagr / max_drawdown)
+        # Set index for resampling
+        results_df = results_df.set_index("return_end").sort_index()
+
+        # Get the return series
+        filtered_returns = results_df["portfolio_return"]
+
+        # Resample to yearly and compute compound returns
+        yearly_returns = filtered_returns.resample('Y').apply(utilities.compound_returns)
+        yearly_returns_df = yearly_returns.to_frame(name='Yearly Return')
+        yearly_returns_df['Yearly Return'] *= 100  # Convert to percentage
+        yearly_returns_df['Year'] = yearly_returns_df.index.year
+        yearly_returns_df = yearly_returns_df.sort_values('Year')
+
+        # Calculate AAR and Sharpe ratio
+        aar = utilities.calculate_average_annual_return(returns=results_df["portfolio_return"])
+        sharpe_ratio = aar / yearly_returns_df["Yearly Return"].std()
+
+        return sharpe_ratio
 
 
     def run(self) -> tuple [dict, dict]:

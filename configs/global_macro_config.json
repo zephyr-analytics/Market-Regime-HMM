@@ -17,12 +17,12 @@
     ],
     "volatility_interval": 21,
     "min_clusters": 3,
-    "max_clusters": 10,
+    "max_clusters": 12,
     "max_assets_per_cluster": 3,
     "train_test_split": 0.70,
-    "start_date": "2015-08-01",
+    "start_date": "2018-08-01",
     "end_date": "2025-05-31",
-    "model_warmup": 2,
+    "model_warmup": 5,
     "max_train_years": 8,
     "max_retries": 20,
     "moving_average": 168,
@@ -30,17 +30,17 @@
     "use_stop_loss": false,
     "data_file_path": "/Users/monic/Documents/HMM_Model/asset_data.csv",
     "persist": false,
-    "risk_lookback": 504,
+    "risk_lookback": 63,
     "sequence_lookback": 63,
     "param_grid": {
         "min_clusters": [3],
-        "max_clusters": [10],
+        "max_clusters": [12],
         "moving_average": [168],
         "max_assets_per_cluster": [3],
         "stop_loss": [-0.05],
         "max_train_years": [8],
         "use_stop_loss": [false],
         "risk_lookback": [504],
-        "sequence_lookback": []
+        "sequence_lookback": [63]
     }
 }

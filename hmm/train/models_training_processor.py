@@ -142,15 +142,15 @@ class ModelsTrainingProcessor:
         rolling_vol_1 = training_data.pct_change().rolling(window=volatility_interval).std()
 
         features = pd.concat([momentum, rolling_vol_1, short_rate], axis=1).dropna()
-        features.columns = ['Momentum', 'Volatility', "Short_Rates"]
+        features.columns = ["Momentum", "Volatility", "Short_Rates"]
 
         scaler = StandardScaler()
-        scaled_part = scaler.fit_transform(features[['Momentum', 'Volatility']])
+        scaled_part = scaler.fit_transform(features[["Momentum", "Volatility"]])
         scaled_features = pd.DataFrame(
-            scaled_part, index=features.index, columns=['Momentum', 'Volatility']
+            scaled_part, index=features.index, columns=["Momentum", "Volatility"]
         )
 
-        scaled_features['Short_Rates'] = features['Short_Rates']
+        scaled_features["Short_Rates"] = features["Short_Rates"]
 
         split_index = int(len(scaled_features) * split)
         training.train_data = scaled_features.iloc[:split_index]
@@ -172,11 +172,11 @@ class ModelsTrainingProcessor:
         max_retries : int
             Number of retries to train the model.
         """
-        X = training.train_data[['Momentum', 'Volatility', "Short_Rates"]].values.copy()
+        X = training.train_data[["Momentum", "Volatility", "Short_Rates"]].values.copy()
         # TODO possibly create a state object that stores current state of asset. 
         # NOTE I am not certain the impact of this as HMM strives to focus on each new state
         # being an indepentent event, but the initial guesses from KMeans is lacking.
-        kmeans = KMeans(n_clusters=n_states, init='k-means++', random_state=42)
+        kmeans = KMeans(n_clusters=n_states, init="k-means++", random_state=42)
         labels = kmeans.fit_predict(X)
         initial_means = kmeans.cluster_centers_
 

@@ -20,6 +20,9 @@ class PortfolioClustering:
         self._price_data: pd.DataFrame=None
         self._moving_average: int=None
         self._state_data: dict=None
+        self._forecast_data: dict=None
+        self._sequences: list=None
+        self._clustering_tickers: list=None
 
     @property
     def parsed_objects(self) -> dict:
@@ -204,3 +207,72 @@ class PortfolioClustering:
             Integer representing the moving average length.
         """
         self._state_data = value
+
+    @property
+    def forecast_data(self) -> dict:
+        """
+        Getter method for forecast_data.
+
+        Returns
+        -------
+        dict : Dictionary of propagated forward forecast probability.
+        """
+        return self._forecast_data
+
+    @forecast_data.setter
+    def forecast_data(self, value: dict):
+        """
+        Setter method for forecast_data.
+
+        Parameters
+        ----------
+        value : dict
+            Dictionary of propagated forward forecast probability.
+        """
+        self._forecast_data = value
+
+    @property
+    def sequences(self) -> list:
+        """
+        Getter method for sequences.
+
+        Returns
+        -------
+        list : List of state sequences.
+        """
+        return self._sequences
+
+    @sequences.setter
+    def sequences(self, value: list):
+        """
+        Setter method for sequences.
+
+        Parameters
+        ----------
+        value : list
+            List of state sequences.
+        """
+        self._sequences = value
+
+    @property
+    def clustering_tickers(self) -> list:
+        """
+        Getter method for clustering_tickers.
+
+        Returns
+        -------
+        list : List of tickers to be clustered.
+        """
+        return self._clustering_tickers
+
+    @clustering_tickers.setter
+    def clustering_tickers(self, value: list):
+        """
+        Setter method for clustering_tickers.
+
+        Parameters
+        ----------
+        value : list
+            List of tickers to be clustered.
+        """
+        self._clustering_tickers = value

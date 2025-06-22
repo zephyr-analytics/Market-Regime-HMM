@@ -5,9 +5,13 @@ import os
 
 import numpy as np
 import pandas as pd
-from scipy.stats import zscore
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
+from scipy.cluster.hierarchy import fcluster
+from scipy.stats import zscore
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+
 
 def calculate_portfolio_return(
     portfolio: dict, data: pd.DataFrame, start_date: str, end_date: str, threshold: float, use_stop_loss: bool
@@ -111,6 +115,51 @@ def calculate_trade_stats_and_details(
     }).reset_index(drop=True)
 
     return trade_stats, asset_details
+
+
+@staticmethod
+def evaluate_clustering_scores(sequences: np.ndarray, linkage_matrix, min_clusters: int, max_clusters: int) -> tuple [list, dict]:
+    """
+    Evaluate clustering performance metrics across a range of cluster counts.
+
+    Parameters
+    ----------
+    sequences : np.ndarray
+        Array of trimmed state sequences
+    linkage_matrix : 
+        Matrix of linkage between clusters
+    min_clusters : int
+        Lower limit of allowed clusters.
+    max_clusters : int
+        Upper limit of allowed clusters.
+
+    Returns
+    -------
+    tuple
+        scores : np.ndarray of shape (n_k, 3) with [silhouette, calinski_harabasz, -davies_bouldin]
+        label_map : dict of {k: labels}
+    """
+    scores = []
+    label_map = {}
+
+    for k in range(min_clusters, max_clusters + 1):
+        labels = fcluster(linkage_matrix, k, criterion='maxclust')
+        unique_labels = np.unique(labels)
+
+        if len(unique_labels) < 2:
+            continue
+
+        try:
+            sil = silhouette_score(sequences, labels)
+            ch = calinski_harabasz_score(sequences, labels)
+            db = davies_bouldin_score(sequences, labels)
+        except ValueError:
+            continue
+
+        scores.append([sil, ch, db])
+        label_map[k] = labels
+
+    return np.array(scores), label_map
 
 
 def stop_loss(prices: pd.Series, threshold: float = -0.05) -> float:

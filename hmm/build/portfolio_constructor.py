@@ -24,6 +24,7 @@ class PortfolioConstructor:
         self.sma_lookback = config["moving_average"]
         self.max_assets_per_cluster = config["max_assets_per_cluster"]
 
+
     def process(self) -> dict:
         """
         Method to process the PortfolioConstructor.
@@ -33,6 +34,8 @@ class PortfolioConstructor:
         normalized_weights : dict
             Dictionary of final portfolio weights.
         """
+        # TODO if possible it might be better to not use compounded returns for the risk component.
+        # It might be best to go back to using a raw series of returns. 
         cluster_assets = self._group_assets_by_cluster(clusters=self.clusters)
         cluster_returns = self._compute_cluster_returns(
             cluster_assets=cluster_assets, price_data=self.price_data, lookback=self.config["risk_lookback"]
@@ -67,6 +70,7 @@ class PortfolioConstructor:
 
         return portfolio_weights
 
+
     @staticmethod
     def _group_assets_by_cluster(clusters: dict):
         """
@@ -87,6 +91,7 @@ class PortfolioConstructor:
             cluster_assets[cid].append(tkr)
 
         return cluster_assets
+
 
     @staticmethod
     def _compute_cluster_returns(cluster_assets: dict, price_data: pd.DataFrame, lookback: int):
@@ -123,6 +128,7 @@ class PortfolioConstructor:
             cluster_returns[cluster_id] = cluster_ret_series
         print(cluster_returns)
         return cluster_returns
+
 
     @staticmethod
     def _compute_sentiment_weights(
@@ -188,6 +194,7 @@ class PortfolioConstructor:
                 sentiment_weights[tkr] += w * cluster_weight
 
         return sentiment_weights, orphaned_weight
+
 
     @staticmethod
     def _risk_parity_weights(tickers: list, price_data: pd.DataFrame, lookback: int) -> dict:

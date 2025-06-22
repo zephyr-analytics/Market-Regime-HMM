@@ -3,29 +3,24 @@ Module for handling final portfolio construction.
 """
 
 from collections import defaultdict
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 
 from hmm import utilities
+from hmm.build.portfolio_clustering import PortfolioClustering
 
 
 class PortfolioConstructor:
     """
     Class for constructing the final portfolio.
     """
-    def __init__(
-        self, config: dict, clusters: dict, forecast_data: dict, price_data: pd.DataFrame
-    ):
-        self.config = config
-        self.clusters = clusters
-        self.forecast_data = forecast_data
-        self.price_data = price_data
-        self.sma_lookback = config["moving_average"]
-        self.max_assets_per_cluster = config["max_assets_per_cluster"]
+    def __init__(self):
+        pass
 
 
-    def process(self) -> dict:
+    def process(self, clustering: PortfolioClustering) -> dict:
         """
         Method to process the PortfolioConstructor.
 
@@ -56,7 +51,7 @@ class PortfolioConstructor:
         sentiment_weights, orphaned_weight = self._compute_sentiment_weights(
             cluster_ids=cluster_ids, cluster_weights=cluster_weights, clusters=self.clusters, 
             forecast_data=self.forecast_data, price_data=self.price_data, lookback=self.config["risk_lookback"], 
-            max_assets=self.max_assets_per_cluster
+            max_assets=self.clustering.max_assets_per_cluster
         )
 
         if orphaned_weight > 0:
@@ -72,46 +67,38 @@ class PortfolioConstructor:
 
 
     @staticmethod
-    def _group_assets_by_cluster(clusters: dict):
+    def _group_assets_by_cluster(clustering: PortfolioClustering):
         """
         Method to group assets into clusters.
 
         Parameters
         ----------
-        clusters : dict
-            Dictionary containing clusters.
-
-        Returns
-        -------
-        cluster_assets : dict
-            Dictionary with clusters as keys and list of assets as values.
+        clustering: PortfolioClustering
+            PortfolioClustering instance.
         """
+        clusters = clustering.clusters
         cluster_assets = defaultdict(list)
         for tkr, cid in clusters.items():
             cluster_assets[cid].append(tkr)
 
-        return cluster_assets
+        clustering.cluster_assets = cluster_assets
 
 
     @staticmethod
-    def _compute_cluster_returns(cluster_assets: dict, price_data: pd.DataFrame, lookback: int):
+    def _compute_cluster_returns(clustering: PortfolioClustering, lookback: int):
         """
         Method to risk parity clusters.
 
         Parameters
         ----------
-        cluster_assets : dict
-
-        price_data : pd.DataFrame
+        clustering : PorfolioClustering
+            PortfolioClustering instance.
 
         lookback : int
-
-
-        Returns
-        -------
-        cluster_returns : dict
-
+            Integer representing the lookback window for risk parity.
         """
+        cluster_assets = clustering.cluster_assets.copy()
+        price_data = clustering.price_data.copy()
         cluster_returns = {}
         for cluster_id, tickers in cluster_assets.items():
             returns = price_data[tickers].pct_change().dropna().tail(lookback)
@@ -126,8 +113,8 @@ class PortfolioConstructor:
             weight_vector = pd.Series([weights[tkr] for tkr in tickers], index=tickers)
             cluster_ret_series = compounded @ weight_vector
             cluster_returns[cluster_id] = cluster_ret_series
-        print(cluster_returns)
-        return cluster_returns
+        # print(cluster_returns)
+        clustering.cluster_returns = cluster_returns
 
 
     @staticmethod
@@ -195,7 +182,7 @@ class PortfolioConstructor:
 
         return sentiment_weights, orphaned_weight
 
-
+# TODO this needs to become a utilities method.
     @staticmethod
     def _risk_parity_weights(tickers: list, price_data: pd.DataFrame, lookback: int) -> dict:
         """

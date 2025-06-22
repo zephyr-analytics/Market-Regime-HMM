@@ -23,6 +23,10 @@ class PortfolioClustering:
         self._forecast_data: dict=None
         self._sequences: list=None
         self._clustering_tickers: list=None
+        self._clsuters: dict=None
+        self._cluster_assets: dict=None
+        self._max_assets_per_cluster: int=None
+        self._risk_lookback: int=None
 
     @property
     def parsed_objects(self) -> dict:
@@ -276,3 +280,118 @@ class PortfolioClustering:
             List of tickers to be clustered.
         """
         self._clustering_tickers = value
+
+    @property
+    def clusters(self) -> dict:
+        """
+        Getter method for clusters.
+
+        Returns
+        -------
+        dict: Dictionary containing cluster data from initial clustering.
+        """
+        return self._clustering_tickers
+
+    @clusters.setter
+    def clusters(self, value: dict):
+        """
+        Setter method for clusters.
+
+        Parameters
+        ----------
+        value : dict
+            Dictionary containing cluster data from initial clustering.
+        """
+        self._clusters = value
+
+    @property
+    def cluster_assets(self) -> dict:
+        """
+        Getter method for cluster_assets.
+
+        Returns
+        -------
+        dict : List of tickers to be clustered.
+        """
+        return self._cluster_assets
+
+    @cluster_assets.setter
+    def cluster_assets(self, value: dict):
+        """
+        Setter method for cluster_assets.
+
+        Parameters
+        ----------
+        value : dict
+            List of tickers to be clustered.
+        """
+        self._cluster_assets = value
+
+    @property
+    def cluster_returns(self) -> dict:
+        """
+        Getter method for cluster_returns.
+
+        Returns
+        -------
+        dict : Dictionary containing clusters as keys and returns as values.
+        """
+        return self._clustering_tickers
+
+    @cluster_returns.setter
+    def cluster_returns(self, value: dict):
+        """
+        Setter method for cluster_returns.
+
+        Parameters
+        ----------
+        value : dict
+            Dictionary containing clusters as keys and returns as values.
+        """
+        self._cluster_returns = value
+
+    @property
+    def max_assets_per_cluster(self) -> int:
+        """
+        Getter method for max_assets_per_cluster.
+
+        Returns
+        -------
+        int : Integer representing the upper cap on allowable assets per cluster.
+        """
+        return self._max_assets_per_cluster
+
+    @max_assets_per_cluster.setter
+    def max_assets_per_cluster(self, value: int):
+        """
+        Setter method for max_assets_per_cluster.
+
+        Parameters
+        ----------
+        value : int
+            Integer representing the upper cap on allowable assets per cluster.
+        """
+        self._max_assets_per_cluster = value
+
+    @property
+    def risk_lookback(self) -> int:
+        """
+        Getter method for risk_lookback.
+
+        Returns
+        -------
+        int : Integer representing the risk parity lookback window.
+        """
+        return self._max_assets_per_cluster
+
+    @risk_lookback.setter
+    def risk_lookback(self, value: int):
+        """
+        Setter method for risk_lookback.
+
+        Parameters
+        ----------
+        value : int
+            Integer representing the risk parity lookback window.
+        """
+        self._risk_lookback = value

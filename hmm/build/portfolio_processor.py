@@ -48,12 +48,9 @@ class PortfolioProcessor:
         results = self.cluster_sequences(clustering=clustering)
 
         clusters = results["clusters"]
-        forecast_data = clustering.forecast_data
 
-        constructor = PortfolioConstructor(
-            config=self.config, clusters=clusters, forecast_data=forecast_data, price_data=self.data
-        )
-        portfolio = constructor.process()
+        constructor = PortfolioConstructor()
+        portfolio = constructor.process(clustering=clustering)
 
         if self.persist:
             results_process = PortfolioResultsProcessor(
@@ -87,6 +84,7 @@ class PortfolioProcessor:
         clustering.start_date = config["current_start"]
         clustering.end_date = config["current_end"]
         clustering.moving_average = config["moving_average"]
+        clustering.risk_lookback = config["risk_lookback"]
         clustering.price_data = data
 
         return clustering

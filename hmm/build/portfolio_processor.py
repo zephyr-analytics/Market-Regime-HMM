@@ -29,8 +29,6 @@ class PortfolioProcessor:
         self.start_date = config["current_start"]
         self.end_date = config["current_end"]
         self.persist = config["persist"]
-        # self.min_clusters = config["min_clusters"]
-        # self.max_clusters = config["max_clusters"]
         self.data = data.loc[self.start_date:self.end_date]
 
     def process(self):
@@ -38,19 +36,18 @@ class PortfolioProcessor:
         Method for processing through the pipeline.
         """
         file_path = os.path.join(os.getcwd(), "hmm", "infer", "artifacts", "inferencing")
+        clustering = self.initialize_portfolio_clustering(config=self.config, data=self.data)
+        self.load_models_inference(clustering=clustering, directory=file_path, tickers=self.config["tickers"])
+        self.extract_states(clustering=clustering)
+        self.moving_average_check(clustering=clustering)
+        # TODO sequence lookback needs to be set properly.
+        sequences, tickers = self.prepare_state_sequences(clustering=clustering, lookback=self.config["sequence_lookback"])
 
-        parsed_objects = self.load_models_inference(directory=file_path, tickers=self.config["tickers"])
-
-        state_data = self.extract_states(parsed_objects=parsed_objects)
-
-        self.moving_average_check(state_data=state_data, moving_average_window=self.config["moving_average"])
-
-        sequences, tickers = self.prepare_state_sequences(state_data, lookback=self.config["sequence_lookback"])
-
-        forecast_data = self.extract_forecast_distributions(parsed_objects=parsed_objects)
-
+        forecast_data = self.extract_forecast_distributions(clustering=clustering)
+        max_clusters = clustering.max_clusters
+        min_clusters = clustering.min_clusters
         results = cluster_sequences(
-            sequences=sequences, tickers=tickers, max_clusters=self.max_clusters, min_clusters=self.min_clusters
+            sequences=sequences, tickers=tickers, max_clusters=max_clusters, min_clusters=min_clusters
         )
 
         clusters = results["clusters"]
@@ -84,13 +81,14 @@ class PortfolioProcessor:
         clustering.max_clusters = config["max_clusters"]
         clustering.start_date = config["current_start"]
         clustering.end_date = config["current_end"]
-        clustering.price_data = data[clustering.start_date:clustering.end_date]
+        clustering.moving_average = config["moving_average"]
+        clustering.price_data = data
 
         return clustering
 
 
     @staticmethod
-    def load_models_inference(directory: str, tickers: list) -> dict:
+    def load_models_inference(clustering: PortfolioClustering, directory: str, tickers: list):
         """
         Method to load the persisted ModelsInference instance for each ticker.
 
@@ -118,11 +116,11 @@ class PortfolioProcessor:
             if objects:
                 parsed_objects[ticker] = objects if len(objects) > 1 else objects[0]
 
-        return parsed_objects
+        clustering.parsed_objects = parsed_objects
 
 
     @staticmethod
-    def extract_states(parsed_objects: dict) -> dict:
+    def extract_states(clustering: PortfolioClustering) -> dict:
         """
         Method to extract state data from the loaded ModelInference instance.
 
@@ -136,6 +134,7 @@ class PortfolioProcessor:
         state_data : dict
             Dictionary of tickers and corresponding state data.
         """
+        parsed_objects = clustering.parsed_objects.copy()
         state_data = {}
         for ticker, obj in parsed_objects.items():
             states = []
@@ -154,22 +153,24 @@ class PortfolioProcessor:
                     "labels": labeled_states
                 }
 
-        return state_data
-    
+        clustering.state_data = state_data
+
 
     @staticmethod
-    def moving_average_check(clustering, state_data, moving_average_window):
+    def moving_average_check(clustering: PortfolioClustering):
         """
         """
-        lookback = clustering.moving_average.copy()
-        lookback = self.config["moving_average"]
+        lookback = clustering.moving_average
+        data = clustering.price_data.copy()
+        state_data = clustering.state_data.copy()
+
         valid_tickers = []
 
         for ticker in state_data:
-            if ticker not in self.data.columns:
+            if ticker not in data.columns:
                 continue
 
-            prices = self.data[ticker].dropna()
+            prices = data[ticker].dropna()
 
             ma = prices.rolling(window=lookback).mean()
 
@@ -184,7 +185,7 @@ class PortfolioProcessor:
 
 
     @staticmethod
-    def prepare_state_sequences(state_data: dict, lookback: int) -> tuple [np.ndarray, list]:
+    def prepare_state_sequences(clustering: PortfolioClustering, lookback: int) -> tuple [np.ndarray, list]:
         """
         Method to parse state data into state sequences for clustering.
 
@@ -202,6 +203,8 @@ class PortfolioProcessor:
         tickers : list
             List of string tickers.
         """
+        state_data = clustering.state_data.copy()
+
         all_labels = set()
         for data in state_data.values():
             trimmed = data["labels"][-lookback:]
@@ -220,7 +223,7 @@ class PortfolioProcessor:
 
 
     @staticmethod
-    def extract_forecast_distributions(parsed_objects: dict) -> dict:
+    def extract_forecast_distributions(clustering: PortfolioClustering) -> dict:
         """
         Method to extract forecast_data from the loaded ModelsInference instance.
 
@@ -234,6 +237,7 @@ class PortfolioProcessor:
         forecast_data : dict
             Dictionary of forecast distributions by ticker with keys normalized.
         """
+        parsed_objects = clustering.parsed_objects.copy()
         forecast_data = {}
         for ticker, obj in parsed_objects.items():
             forecast = getattr(obj, "forecast_distribution", None)

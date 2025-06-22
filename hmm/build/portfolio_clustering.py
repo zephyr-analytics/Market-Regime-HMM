@@ -18,6 +18,8 @@ class PortfolioClustering:
         self._start_date: str=None
         self._end_date: str=None
         self._price_data: pd.DataFrame=None
+        self._moving_average: int=None
+        self._state_data: dict=None
 
     @property
     def parsed_objects(self) -> dict:
@@ -156,3 +158,49 @@ class PortfolioClustering:
             Dataframe of price data for assets.
         """
         self._price_data = value
+
+    @property
+    def moving_average(self) -> int:
+        """
+        Getter method for moving_average.
+
+        Returns
+        -------
+        int : Integer representing the moving average length.
+        """
+        return self._moving_average
+
+    @moving_average.setter
+    def moving_average(self, value: int):
+        """
+        Setter method for moving_average.
+
+        Parameters
+        ----------
+        value : int
+            Integer representing the moving average length.
+        """
+        self._moving_average = value
+
+    @property
+    def state_data(self) -> int:
+        """
+        Getter method for state_data.
+
+        Returns
+        -------
+        int : Integer representing the moving average length.
+        """
+        return self._state_data
+
+    @state_data.setter
+    def state_data(self, value: int):
+        """
+        Setter method for state_data.
+
+        Parameters
+        ----------
+        value : int
+            Integer representing the moving average length.
+        """
+        self._state_data = value

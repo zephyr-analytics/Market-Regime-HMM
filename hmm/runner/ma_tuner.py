@@ -10,7 +10,7 @@ import os
 class MovingAverageTuner:
     """
     """
-    def __init__(self, price_data: pd.DataFrame, start: str, end: str, config: Dict):
+    def __init__(self, price_data: pd.DataFrame, start: str, end: str, config: dict):
         self.price_data = price_data
         self.start = pd.to_datetime(start)
         self.end = pd.to_datetime(end)

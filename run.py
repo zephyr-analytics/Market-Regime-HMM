@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 from hmm.data.data_processor import DataProcessor
 from hmm.runner.factory import get_runner
 from hmm import utilities
+from hmm.runner.ma_tuner import MovingAverageTuner
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,10 @@ def main():
 
     # Process data
     data = DataProcessor(config=config).process()
-
+    ma_tuner = MovingAverageTuner(
+        price_data=data, start=config["start_date"], end=config["end_date"], config=config
+    )
+    ma_tuner.process()
     # Determine operation mode
     if args.train:
         mode = "train"

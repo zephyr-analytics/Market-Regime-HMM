@@ -3,200 +3,137 @@ Module for handling final portfolio construction.
 """
 
 from collections import defaultdict
-
 import numpy as np
 import pandas as pd
+
 from scipy.optimize import minimize
 
-from hmm import utilities
 from hmm.build.portfolio_clustering import PortfolioClustering
 
 
 class PortfolioConstructor:
     """
-    Class for constructing the final portfolio.
+    Class for constructing a final portfolio using sentiment forecasts.
     """
-    def __init__(self):
-        pass
+    def __init__(self, clustering: PortfolioClustering):
+        self.risk_lookback = clustering.risk_lookback
+        self.clusters = clustering.clusters
+        self.forecast_data = clustering.forecast_data
+        self.price_data = clustering.price_data.copy()
+        self.sma_lookback = clustering.moving_average
+        self.max_assets_per_cluster = clustering.max_assets_per_cluster
 
 
-    def process(self, clustering: PortfolioClustering) -> dict:
+    def process(self) -> dict:
         """
-        Method to process the PortfolioConstructor.
+        Method for processing through the pipeline.
 
         Returns
         -------
         normalized_weights : dict
-            Dictionary of final portfolio weights.
+            Dictionary containing tickers as keys and weights as values.
         """
-        # TODO if possible it might be better to not use compounded returns for the risk component.
-        # It might be best to go back to using a raw series of returns. 
-        self._group_assets_by_cluster(clustering=clustering)
-        self._compute_cluster_returns(clustering=clustering)
+        ticker_weights = defaultdict(float)
+        orphaned_weight = 0.0
 
-        cluster_returns = clustering.cluster_returns
+        # TODO this needs to be adjusted as raw returns lack the explanitory power and story telling
+        # of the asset as well as the market.
+        # NOTE this should be risk free rate - compounded return over the time period.
+        # Step 1: Compute Synthetic Cluster Returns Using All Assets
+        cluster_returns = {}
+        cluster_assets = defaultdict(list)
+
+        for tkr, cid in self.clusters.items():
+            cluster_assets[cid].append(tkr)
+
+        for cluster_id, tickers in cluster_assets.items():
+            # TODO this needs to be compounded returns.
+            returns = self.price_data[tickers].pct_change().dropna().tail(self.risk_lookback)
+            if returns.empty:
+                continue
+            equal_weights = np.ones(len(tickers)) / len(tickers)
+            cluster_ret_series = returns @ pd.Series(equal_weights, index=returns.columns)
+            cluster_returns[cluster_id] = cluster_ret_series
+
         if not cluster_returns:
             return {"SHV": 1.0}
 
-        cluster_ret_df = pd.DataFrame([cluster_returns])
+        # Step 2: Risk Parity Between Clusters
+        # TODO this needs to be more explicitly handled.
+        cluster_ret_df = pd.DataFrame(cluster_returns)
+        cluster_cov = cluster_ret_df.cov().values
         cluster_ids = list(cluster_returns.keys())
 
-        cluster_weights = self._risk_parity_weights(
+        top_level_weights = self._risk_parity_weights(
             tickers=cluster_ids,
             price_data=cluster_ret_df,
-            lookback=clustering.risk_lookback
+            lookback=self.risk_lookback
         )
 
-        sentiment_weights, orphaned_weight = self._compute_sentiment_weights(
-            cluster_ids=cluster_ids, 
-            cluster_weights=cluster_weights, 
-            clusters=clustering.clusters, 
-            forecast_data=clustering.forecast_data, 
-            price_data=clustering.price_data, 
-            lookback=clustering.risk_lookback, 
-            max_assets=clustering.max_assets_per_cluster
-        )
-
-        if orphaned_weight > 0:
-            sentiment_weights["SHV"] += orphaned_weight
-
-        if not sentiment_weights:
-            return {"SHV": 1.0}
-
-        total = sum(sentiment_weights.values())
-        portfolio_weights = {tkr: w / total for tkr, w in sentiment_weights.items()}
-
-        return portfolio_weights
-
-
-    @staticmethod
-    def _group_assets_by_cluster(clustering: PortfolioClustering):
-        """
-        Method to group assets into clusters.
-
-        Parameters
-        ----------
-        clustering: PortfolioClustering
-            PortfolioClustering instance.
-        """
-        clusters = clustering.clusters
-        cluster_assets = defaultdict(list)
-        for tkr, cid in clusters.items():
-            cluster_assets[cid].append(tkr)
-
-        clustering.cluster_assets = cluster_assets
-
-
-    @staticmethod
-    def _compute_cluster_returns(clustering: PortfolioClustering):
-        """
-        Method to risk parity clusters.
-
-        Parameters
-        ----------
-        clustering : PorfolioClustering
-            PortfolioClustering instance.
-
-        lookback : int
-            Integer representing the lookback window for risk parity.
-        """
-        cluster_assets = clustering.cluster_assets.copy()
-        lookback = clustering.risk_lookback
-        price_data = clustering.price_data.copy()
-        cluster_returns = {}
-        for cluster_id, tickers in cluster_assets.items():
-            returns = price_data[tickers].pct_change().dropna().tail(lookback)
-            compounded = utilities.compound_returns(returns=returns)
-            if compounded.empty:
-                continue
-            weights = PortfolioConstructor._risk_parity_weights(
-                tickers=tickers,
-                price_data=price_data,
-                lookback=lookback
-            )
-            weight_vector = pd.Series([weights[tkr] for tkr in tickers], index=tickers)
-            cluster_ret_series = compounded @ weight_vector
-            cluster_returns[cluster_id] = cluster_ret_series
-        # print(cluster_returns)
-        clustering.cluster_returns = cluster_returns
-
-
-    @staticmethod
-    def _compute_sentiment_weights(
-        cluster_ids: list, cluster_weights: dict, clusters: dict, forecast_data: dict,
-        price_data: pd.DataFrame, lookback: int, max_assets: int
-    ):
-        """
-
-        Parameters
-        ----------
-        cluster_ids : list
-            List of clusters.
-        cluster_weights : dict
-            Dictionary of cluster weights.
-        clusters : dict
-            Dictionary of cluster data.
-        forecast_data : dict
-            Dictionary of forward propagated probabilites per asset.
-        price_data : pd.Dataframe
-            Dataframe of price data for constructing returns.
-        lookback : int
-            Integer representing the length in trading days for risk parity.
-        max_assets : int
-            Integer representing the maximum assets to select per cluster.
-
-        Returns
-        -------
-        """
+        # Step 3: For Each Cluster, Select Top-N by Sentiment and Apply Risk Parity
         sentiment_weights = defaultdict(float)
-        orphaned_weight = 0.0
 
         for cluster_id in cluster_ids:
-            tickers = [tkr for tkr, cid in clusters.items() if cid == cluster_id]
+            tickers = [tkr for tkr, cid in self.clusters.items() if cid == cluster_id]
             contributions = {}
 
             for tkr in tickers:
-                forecast = forecast_data.get(tkr)
+                forecast = self.forecast_data.get(tkr)
                 if isinstance(forecast, np.ndarray):
                     forecast = forecast.item()
                 if not isinstance(forecast, dict):
                     continue
 
                 bullish = forecast.get("Bullish", 0.0)
-
                 if bullish > 0:
                     contributions[tkr] = bullish
 
+# TODO this logic needs to be split based on cluster weighting and within cluster weighting. 
+# Some of the logic is a a bit hard to follow as parameters are being set.
             if not contributions:
-                orphaned_weight += cluster_weights.get(cluster_id, 0.0)
+                orphaned_weight += top_level_weights.get(cluster_id, 0.0)
                 continue
 
-            top_tickers = sorted(contributions.items(), key=lambda x: x[1], reverse=True)[:max_assets]
+            top_tickers = sorted(contributions.items(), key=lambda x: x[1], reverse=True)[:self.max_assets_per_cluster]
             selected_tickers = [tkr for tkr, _ in top_tickers]
 
-            rp_weights = PortfolioConstructor._risk_parity_weights(
+            rp_weights = self._risk_parity_weights(
                 tickers=selected_tickers,
-                price_data=price_data,
-                lookback=lookback
+                price_data=self.price_data,
+                lookback=self.risk_lookback
             )
 
-            cluster_weight = cluster_weights.get(cluster_id, 0.0)
+            cluster_weight = top_level_weights.get(cluster_id, 0.0)
             for tkr, w in rp_weights.items():
                 sentiment_weights[tkr] += w * cluster_weight
 
-        return sentiment_weights, orphaned_weight
+        # Step 4: Assign orphaned weight to SHV
+        if orphaned_weight > 0:
+            sentiment_weights["SHV"] += orphaned_weight
 
-# TODO this needs to become a utilities method.
+        if not sentiment_weights:
+            return {"SHV": 1.0}
+
+        # Step 5: Final normalization
+        total = sum(sentiment_weights.values())
+        normalized_weights = {tkr: w / total for tkr, w in sentiment_weights.items()}
+
+        return normalized_weights
+
+
     @staticmethod
     def _risk_parity_weights(tickers: list, price_data: pd.DataFrame, lookback: int) -> dict:
         """
-        Method to handle weighting clusters and assets by risk parity.
+        Method for handling risk parity weighting.
 
         Parameters
         ----------
-
-        Returns
-        -------
+        tickers : list
+            List of cluster_ids or tickers.
+        price_data : pd.Dataframe
+            Dataframe utilized for the return property of risk parity.
+        lookback : int
+            Lookback period used to calculate risk and returns.
         """
         tickers = tickers.copy()
 
@@ -211,31 +148,43 @@ class PortfolioConstructor:
         if not tickers:
             return {"SHV": 1.0}
 
-        if set(tickers).issubset(price_data.index):
-            returns = price_data.loc[tickers]
-            returns = returns.to_frame().T if isinstance(returns, pd.Series) else returns.T
-        else:
-            returns = price_data[tickers].pct_change().dropna().tail(lookback)
+        returns = price_data[tickers].pct_change().dropna().tail(lookback)
+        cov_matrix = returns.cov().values
 
-        cov = returns.cov().values if isinstance(returns, pd.DataFrame) else np.array([[returns.var()]])
+        if np.allclose(cov_matrix, 0):
+            weights = {tkr: 1.0 / len(tickers) for tkr in tickers}
+            weights["SHV"] = shv_weight
+
+            return weights
 
         n = len(tickers)
-        b = np.ones(n) / n  # equal risk budget
 
         def objective(w):
-            port_var = w @ cov @ w
-            sigma = np.sqrt(port_var)
-            rc = w * (cov @ w)  # risk contributions
-            return np.sum((rc - b * sigma) ** 2)
+            """
+            Method to implement the objective function of risk parity.
+            """
+            port_vol = np.sqrt(w @ cov_matrix @ w)
+            marginal = cov_matrix @ w
+            contrib = w * marginal / port_vol
+
+            return np.sum((contrib - np.mean(contrib)) ** 2)
 
         init = np.ones(n) / n
-        bounds = [(0.0, 1.0)] * n
+        bounds = [(0, 1)] * n
         constraints = [{'type': 'eq', 'fun': lambda w: np.sum(w) - 1}]
 
-        result = minimize(objective, init, method='SLSQP', bounds=bounds, constraints=constraints)
+        try:
+            result = minimize(objective, init, method='SLSQP', bounds=bounds, constraints=constraints)
+            if not result.success:
+                raise ValueError()
+        except Exception:
+            weights = {tkr: 1.0 / len(tickers) for tkr in tickers}
+            weights["SHV"] = shv_weight
+
+            return weights
 
         optimized = dict(zip(tickers, result.x))
-        scaled = {t: w * (1 - shv_weight) for t, w in optimized.items()}
+        scaled = {tkr: w * (1 - shv_weight) for tkr, w in optimized.items()}
         scaled["SHV"] = shv_weight
 
         return scaled

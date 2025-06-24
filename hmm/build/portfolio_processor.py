@@ -5,6 +5,7 @@ Module for building portfolio.
 import glob
 import logging
 import os
+import json
 import pickle
 
 import numpy as np
@@ -49,8 +50,8 @@ class PortfolioProcessor:
 
         clusters = results["clusters"]
         clustering.clusters = clusters
-        constructor = PortfolioConstructor()
-        portfolio = constructor.process(clustering=clustering)
+        constructor = PortfolioConstructor(clustering=clustering)
+        portfolio = constructor.process()
 
         if self.persist:
             results_process = PortfolioResultsProcessor(
@@ -157,28 +158,39 @@ class PortfolioProcessor:
     @staticmethod
     def moving_average_check(clustering: PortfolioClustering):
         """
-        Method to moving average filter assets.
+        Method to apply moving average filter using per-ticker lookbacks from config.
 
         Parameters
         ----------
         clustering : PortfolioClustering
             PortfolioClustering instance.
         """
-        lookback = clustering.moving_average
+        config_path = os.path.join(os.getcwd(), "configs", "ma_config.json")
+
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Config file not found: {config_path}")
+
+        with open(config_path, "r") as f:
+            ma_config = json.load(f)
+
         data = clustering.price_data.copy()
         state_data = clustering.state_data.copy()
 
         valid_tickers = []
 
         for ticker in state_data:
-            if ticker not in data.columns:
-                continue
+            if ticker not in data.columns or ticker not in ma_config:
+                raise ValueError("Please re-tune moving averages.")
 
             prices = data[ticker].dropna()
+            lookback = ma_config[ticker]["length"]
+
+            if len(prices) < lookback:
+                continue
 
             ma = prices.rolling(window=lookback).mean()
 
-            if prices.iloc[-1] >= ma.iloc[-1]:
+            if prices.iloc[-1] > ma.iloc[-1]:
                 valid_tickers.append(ticker)
 
         state_data = {t: state_data[t] for t in valid_tickers}

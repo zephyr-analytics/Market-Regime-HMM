@@ -1,0 +1,401 @@
+{
+    "BND": {
+        "length": 189
+    },
+    "EMB": {
+        "length": 168
+    },
+    "BNDX": {
+        "length": 252
+    },
+    "IGOV": {
+        "length": 168
+    },
+    "VWOB": {
+        "length": 168
+    },
+    "GOVT": {
+        "length": 252
+    },
+    "IBND": {
+        "length": 168
+    },
+    "CEMB": {
+        "length": 147
+    },
+    "LQD": {
+        "length": 147
+    },
+    "SHV": {
+        "length": 210
+    },
+    "SHY": {
+        "length": 147
+    },
+    "IEF": {
+        "length": 252
+    },
+    "TLT": {
+        "length": 189
+    },
+    "HYG": {
+        "length": 252
+    },
+    "HYXU": {
+        "length": 168
+    },
+    "EMHY": {
+        "length": 168
+    },
+    "VNQ": {
+        "length": 252
+    },
+    "VNQI": {
+        "length": 210
+    },
+    "DBA": {
+        "length": 210
+    },
+    "DBB": {
+        "length": 147
+    },
+    "DBE": {
+        "length": 252
+    },
+    "IAU": {
+        "length": 147
+    },
+    "UUP": {
+        "length": 147
+    },
+    "MSFT": {
+        "length": 147
+    },
+    "NVDA": {
+        "length": 189
+    },
+    "AAPL": {
+        "length": 210
+    },
+    "ORCL": {
+        "length": 168
+    },
+    "CSCO": {
+        "length": 189
+    },
+    "TSM": {
+        "length": 189
+    },
+    "SAP": {
+        "length": 147
+    },
+    "ASML": {
+        "length": 147
+    },
+    "ACN": {
+        "length": 252
+    },
+    "SONY": {
+        "length": 147
+    },
+    "AMZN": {
+        "length": 147
+    },
+    "HD": {
+        "length": 168
+    },
+    "MCD": {
+        "length": 147
+    },
+    "BKNG": {
+        "length": 231
+    },
+    "TJX": {
+        "length": 147
+    },
+    "TM": {
+        "length": 210
+    },
+    "HMC": {
+        "length": 210
+    },
+    "TCOM": {
+        "length": 231
+    },
+    "STLA": {
+        "length": 168
+    },
+    "IHG": {
+        "length": 147
+    },
+    "GOOGL": {
+        "length": 147
+    },
+    "NFLX": {
+        "length": 147
+    },
+    "DIS": {
+        "length": 252
+    },
+    "T": {
+        "length": 189
+    },
+    "VZ": {
+        "length": 252
+    },
+    "NTES": {
+        "length": 168
+    },
+    "AMX": {
+        "length": 252
+    },
+    "CHT": {
+        "length": 231
+    },
+    "TEF": {
+        "length": 231
+    },
+    "TU": {
+        "length": 231
+    },
+    "XOM": {
+        "length": 168
+    },
+    "CVX": {
+        "length": 252
+    },
+    "COP": {
+        "length": 231
+    },
+    "WMB": {
+        "length": 147
+    },
+    "EPD": {
+        "length": 252
+    },
+    "SHEL": {
+        "length": 210
+    },
+    "TTE": {
+        "length": 231
+    },
+    "ENB": {
+        "length": 231
+    },
+    "BP": {
+        "length": 231
+    },
+    "EQNR": {
+        "length": 147
+    },
+    "BRK-B": {
+        "length": 210
+    },
+    "JPM": {
+        "length": 189
+    },
+    "BAC": {
+        "length": 252
+    },
+    "WFC": {
+        "length": 189
+    },
+    "HSBC": {
+        "length": 147
+    },
+    "HDB": {
+        "length": 210
+    },
+    "RY": {
+        "length": 147
+    },
+    "MUFG": {
+        "length": 168
+    },
+    "TD": {
+        "length": 252
+    },
+    "GE": {
+        "length": 210
+    },
+    "RTX": {
+        "length": 252
+    },
+    "CAT": {
+        "length": 168
+    },
+    "BA": {
+        "length": 168
+    },
+    "HON": {
+        "length": 252
+    },
+    "ETN": {
+        "length": 210
+    },
+    "RELX": {
+        "length": 189
+    },
+    "TT": {
+        "length": 252
+    },
+    "TRI": {
+        "length": 147
+    },
+    "CP": {
+        "length": 252
+    },
+    "SHW": {
+        "length": 252
+    },
+    "SCCO": {
+        "length": 147
+    },
+    "ECL": {
+        "length": 252
+    },
+    "CRH": {
+        "length": 252
+    },
+    "APD": {
+        "length": 189
+    },
+    "BHP": {
+        "length": 231
+    },
+    "RIO": {
+        "length": 147
+    },
+    "AEM": {
+        "length": 231
+    },
+    "VALE": {
+        "length": 168
+    },
+    "WPM": {
+        "length": 168
+    },
+    "PLD": {
+        "length": 168
+    },
+    "AMT": {
+        "length": 252
+    },
+    "WELL": {
+        "length": 147
+    },
+    "EQIX": {
+        "length": 231
+    },
+    "VTR": {
+        "length": 147
+    },
+    "LLY": {
+        "length": 147
+    },
+    "JNJ": {
+        "length": 210
+    },
+    "UNH": {
+        "length": 189
+    },
+    "ABT": {
+        "length": 210
+    },
+    "MRK": {
+        "length": 231
+    },
+    "NVO": {
+        "length": 231
+    },
+    "AZN": {
+        "length": 252
+    },
+    "NVS": {
+        "length": 210
+    },
+    "SNY": {
+        "length": 147
+    },
+    "MDT": {
+        "length": 147
+    },
+    "WMT": {
+        "length": 231
+    },
+    "COST": {
+        "length": 252
+    },
+    "PG": {
+        "length": 210
+    },
+    "KO": {
+        "length": 252
+    },
+    "PEP": {
+        "length": 252
+    },
+    "UL": {
+        "length": 147
+    },
+    "BTI": {
+        "length": 252
+    },
+    "DEO": {
+        "length": 252
+    },
+    "CCEP": {
+        "length": 189
+    },
+    "FMX": {
+        "length": 147
+    },
+    "NEE": {
+        "length": 231
+    },
+    "SO": {
+        "length": 252
+    },
+    "DUK": {
+        "length": 231
+    },
+    "AEP": {
+        "length": 231
+    },
+    "SRE": {
+        "length": 147
+    },
+    "NGG": {
+        "length": 168
+    },
+    "FTS": {
+        "length": 189
+    },
+    "KEP": {
+        "length": 231
+    },
+    "EBR": {
+        "length": 189
+    },
+    "SBS": {
+        "length": 168
+    },
+    "SH": {
+        "length": 147
+    },
+    "PST": {
+        "length": 210
+    },
+    "TBT": {
+        "length": 168
+    },
+    "EFZ": {
+        "length": 147
+    },
+    "EUM": {
+        "length": 147
+    },
+    "RWM": {
+        "length": 231
+    }
+}

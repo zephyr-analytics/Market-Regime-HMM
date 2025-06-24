@@ -60,6 +60,7 @@ class PortfolioProcessor:
                 portfolio=portfolio
             )
             results_process.process()
+
             return portfolio
 
         else:
@@ -179,14 +180,8 @@ class PortfolioProcessor:
         valid_tickers = []
 
         for ticker in state_data:
-            if ticker not in data.columns or ticker not in ma_config:
-                raise ValueError("Please re-tune moving averages.")
-
             prices = data[ticker].dropna()
             lookback = ma_config[ticker]["length"]
-
-            if len(prices) < lookback:
-                continue
 
             ma = prices.rolling(window=lookback).mean()
 
@@ -257,7 +252,7 @@ class PortfolioProcessor:
 
         clustering.forecast_data = forecast_data
 
-# TODO this needs to be condensed down to handle usage of clustering instance.
+
     @staticmethod
     def cluster_sequences(clustering: PortfolioClustering):
         """

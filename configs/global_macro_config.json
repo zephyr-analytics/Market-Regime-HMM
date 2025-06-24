@@ -25,7 +25,6 @@
     "model_warmup": 3,
     "max_train_years": 8,
     "max_retries": 20,
-    "moving_average": 168,
     "stop_loss": -0.05,
     "use_stop_loss": false,
     "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
@@ -33,14 +32,17 @@
     "risk_lookback": 252,
     "sequence_lookback": 63,
     "param_grid": {
-        "min_clusters": [3],
-        "max_clusters": [10],
-        "moving_average": [168],
-        "max_assets_per_cluster": [3],
-        "stop_loss": [-0.05],
+        "min_clusters": [2, 3, 4],
+        "max_clusters": [8, 10, 12],
+        "max_assets_per_cluster": [2, 3, 4],
+        "stop_loss": [-0.035],
         "max_train_years": [8],
         "use_stop_loss": [false],
         "risk_lookback": [252],
         "sequence_lookback": [63]
+    },
+    "ma_tuning": {
+        "start_date": "2013-08-01",
+        "end_date": "2025-05-31"
     }
 }

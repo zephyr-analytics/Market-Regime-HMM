@@ -26,7 +26,7 @@ class TrainingResultsProcessor(ResultsProcessor):
     def process(self):
         """
         """
-        self._plot_regimes()
+        # self._plot_regimes()
         self._plot_price_with_states()
         self._plot_price_path_train_only()
 

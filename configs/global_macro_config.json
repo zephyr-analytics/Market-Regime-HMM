@@ -1,24 +1,46 @@
 {
     "tickers": [
         "BND", "EMB", "BNDX",
-        "SHV", "SHY", "IEI", "IEF", "TLT",
-        "SLQD", "LQD", "SHYG", "HYG", "STIP", "TIP",
-        "IAU", "DBC", "VNQ", "VNQI",
+        "IGOV", "VWOB", "GOVT",
+        "IBND", "CEMB", "LQD",
+        "SHV", "SHY", "IEF", "TLT",
+        "HYG", "HYXU", "EMHY",
+        "VNQ", "VNQI",
+        "DBA", "DBB", "DBE", "IAU", 
+        "UUP",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
-        "IUSV", "IUSG", "EFV", "EFG", "VWO"
+        "IUSG", "IUSV", "EFV", "EFG", "VWO",
+        "SH", "PST", "TBT", "RWM", "EFZ", "EUM"
     ],
     "momentum_intervals": [
         21, 63, 126, 189
     ],
     "volatility_interval": 21,
-    "equal_asset_weight": true,
+    "min_clusters": 3,
+    "max_clusters": 12,
     "max_assets_per_cluster": 3,
     "train_test_split": 0.70,
-    "start_date": "2014-01-01",
-    "end_date": "2025-06-01",
+    "start_date": "2015-08-01",
+    "end_date": "2025-05-31",
     "model_warmup": 2,
+    "max_train_years": 8,
     "max_retries": 20,
     "moving_average": 168,
+    "stop_loss": -0.05,
+    "use_stop_loss": false,
     "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
-    "persist": false
+    "persist": false,
+    "risk_lookback": 63,
+    "sequence_lookback": 63,
+    "param_grid": {
+        "min_clusters": [3],
+        "max_clusters": [12],
+        "moving_average": [168],
+        "max_assets_per_cluster": [3],
+        "stop_loss": [-0.05],
+        "max_train_years": [8],
+        "use_stop_loss": [false],
+        "risk_lookback": [504],
+        "sequence_lookback": [63]
+    }
 }

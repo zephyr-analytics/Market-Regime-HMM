@@ -29,7 +29,7 @@ class InferencingResultsProcessor(ResultsProcessor):
     def process(self):
         """
         """
-        self._plot_regimes()
+        # self._plot_regimes()
         self._plot_price_with_states()
         self._plot_price_path_with_train_and_test()
 

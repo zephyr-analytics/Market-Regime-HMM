@@ -5,6 +5,7 @@ import os
 
 import pandas as pd
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from pandas_datareader import data as web
 
 import hmm.utilities as utilities
@@ -27,7 +28,6 @@ class DataProcessor:
         """
         self.config = config
 
-
     def process(self):
         """
         Processes historical price data and appends FRED short rate data ("DFF").
@@ -37,15 +37,16 @@ class DataProcessor:
         pd.DataFrame
             Combined dataset of market prices and interest rates.
         """
+        start_date = self.config["current_start"]
+
         data = self.pull_data(
             tickers=self.config["tickers"],
             file_path=self.config["data_file_path"],
-            start_date=self.config["start_date"]
+            start_date=start_date
         )
 
-        start_date = self.config["start_date"]
         end_date = self.get_latest_trading_day()
-        fred_data = self.load_fred_rate("DFF", start_date, end_date)
+        fred_data = self.load_short_rates(series="DFF", start_date=start_date, end_date=end_date)
         data = data.join(fred_data, how="left")
 
         return data
@@ -88,7 +89,8 @@ class DataProcessor:
             DataFrame of adjusted close prices.
         """
         tickers = [tickers] if isinstance(tickers, str) else tickers
-        today = self.get_latest_trading_day()
+        today = self.config["end_date"]
+        # today = self.get_latest_trading_day()
 
         def refresh_data():
             price_data = utilities.load_price_data(tickers, start_date, today)
@@ -121,7 +123,7 @@ class DataProcessor:
 
 
     @staticmethod
-    def load_fred_rate(series, start_date, end_date):
+    def load_short_rates(series, start_date, end_date):
         """
         Load a short-term interest rate series from FRED.
 

@@ -1,12 +1,16 @@
 """
 """
+import logging
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.subplots as sp
 
+import logger_config
 from hmm import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class FinalResultsPortfolio:
@@ -26,17 +30,17 @@ class FinalResultsPortfolio:
         returns.index.name = 'Date'
         returns.name = 'Return'
         portfolio_value = utilities.compute_portfolio_value(returns=returns)
-        print(portfolio_value)
+        print(portfolio_value[-1])
         var, cvar = utilities.calculate_var_cvar(returns=returns)
         print(var, cvar)
         average_annual_return = utilities.calculate_average_annual_return(returns=returns)
-        print(average_annual_return)
+        logger.info(f"Average Annual Return: {average_annual_return * 100:.2f}%")
         max_drawdown = utilities.calculate_max_drawdown(portfolio_value=portfolio_value)
-        print(max_drawdown)
+        logger.info(f"Max Drawdown: {max_drawdown * 100:.2f}%")
 
         self.plot_portfolio_value(dates=returns.index, portfolio_value=portfolio_value)
         self.plot_var_cvar(returns=returns, var=var, cvar=cvar)
-        self.plot_returns_heatmaps(returns=returns)
+        self.plot_returns_heatmaps(returns=returns, average_annual_return=average_annual_return)
 
     @staticmethod
     def plot_portfolio_value(dates, portfolio_value, metrics=None, filename='portfolio_value'):
@@ -128,7 +132,7 @@ class FinalResultsPortfolio:
         utilities.save_html(fig, filename)
 
     @staticmethod
-    def plot_returns_heatmaps(returns, filename='returns_heatmap'):
+    def plot_returns_heatmaps(returns, average_annual_return, filename='returns_heatmap'):
         """
         Plots a combined heatmap of monthly and yearly
         returns with values shown as percentages on each cell.
@@ -139,19 +143,32 @@ class FinalResultsPortfolio:
             The name of the file to save the plot. Default is 'returns_heatmap.html'.
         """
         monthly_returns = returns.copy()
-        # monthly_returns.index = monthly_returns.index + pd.DateOffset(months=1)
         monthly_returns_df = monthly_returns.to_frame(name='Monthly Return')
         monthly_returns_df['Monthly Return'] *= 100
         monthly_returns_df['Year'] = monthly_returns_df.index.year
         monthly_returns_df['Month'] = monthly_returns_df.index.month
 
-        yearly_returns = returns.copy()
-        yearly_returns = yearly_returns.resample('Y').apply(utilities.compound_returns)
+        # Step 2: Identify the first year in the dataset
+        first_year = monthly_returns_df['Year'].iloc[0]
+
+        # Step 3: Check if the first year is partial (i.e., has fewer than 12 months)
+        month_counts = monthly_returns_df.groupby('Year')['Month'].nunique()
+        if month_counts.get(first_year, 0) < 12:
+            # Remove data from the first year
+            monthly_returns_df = monthly_returns_df[monthly_returns_df['Year'] != first_year]
+
+        # Step 4: Recompute yearly returns from the trimmed monthly returns
+        filtered_returns = monthly_returns_df['Monthly Return'] / 100  # convert back to decimal
+        filtered_returns.index = pd.to_datetime(monthly_returns_df.index)
+
+        yearly_returns = filtered_returns.resample('Y').apply(utilities.compound_returns)
         yearly_returns_df = yearly_returns.to_frame(name='Yearly Return')
         yearly_returns_df['Yearly Return'] *= 100  # Convert to percentage
         yearly_returns_df['Year'] = yearly_returns_df.index.year
         yearly_returns_df = yearly_returns_df.sort_values('Year')
 
+        sharpe_ratio = average_annual_return / yearly_returns_df["Yearly Return"].std()
+        logger.info(f"Sharpe Ratio: {sharpe_ratio * 100:.2f}")
 
         monthly_heatmap_data = monthly_returns_df.pivot('Year', 'Month', 'Monthly Return')
         monthly_heatmap_data = monthly_heatmap_data.reindex(columns=np.arange(1, 13))

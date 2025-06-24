@@ -7,9 +7,7 @@ import logging
 import os
 
 import numpy as np
-import pandas as pd
 
-import hmm.utilities as utilities
 from hmm.infer.models_inferencing import ModelsInferencing
 from hmm.results import InferencingResultsProcessor
 
@@ -39,7 +37,6 @@ class ModelsInferenceProcessor:
         self.load_model(inferencing=inferencing)
         self.load_training(inferencing=inferencing)
         self.infer_states(inferencing=inferencing)
-        # self.label_states(inferencing=inferencing)
         self.collect_current_state_probability(inferencing=inferencing)
         if self.persist:
             results = InferencingResultsProcessor(inferencing=inferencing)
@@ -124,7 +121,7 @@ class ModelsInferenceProcessor:
             ModelsInferencing instances.
         """
         model = inferencing.model
-        test_data = inferencing.test_data[['Momentum', 'Volatility', "Short_Rates"]].values.copy()
+        test_data = inferencing.test_data[["Momentum", "Volatility", "Short_Rates"]].values.copy()
         test_states = model.predict(test_data)
         inferencing.test_states = test_states
 
@@ -139,8 +136,6 @@ class ModelsInferenceProcessor:
         inferencing : ModelsInferencing
             The inference object containing the trained HMM, state labels, and test data.
         """
-        # NOTE since this is being forward propagated the new states path over the period need to be
-        # appended to the states.
         posteriors = inferencing.model.predict_proba(inferencing.test_data.copy())
 
         pi_t = posteriors[-1]

@@ -1,4 +1,5 @@
 """
+Module for the BuildRunner.
 """
 
 import logging
@@ -11,9 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class BuildRunner(BaseRunner):
+    """
+    Class for running build tasks.
+    """
     def run(self):
         logger.info("Building single portfolio...")
         self.config["current_end"] = self.config["end_date"]
         builder = PortfolioProcessor(config=self.config, data=self.data)
         portfolio = builder.process()
+        portfolio = {asset: weight for asset, weight in portfolio.items() if weight != 0.0}
         logger.info(f"Built portfolio: {portfolio}")

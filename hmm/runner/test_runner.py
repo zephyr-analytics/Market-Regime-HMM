@@ -168,7 +168,7 @@ class TestRunner(BaseRunner):
         full_path_returns = os.path.join(file_path, filename_returns)
         pd.DataFrame(results).to_csv(full_path_returns, index=False)
 
-        processor = FinalResultsPortfolio(results=results)
+        processor = FinalResultsPortfolio(results=results, config=self.config)
         processor.process()
         logger.info("Saved test results to portfolio_test_results.csv")
 

@@ -1,21 +1,21 @@
 {
     "BND": {
-        "length": 189
+        "length": 147
     },
     "EMB": {
         "length": 168
     },
     "BNDX": {
-        "length": 252
+        "length": 168
     },
     "IGOV": {
-        "length": 168
+        "length": 231
     },
     "VWOB": {
         "length": 168
     },
     "GOVT": {
-        "length": 252
+        "length": 147
     },
     "IBND": {
         "length": 168
@@ -27,34 +27,34 @@
         "length": 147
     },
     "SHV": {
-        "length": 210
+        "length": 231
     },
     "SHY": {
-        "length": 147
+        "length": 168
     },
     "IEF": {
-        "length": 252
+        "length": 168
     },
     "TLT": {
-        "length": 189
+        "length": 147
     },
     "HYG": {
         "length": 252
     },
     "HYXU": {
-        "length": 168
+        "length": 252
     },
     "EMHY": {
         "length": 168
     },
     "VNQ": {
-        "length": 252
+        "length": 189
     },
     "VNQI": {
-        "length": 210
+        "length": 252
     },
     "DBA": {
-        "length": 210
+        "length": 231
     },
     "DBB": {
         "length": 147
@@ -72,16 +72,16 @@
         "length": 189
     },
     "RXI": {
-        "length": 231
-    },
-    "IXP": {
         "length": 252
     },
+    "IXP": {
+        "length": 168
+    },
     "IXG": {
-        "length": 210
+        "length": 231
     },
     "EXI": {
-        "length": 168
+        "length": 252
     },
     "MXI": {
         "length": 147
@@ -93,10 +93,10 @@
         "length": 168
     },
     "KXI": {
-        "length": 231
+        "length": 210
     },
     "JXI": {
-        "length": 189
+        "length": 168
     },
     "IUSG": {
         "length": 168
@@ -123,7 +123,7 @@
         "length": 168
     },
     "RWM": {
-        "length": 231
+        "length": 210
     },
     "EFZ": {
         "length": 147

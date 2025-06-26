@@ -85,7 +85,7 @@ class PortfolioConstructor:
                     continue
 
                 bullish = forecast.get("Bullish", 0.0)
-                if bullish > 0:
+                if bullish > 0.0:
                     contributions[tkr] = bullish
 
 # TODO this logic needs to be split based on cluster weighting and within cluster weighting. 
@@ -120,20 +120,17 @@ class PortfolioConstructor:
 
         return normalized_weights
 
-
+# TODO this needs to become a utilities method.
     @staticmethod
     def _risk_parity_weights(tickers: list, price_data: pd.DataFrame, lookback: int) -> dict:
         """
-        Method for handling risk parity weighting.
+        Method to handle weighting clusters and assets by risk parity.
 
         Parameters
         ----------
-        tickers : list
-            List of cluster_ids or tickers.
-        price_data : pd.Dataframe
-            Dataframe utilized for the return property of risk parity.
-        lookback : int
-            Lookback period used to calculate risk and returns.
+
+        Returns
+        -------
         """
         tickers = tickers.copy()
 
@@ -148,43 +145,31 @@ class PortfolioConstructor:
         if not tickers:
             return {"SHV": 1.0}
 
-        returns = price_data[tickers].pct_change().dropna().tail(lookback)
-        cov_matrix = returns.cov().values
+        if set(tickers).issubset(price_data.index):
+            returns = price_data.loc[tickers]
+            returns = returns.to_frame().T if isinstance(returns, pd.Series) else returns.T
+        else:
+            returns = price_data[tickers].pct_change().dropna().tail(lookback)
 
-        if np.allclose(cov_matrix, 0):
-            weights = {tkr: 1.0 / len(tickers) for tkr in tickers}
-            weights["SHV"] = shv_weight
-
-            return weights
+        cov = returns.cov().values if isinstance(returns, pd.DataFrame) else np.array([[returns.var()]])
 
         n = len(tickers)
+        b = np.ones(n) / n  # equal risk budget
 
         def objective(w):
-            """
-            Method to implement the objective function of risk parity.
-            """
-            port_vol = np.sqrt(w @ cov_matrix @ w)
-            marginal = cov_matrix @ w
-            contrib = w * marginal / port_vol
-
-            return np.sum((contrib - np.mean(contrib)) ** 2)
+            port_var = w @ cov @ w
+            sigma = np.sqrt(port_var)
+            rc = w * (cov @ w)  # risk contributions
+            return np.sum((rc - b * sigma) ** 2)
 
         init = np.ones(n) / n
-        bounds = [(0, 1)] * n
+        bounds = [(0.0, 1.0)] * n
         constraints = [{'type': 'eq', 'fun': lambda w: np.sum(w) - 1}]
 
-        try:
-            result = minimize(objective, init, method='SLSQP', bounds=bounds, constraints=constraints)
-            if not result.success:
-                raise ValueError()
-        except Exception:
-            weights = {tkr: 1.0 / len(tickers) for tkr in tickers}
-            weights["SHV"] = shv_weight
-
-            return weights
+        result = minimize(objective, init, method='SLSQP', bounds=bounds, constraints=constraints)
 
         optimized = dict(zip(tickers, result.x))
-        scaled = {tkr: w * (1 - shv_weight) for tkr, w in optimized.items()}
+        scaled = {t: w * (1 - shv_weight) for t, w in optimized.items()}
         scaled["SHV"] = shv_weight
 
         return scaled

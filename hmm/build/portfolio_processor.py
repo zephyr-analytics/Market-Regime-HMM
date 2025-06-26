@@ -85,7 +85,6 @@ class PortfolioProcessor:
         clustering.max_clusters = config["max_clusters"]
         clustering.start_date = config["current_start"]
         clustering.end_date = config["current_end"]
-        clustering.moving_average = config["moving_average"]
         clustering.risk_lookback = config["risk_lookback"]
         clustering.price_data = data
 

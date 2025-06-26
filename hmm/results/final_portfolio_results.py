@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.subplots as sp
+import yfinance as yf
 
 import logger_config
 from hmm import utilities
@@ -16,9 +17,9 @@ logger = logging.getLogger(__name__)
 class FinalResultsPortfolio:
     """
     """
-
-    def __init__(self, results: pd.DataFrame):
+    def __init__(self, results: pd.DataFrame, config: dict):
         self.results = results
+        self.config = config
 
     def process(self):
         """
@@ -38,16 +39,33 @@ class FinalResultsPortfolio:
         max_drawdown = utilities.calculate_max_drawdown(portfolio_value=portfolio_value)
         logger.info(f"Max Drawdown: {max_drawdown * 100:.2f}%")
 
-        self.plot_portfolio_value(dates=returns.index, portfolio_value=portfolio_value)
+        self.plot_portfolio_value(dates=returns.index, portfolio_value=portfolio_value, config=self.config)
         self.plot_var_cvar(returns=returns, var=var, cvar=cvar)
         self.plot_returns_heatmaps(returns=returns, average_annual_return=average_annual_return)
 
     @staticmethod
-    def plot_portfolio_value(dates, portfolio_value, metrics=None, filename='portfolio_value'):
+    def plot_portfolio_value(dates, portfolio_value, config, price_data=None, metrics=None, filename='portfolio_value'):
         """
+        Plots the portfolio value over time, optionally including a benchmark and performance metrics.
+
+        Parameters
+        ----------
+        dates : pd.Series
+            Date index for the time series.
+        portfolio_value : pd.Series
+            Portfolio value time series aligned with `dates`.
+        config : dict
+            Configuration dictionary containing at least 'benchmark_ticker'.
+        price_data : pd.DataFrame, optional
+            Optional DataFrame with adjusted close prices including benchmark. Used if available.
+        metrics : dict, optional
+            Dictionary of performance metrics to annotate.
+        filename : str
+            Output filename (without extension) for saving the HTML plot.
         """
         fig = go.Figure()
 
+        # Plot portfolio
         fig.add_trace(go.Scatter(
             x=dates,
             y=portfolio_value,
@@ -56,6 +74,43 @@ class FinalResultsPortfolio:
             line=dict(color='green')
         ))
 
+        # Handle benchmark
+        benchmark_ticker = config.get('benchmark_ticker')
+        if benchmark_ticker:
+            try:
+                if price_data is not None and benchmark_ticker in price_data.columns:
+                    benchmark_series = price_data[benchmark_ticker].loc[dates]
+                else:
+                    # Download from yfinance, ensure multi-index support
+                    benchmark_data = yf.download(
+                        benchmark_ticker,
+                        start=dates.min(),
+                        end=dates.max(),
+                        auto_adjust=False,
+                        group_by='ticker'
+                    )
+
+                    if isinstance(benchmark_data.columns, pd.MultiIndex):
+                        benchmark_series = benchmark_data[(benchmark_ticker, 'Adj Close')]
+                    else:
+                        benchmark_series = benchmark_data['Adj Close']
+
+                    benchmark_series = benchmark_series.reindex(dates).fillna(method='ffill')
+
+                # Normalize benchmark to match portfolio starting value
+                benchmark_series = benchmark_series / benchmark_series.iloc[0] * portfolio_value.iloc[0]
+
+                fig.add_trace(go.Scatter(
+                    x=dates,
+                    y=benchmark_series,
+                    mode='lines',
+                    name=benchmark_ticker,
+                    line=dict(color='blue', dash='dash')
+                ))
+            except Exception as e:
+                print(f"Failed to fetch or process benchmark data for {benchmark_ticker}: {e}")
+
+        # Add annotations
         annotations = []
         if metrics:
             positions = [0.05 + i * 0.1 for i in range(len(metrics))]

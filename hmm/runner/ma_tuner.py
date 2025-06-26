@@ -19,6 +19,7 @@ class MovingAverageTuner:
         self.ma_lengths = [147, 168, 189, 210, 231, 252]
         self.best_config = {}
 
+
     def process(self):
         """
         Method to process through MovingAverageTuner.
@@ -26,6 +27,7 @@ class MovingAverageTuner:
         print("Starting moving average tuning process...")
         self.run()
         self.save_config()
+
 
     @staticmethod
     def compute_sma(prices: pd.Series, length: int) -> pd.Series:
@@ -45,6 +47,7 @@ class MovingAverageTuner:
         """
 
         return prices.rolling(window=length).mean()
+
 
     @staticmethod
     def score_moving_average(prices: pd.Series, moving_average: pd.Series) -> float:
@@ -71,6 +74,7 @@ class MovingAverageTuner:
 
         return sharpe
 
+
     def tune_ticker(self, ticker: str) -> int:
         """
         Method to tune moving average length.
@@ -96,6 +100,7 @@ class MovingAverageTuner:
 
         return best_length
 
+
     def run(self) -> dict:
         """
         """
@@ -106,6 +111,7 @@ class MovingAverageTuner:
                 self.best_config[ticker] = {"length": result}
 
         return self.best_config
+
 
     def save_config(self):
         """

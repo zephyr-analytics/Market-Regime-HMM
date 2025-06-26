@@ -3,56 +3,52 @@
         "params": {
             "min_clusters": 3,
             "max_clusters": 10,
-            "moving_average": 168,
-            "max_assets_per_cluster": 3,
-            "stop_loss": -0.05,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
             "max_train_years": 8,
             "use_stop_loss": false,
             "risk_lookback": 63,
             "sequence_lookback": 63
         },
-        "score": 0.014364511335406359
+        "score": 0.017021750353027387
     },
     {
         "params": {
             "min_clusters": 3,
             "max_clusters": 10,
-            "moving_average": 168,
-            "max_assets_per_cluster": 3,
-            "stop_loss": -0.05,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
             "max_train_years": 8,
             "use_stop_loss": false,
             "risk_lookback": 126,
             "sequence_lookback": 63
         },
-        "score": 0.013288964733961496
+        "score": 0.017880032342443657
     },
     {
         "params": {
             "min_clusters": 3,
             "max_clusters": 10,
-            "moving_average": 168,
-            "max_assets_per_cluster": 3,
-            "stop_loss": -0.05,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
             "max_train_years": 8,
             "use_stop_loss": false,
             "risk_lookback": 252,
             "sequence_lookback": 63
         },
-        "score": 0.017616802396734094
+        "score": 0.01865323821174547
     },
     {
         "params": {
             "min_clusters": 3,
             "max_clusters": 10,
-            "moving_average": 168,
-            "max_assets_per_cluster": 3,
-            "stop_loss": -0.05,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
             "max_train_years": 8,
             "use_stop_loss": false,
             "risk_lookback": 504,
             "sequence_lookback": 63
         },
-        "score": 0.01640178859341555
+        "score": 0.01787397223937831
     }
 ]

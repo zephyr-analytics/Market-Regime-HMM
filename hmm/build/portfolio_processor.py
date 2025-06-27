@@ -50,7 +50,7 @@ class PortfolioProcessor:
 
         clusters = results["clusters"]
         clustering.clusters = clusters
-        constructor = PortfolioConstructor(clustering=clustering)
+        constructor = PortfolioConstructor(clustering=clustering, config=self.config)
         portfolio = constructor.process()
 
         if self.persist:

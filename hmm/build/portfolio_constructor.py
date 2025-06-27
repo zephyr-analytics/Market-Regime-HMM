@@ -15,13 +15,14 @@ class PortfolioConstructor:
     """
     Class for constructing a final portfolio using sentiment forecasts.
     """
-    def __init__(self, clustering: PortfolioClustering):
+    def __init__(self, clustering: PortfolioClustering, config: dict):
         self.risk_lookback = clustering.risk_lookback
         self.clusters = clustering.clusters
         self.forecast_data = clustering.forecast_data
         self.price_data = clustering.price_data.copy()
         self.sma_lookback = clustering.moving_average
         self.max_assets_per_cluster = clustering.max_assets_per_cluster
+        self.bullish_cutoff = config["bullish_cutoff"]
 
 
     def process(self) -> dict:
@@ -83,7 +84,8 @@ class PortfolioConstructor:
                     forecast = forecast.item()
                 if not isinstance(forecast, dict):
                     continue
-
+                neutral = forecast.get("Neutral", 0.0)
+                bearish = forecast.get("Bearish", 0.0)
                 bullish = forecast.get("Bullish", 0.0)
                 if bullish > 0.0:
                     contributions[tkr] = bullish

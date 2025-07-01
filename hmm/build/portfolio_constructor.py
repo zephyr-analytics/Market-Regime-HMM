@@ -84,30 +84,27 @@ class PortfolioConstructor:
                     forecast = forecast.item()
                 if not isinstance(forecast, dict):
                     continue
-                neutral = forecast.get("Neutral", 0.0)
-                bearish = forecast.get("Bearish", 0.0)
+
                 bullish = forecast.get("Bullish", 0.0)
                 if bullish > 0.0:
                     contributions[tkr] = bullish
 
 # TODO this logic needs to be split based on cluster weighting and within cluster weighting. 
 # Some of the logic is a a bit hard to follow as parameters are being set.
-            if not contributions:
+            if contributions:
+                # Select top tickers by bullish strength
+                top_tickers = sorted(contributions.items(), key=lambda x: x[1], reverse=True)[:self.max_assets_per_cluster]
+
+                # Normalize bullish weights
+                total_bullish = sum(w for _, w in top_tickers)
+                if total_bullish > 0:
+                    cluster_weight = top_level_weights.get(cluster_id, 0.0)
+                    for tkr, bullish_weight in top_tickers:
+                        norm_weight = bullish_weight / total_bullish
+                        sentiment_weights[tkr] += norm_weight * cluster_weight
+            else:
+                # No bullish tickers — treat cluster as orphaned
                 orphaned_weight += top_level_weights.get(cluster_id, 0.0)
-                continue
-
-            top_tickers = sorted(contributions.items(), key=lambda x: x[1], reverse=True)[:self.max_assets_per_cluster]
-            selected_tickers = [tkr for tkr, _ in top_tickers]
-
-            rp_weights = self._risk_parity_weights(
-                tickers=selected_tickers,
-                price_data=self.price_data,
-                lookback=self.risk_lookback
-            )
-
-            cluster_weight = top_level_weights.get(cluster_id, 0.0)
-            for tkr, w in rp_weights.items():
-                sentiment_weights[tkr] += w * cluster_weight
 
         # Step 4: Assign orphaned weight to SHV
         if orphaned_weight > 0:

@@ -3,16 +3,16 @@
         "BND", "EMB", "BNDX",
         "IGOV", "VWOB", "GOVT",
         "IBND", "CEMB", "LQD",
-        "SHV", "SHY", "IEF", "TLT",
+        "SHY", "IEF", "TLT",
         "HYG", "HYXU", "EMHY",
         "VNQ", "VNQI",
         "DBA", "DBB", "DBE", "IAU", 
         "UUP",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
         "IUSG", "IUSV", "EFV", "EFG", "VWO",
-
         "SH", "PST", "TBT", "RWM", "EFZ", "EUM"
     ],
+    "Cash_Ticker": "SHV",
     "momentum_intervals": [
         21, 63, 126, 189
     ],
@@ -29,7 +29,7 @@
     "max_retries": 20,
     "stop_loss": -0.035,
     "use_stop_loss": false,
-    "data_file_path": "/Users/monic/Actual Drive Storage/HMM_Model/asset_data.csv",
+    "data_file_path": "/Users/monic/Documents/HMM_Model/asset_data.csv",
     "persist": false,
     "risk_lookback": 252,
     "bullish_cutoff": 0.0,

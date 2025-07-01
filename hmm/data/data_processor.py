@@ -38,9 +38,9 @@ class DataProcessor:
             Combined dataset of market prices and interest rates.
         """
         start_date = self.config["current_start"]
-
+        tickers = self.config["tickers"] + [self.config["Cash_Ticker"]]
         data = self.pull_data(
-            tickers=self.config["tickers"],
+            tickers=tickers,
             file_path=self.config["data_file_path"],
             start_date=start_date
         )

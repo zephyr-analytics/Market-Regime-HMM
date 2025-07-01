@@ -2,6 +2,118 @@
     {
         "params": {
             "min_clusters": 2,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.01869225005087555
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 3,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.01869225005087555
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 4,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.01869225005087555
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.01869225005087555
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.018077777972100122
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 3,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.018077777972100122
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 4,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.018077777972100122
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.018077777972100122
+    },
+    {
+        "params": {
+            "min_clusters": 2,
             "max_clusters": 8,
             "max_assets_per_cluster": 2,
             "stop_loss": -0.045,
@@ -11,7 +123,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.024747345490937208
+        "score": 0.018139736889771708
     },
     {
         "params": {
@@ -25,7 +137,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.024747345490937208
+        "score": 0.018139736889771708
     },
     {
         "params": {
@@ -39,7 +151,21 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.024747345490937208
+        "score": 0.018139736889771708
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 8,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.018139736889771708
     },
     {
         "params": {
@@ -53,7 +179,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.029582063586417344
+        "score": 0.016967186157387355
     },
     {
         "params": {
@@ -67,7 +193,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.029582063586417344
+        "score": 0.016967186157387355
     },
     {
         "params": {
@@ -81,7 +207,21 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.029582063586417344
+        "score": 0.016967186157387355
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 10,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.016967186157387355
     },
     {
         "params": {
@@ -95,7 +235,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.029410492469385957
+        "score": 0.017479502066926698
     },
     {
         "params": {
@@ -109,7 +249,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.029410492469385957
+        "score": 0.017479502066926698
     },
     {
         "params": {
@@ -123,7 +263,133 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.029410492469385957
+        "score": 0.017479502066926698
+    },
+    {
+        "params": {
+            "min_clusters": 2,
+            "max_clusters": 12,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017479502066926698
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017300677569336537
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 3,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017300677569336537
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 4,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017300677569336537
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017300677569336537
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.01782358122705135
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 3,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.01782358122705135
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 4,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.01782358122705135
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.01782358122705135
     },
     {
         "params": {
@@ -137,7 +403,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.027203246184251177
+        "score": 0.018717759613677283
     },
     {
         "params": {
@@ -151,7 +417,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.027203246184251177
+        "score": 0.018717759613677283
     },
     {
         "params": {
@@ -165,7 +431,21 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.027203246184251177
+        "score": 0.018717759613677283
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 8,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.018717759613677283
     },
     {
         "params": {
@@ -179,7 +459,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.03091081186974117
+        "score": 0.01828735248188434
     },
     {
         "params": {
@@ -193,7 +473,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.03091081186974117
+        "score": 0.01828735248188434
     },
     {
         "params": {
@@ -207,7 +487,21 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.03091081186974117
+        "score": 0.01828735248188434
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 10,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.01828735248188434
     },
     {
         "params": {
@@ -221,7 +515,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.030797075695910687
+        "score": 0.018827090606440694
     },
     {
         "params": {
@@ -235,7 +529,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.030797075695910687
+        "score": 0.018827090606440694
     },
     {
         "params": {
@@ -249,7 +543,133 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.030797075695910687
+        "score": 0.018827090606440694
+    },
+    {
+        "params": {
+            "min_clusters": 3,
+            "max_clusters": 12,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.018827090606440694
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017737092886354687
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 3,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017737092886354687
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 4,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017737092886354687
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 5,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017737092886354687
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 2,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017964940262334566
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 3,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017964940262334566
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 4,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017964940262334566
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 6,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.017964940262334566
     },
     {
         "params": {
@@ -263,7 +683,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.02568243953969181
+        "score": 0.018537352222914014
     },
     {
         "params": {
@@ -277,7 +697,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.02568243953969181
+        "score": 0.018537352222914014
     },
     {
         "params": {
@@ -291,7 +711,21 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.02568243953969181
+        "score": 0.018537352222914014
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 8,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.018537352222914014
     },
     {
         "params": {
@@ -305,7 +739,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.031104417549315255
+        "score": 0.018868184819062158
     },
     {
         "params": {
@@ -319,7 +753,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.031104417549315255
+        "score": 0.018868184819062158
     },
     {
         "params": {
@@ -333,7 +767,21 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.031104417549315255
+        "score": 0.018868184819062158
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 10,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.018868184819062158
     },
     {
         "params": {
@@ -347,7 +795,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.03083881287870845
+        "score": 0.019368383493597582
     },
     {
         "params": {
@@ -361,7 +809,7 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.03083881287870845
+        "score": 0.019368383493597582
     },
     {
         "params": {
@@ -375,6 +823,20 @@
             "bullish_cutoff": 0.0,
             "sequence_lookback": 63
         },
-        "score": 0.03083881287870845
+        "score": 0.019368383493597582
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "max_assets_per_cluster": 5,
+            "stop_loss": -0.045,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "bullish_cutoff": 0.0,
+            "sequence_lookback": 63
+        },
+        "score": 0.019368383493597582
     }
 ]

@@ -26,9 +26,6 @@
     "LQD": {
         "length": 147
     },
-    "SHY": {
-        "length": 168
-    },
     "IEF": {
         "length": 168
     },
@@ -62,7 +59,22 @@
     "IAU": {
         "length": 147
     },
+    "SHV": {
+        "length": 231
+    },
+    "IEI": {
+        "length": 252
+    },
     "UUP": {
+        "length": 147
+    },
+    "IWM": {
+        "length": 231
+    },
+    "SCZ": {
+        "length": 168
+    },
+    "EEMS": {
         "length": 147
     },
     "IXN": {

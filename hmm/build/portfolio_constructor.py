@@ -3,6 +3,7 @@ Module for handling final portfolio construction.
 """
 
 from collections import defaultdict
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -12,9 +13,15 @@ from hmm.build.portfolio_clustering import PortfolioClustering
 
 class PortfolioConstructor:
     """
-    Class for constructing a final portfolio using sentiment forecasts.
-    """
+    Constructs a final portfolio using sentiment forecasts, clustering, and risk parity.
 
+    Parameters
+    ----------
+    clustering : PortfolioClustering
+        Object containing clustering structure and associated price/sentiment data.
+    config : dict
+        Configuration dictionary containing user-specified options (e.g., exclusive pairs).
+    """
     def __init__(self, clustering: PortfolioClustering, config: dict):
         self.risk_lookback = clustering.risk_lookback
         self.clusters = clustering.clusters

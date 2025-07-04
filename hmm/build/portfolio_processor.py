@@ -102,11 +102,6 @@ class PortfolioProcessor:
             String representing the file path.
         tickers : list
             List of str ticker symbols.
-
-        Returns
-        -------
-        parsed_objects : dict
-            Dictionary of loaded pickle files representing persisted inference files.
         """
         parsed_objects = {}
         for ticker in tickers:

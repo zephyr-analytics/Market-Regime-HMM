@@ -7,10 +7,10 @@
         "HYG", "HYXU", "EMHY",
         "VNQ", "VNQI",
         "DBB", "DBE", "DBA", "IAU", 
-        "SHV", "IEI", "UUP",
+        "IEI", "UUP",
         "IWM", "SCZ", "EEMS",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
-        "IUSG", "IUSV", "EFV", "EFG", "VWO", "MCHI",
+        "IUSG", "IUSV", "EFV", "EFG", "VWO",
         "SH", "PST", "TBT", "RWM", "EFZ", "EUM"
     ],
     "Cash_Ticker": "SHV",
@@ -18,14 +18,11 @@
         ["SH", "IUSG"],
         ["SH", "IUSV"],
         ["EUM", "VWO"],
-        ["EUM", "MCHI"],
         ["EFZ", "EFG"],
         ["EFZ", "EFV"],
         ["IEF", "PST"],
         ["TLT", "TBT"],
-        ["RWM", "IWM"],
-        ["PST", "IEF"],
-        ["TBT", "TLT"]
+        ["RWM", "IWM"]
     ],
     "momentum_intervals": [
         21, 63, 126, 189
@@ -49,9 +46,9 @@
     "bullish_cutoff": 0.0,
     "sequence_lookback": 63,
     "param_grid": {
-        "min_clusters": [2, 3, 4],
-        "max_clusters": [5, 6, 8, 10, 12],
-        "max_assets_per_cluster": [2, 3, 4, 5],
+        "min_clusters": [2, 3, 4, 5],
+        "max_clusters": [6, 8, 10, 12, 14],
+        "max_assets_per_cluster": [2, 3, 4, 5, 6],
         "stop_loss": [-0.045],
         "max_train_years": [8],
         "use_stop_loss": [false],

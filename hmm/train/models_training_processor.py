@@ -8,6 +8,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 from hmmlearn.hmm import GaussianHMM
 from sklearn.cluster._kmeans import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -61,6 +62,7 @@ class ModelsTrainingProcessor:
                 break
 
         self._save_model(training=training)
+        self.run_multiple_regression(training=training, raw_data=self.data, target_column=self.ticker, output_path=f"regression_{self.ticker}.csv")
         if self.persist:
             results = TrainingResultsProcessor(training=training)
             results.process()
@@ -131,6 +133,8 @@ class ModelsTrainingProcessor:
         """
         training_data = training.data.copy()
         short_rate = data["DFF"].replace(0, 1e-6)
+        inflation = data["CORESTICKM679SFRBATL"].replace(0, 1e-6)
+        gdp = data["A191RP1Q027SBEA"].replace(0, 1e-6)
 
         returns = [
             utilities.compound_return(
@@ -141,8 +145,8 @@ class ModelsTrainingProcessor:
 
         rolling_vol_1 = training_data.pct_change().rolling(window=volatility_interval).std()
 
-        features = pd.concat([momentum, rolling_vol_1, short_rate], axis=1).dropna()
-        features.columns = ["Momentum", "Volatility", "Short_Rates"]
+        features = pd.concat([momentum, rolling_vol_1, short_rate, inflation], axis=1).dropna()
+        features.columns = ["Momentum", "Volatility", "Short_Rates", "Inflation"]
 
         scaler = StandardScaler()
         scaled_part = scaler.fit_transform(features[["Momentum", "Volatility"]])
@@ -151,11 +155,74 @@ class ModelsTrainingProcessor:
         )
 
         scaled_features["Short_Rates"] = features["Short_Rates"]
+        scaled_features["Inflation"] = features["Inflation"]
+        # scaled_features["GDP"] = features["GDP"]
 
         split_index = int(len(scaled_features) * split)
         training.train_data = scaled_features.iloc[:split_index]
         training.test_data = scaled_features.iloc[split_index:]
         training.features = scaled_features
+
+
+    @staticmethod
+    def run_multiple_regression(
+        training, 
+        raw_data: pd.DataFrame, 
+        target_column: str = None, 
+        output_path: str = "regression_output.txt"
+    ):
+        """
+        Run a multiple regression of future returns on Momentum, Volatility, and Short_Rates
+        and save the results summary to a human-readable file.
+
+        Parameters
+        ----------
+        training : ModelsTraining
+            The training object with `.train_data` prepared, containing:
+            - 'Momentum'
+            - 'Volatility'
+            - 'Short_Rates'
+        raw_data : pd.DataFrame
+            Raw price or return data to compute the dependent variable (future returns).
+        target_column : str, optional
+            If provided, use this column as the dependent variable;
+            otherwise, compute 1-step-ahead returns from `raw_data`.
+        output_path : str, optional
+            Path to save the regression summary (.txt).
+
+        Returns
+        -------
+        results : RegressionResultsWrapper
+            The fitted regression model from statsmodels.
+        """
+        # Features (X) — only the specified predictors
+        X_train = training.train_data[["Momentum", "Volatility", "Short_Rates", "Inflation"]].copy()
+        X_train = sm.add_constant(X_train)
+
+        # Dependent variable (Y)
+        if target_column is None:
+            y_all = raw_data.pct_change(periods=1).shift(-1).rename("Target")
+        else:
+            y_all = raw_data[target_column].copy()
+
+        # Align indices
+        y_train = y_all.loc[X_train.index].dropna()
+        X_train = X_train.loc[y_train.index]
+
+        # Fit regression
+        model = sm.OLS(y_train, X_train).fit()
+
+        # Print results to console
+        print(model.summary())
+
+        # Write results to file
+        output_path = os.path.join(output_path)
+        with open(output_path, "w") as f:
+            f.write(model.summary().as_text())
+
+        # print(f"\n📄 Regression summary saved to: {output_path()}")
+
+        return model
 
 
     @staticmethod
@@ -172,7 +239,7 @@ class ModelsTrainingProcessor:
         max_retries : int
             Number of retries to train the model.
         """
-        X = training.train_data[["Momentum", "Volatility", "Short_Rates"]].values.copy()
+        X = training.train_data[["Momentum", "Volatility", "Short_Rates", "Inflation"]].values.copy()
         # TODO possibly create a state object that stores current state of asset. 
         # NOTE I am not certain the impact of this as HMM strives to focus on each new state
         # being an indepentent event, but the initial guesses from KMeans is lacking.

@@ -28,7 +28,7 @@ class PortfolioConstructor:
         self.forecast_data = clustering.forecast_data
         self.price_data = clustering.price_data.copy()
         self.sma_lookback = clustering.moving_average
-        self.max_assets_per_cluster = clustering.max_assets_per_cluster
+        self.max_assets_per_cluster = self.config["max_assets_per_cluster"]
         self.config = config
 
     def process(self) -> dict:
@@ -60,6 +60,7 @@ class PortfolioConstructor:
         final_weights = self.normalize_weights(sentiment_weights, orphaned)
 
         return final_weights
+
 
     @staticmethod
     def compute_cluster_returns(price_data: pd.DataFrame, clusters: dict, risk_lookback: int) -> dict:
@@ -96,6 +97,7 @@ class PortfolioConstructor:
 
         return cluster_returns
 
+
     @staticmethod
     def compute_risk_parity_weights(risk_parity_fn, cluster_returns: dict, risk_lookback: int) -> dict:
         """
@@ -127,6 +129,7 @@ class PortfolioConstructor:
             lookback=risk_lookback
         )
         return weights
+
 
     @staticmethod
     def compute_sentiment_weights(
@@ -187,7 +190,16 @@ class PortfolioConstructor:
                 tkr: w for tkr, w in contributions.items() if tkr not in to_drop
             }
 
-            top_tickers = sorted(filtered.items(), key=lambda x: x[1], reverse=True)[:max_assets_per_cluster]
+            print("\n=== DEBUG ===")
+            print(f"max_assets_per_cluster (type): {type(max_assets_per_cluster)}, value: {max_assets_per_cluster}")
+
+            sorted_all = sorted(filtered.items(), key=lambda x: x[1], reverse=True)
+            print(f"FULL sorted ({len(sorted_all)}): {sorted_all}")
+
+            top_tickers = sorted_all[:int(max_assets_per_cluster)]
+            print(f"TOP tickers ({len(top_tickers)}): {top_tickers}")
+            print("=== END DEBUG ===\n")
+
             if not top_tickers:
                 orphaned_weight += top_level_weights.get(cluster_id, 0.0)
                 continue
@@ -202,6 +214,7 @@ class PortfolioConstructor:
                 orphaned_weight += cluster_weight
 
         return sentiment_weights, orphaned_weight
+
 
     @staticmethod
     def normalize_weights(sentiment_weights: dict, orphaned_weight: float) -> dict:
@@ -229,6 +242,7 @@ class PortfolioConstructor:
         total = sum(sentiment_weights.values())
         normalized_weights = {tkr: w / total for tkr, w in sentiment_weights.items()}
         return normalized_weights
+
 
     @staticmethod
     def _risk_parity_weights(tickers: list, price_data: pd.DataFrame, lookback: int) -> dict:
@@ -270,7 +284,7 @@ class PortfolioConstructor:
 
         cov = returns.cov().values if isinstance(returns, pd.DataFrame) else np.array([[returns.var()]])
         n = len(tickers)
-        b = np.ones(n) / n  # equal risk budget
+        b = np.ones(n) / n
 
         def objective(w):
             port_var = w @ cov @ w

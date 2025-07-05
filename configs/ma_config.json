@@ -26,6 +26,9 @@
     "LQD": {
         "length": 147
     },
+    "IEI": {
+        "length": 252
+    },
     "IEF": {
         "length": 168
     },
@@ -47,94 +50,112 @@
     "VNQI": {
         "length": 252
     },
+    "DBA": {
+        "length": 231
+    },
     "DBB": {
         "length": 147
     },
     "DBE": {
         "length": 252
     },
-    "DBA": {
-        "length": 231
-    },
     "IAU": {
         "length": 147
-    },
-    "IEI": {
-        "length": 252
     },
     "UUP": {
         "length": 147
     },
-    "IWM": {
-        "length": 231
-    },
-    "SCZ": {
-        "length": 168
-    },
-    "EEMS": {
-        "length": 147
-    },
-    "IXN": {
+    "AMZN": {
         "length": 189
     },
-    "RXI": {
+    "AXP": {
         "length": 252
     },
-    "IXP": {
-        "length": 168
-    },
-    "IXG": {
+    "AMGN": {
         "length": 231
     },
-    "EXI": {
-        "length": 252
-    },
-    "MXI": {
-        "length": 147
-    },
-    "IXC": {
-        "length": 252
-    },
-    "IXJ": {
+    "BA": {
         "length": 168
     },
-    "KXI": {
+    "CAT": {
+        "length": 252
+    },
+    "CSCO": {
+        "length": 189
+    },
+    "CVX": {
+        "length": 252
+    },
+    "GS": {
         "length": 210
     },
-    "JXI": {
-        "length": 168
-    },
-    "IUSG": {
-        "length": 168
-    },
-    "IUSV": {
-        "length": 147
-    },
-    "EFV": {
+    "HD": {
         "length": 231
     },
-    "EFG": {
-        "length": 168
+    "HON": {
+        "length": 252
     },
-    "VWO": {
-        "length": 168
+    "IBM": {
+        "length": 252
     },
-    "SH": {
+    "JNJ": {
+        "length": 252
+    },
+    "KO": {
+        "length": 252
+    },
+    "JPM": {
+        "length": 189
+    },
+    "MCD": {
+        "length": 231
+    },
+    "MMM": {
+        "length": 252
+    },
+    "MRK": {
+        "length": 252
+    },
+    "MSFT": {
+        "length": 210
+    },
+    "NKE": {
+        "length": 231
+    },
+    "PG": {
+        "length": 210
+    },
+    "SHW": {
         "length": 147
+    },
+    "TRV": {
+        "length": 231
+    },
+    "UNH": {
+        "length": 189
+    },
+    "CRM": {
+        "length": 210
+    },
+    "NVDA": {
+        "length": 189
+    },
+    "VZ": {
+        "length": 252
+    },
+    "V": {
+        "length": 252
+    },
+    "WMT": {
+        "length": 231
+    },
+    "DIS": {
+        "length": 252
     },
     "PST": {
         "length": 210
     },
     "TBT": {
         "length": 168
-    },
-    "RWM": {
-        "length": 210
-    },
-    "EFZ": {
-        "length": 147
-    },
-    "EUM": {
-        "length": 147
     }
 }

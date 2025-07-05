@@ -23,6 +23,7 @@ from hmm.train.models_training_processor import ModelsTrainingProcessor
 
 logger = logging.getLogger(__name__)
 
+
 def process_ticker(config: dict, data: pd.DataFrame, ticker: str) -> bool:
     """
     Helper method to process model training and inferencing.

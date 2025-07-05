@@ -1,41 +1,54 @@
 [
     {
         "params": {
-            "min_clusters": 3,
-            "max_clusters": 14,
-            "max_assets_per_cluster": 2,
-            "stop_loss": -0.045,
-            "max_train_years": 6,
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "max_assets_per_cluster": 4,
+            "stop_loss": -0.035,
+            "max_train_years": 8,
             "use_stop_loss": false,
             "risk_lookback": 252,
             "sequence_lookback": 63
         },
-        "score": 0.01582210050530384
+        "score": 0.01712109646916403
     },
     {
         "params": {
-            "min_clusters": 3,
-            "max_clusters": 14,
-            "max_assets_per_cluster": 2,
-            "stop_loss": -0.045,
-            "max_train_years": 7,
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "max_assets_per_cluster": 4,
+            "stop_loss": -0.04,
+            "max_train_years": 8,
             "use_stop_loss": false,
             "risk_lookback": 252,
             "sequence_lookback": 63
         },
-        "score": 0.015293710781966886
+        "score": 0.01712109646916403
     },
     {
         "params": {
-            "min_clusters": 3,
-            "max_clusters": 14,
-            "max_assets_per_cluster": 2,
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "max_assets_per_cluster": 4,
             "stop_loss": -0.045,
             "max_train_years": 8,
             "use_stop_loss": false,
             "risk_lookback": 252,
             "sequence_lookback": 63
         },
-        "score": 0.021059028262485936
+        "score": 0.01712109646916403
+    },
+    {
+        "params": {
+            "min_clusters": 4,
+            "max_clusters": 12,
+            "max_assets_per_cluster": 4,
+            "stop_loss": -0.05,
+            "max_train_years": 8,
+            "use_stop_loss": false,
+            "risk_lookback": 252,
+            "sequence_lookback": 63
+        },
+        "score": 0.01712109646916403
     }
 ]

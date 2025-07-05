@@ -29,7 +29,7 @@
     ],
     "volatility_interval": 21,
     "min_clusters": 3,
-    "max_clusters": 16,
+    "max_clusters": 12,
     "max_assets_per_cluster": 2,
     "train_test_split": 0.70,
     "start_date": "2015-08-01",

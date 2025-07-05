@@ -1,4 +1,5 @@
 """
+Main module to run piplines.
 """
 
 import argparse
@@ -6,11 +7,14 @@ import datetime
 import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from hmm.data.data_processor import DataProcessor
-from hmm.runner.factory import get_runner
+
 from hmm import utilities
+from hmm.data.data_processor import DataProcessor
+from hmm.runner.ma_tuner import MovingAverageTuner
+from hmm.runner.factory import get_runner
 
 logger = logging.getLogger(__name__)
+
 
 def main():
     """
@@ -44,6 +48,14 @@ def main():
 
     # Process data
     data = DataProcessor(config=config).process()
+
+    ma_tuner = MovingAverageTuner(
+        price_data=data,
+        start=config["ma_tuning"]["start_date"],
+        end=config["ma_tuning"]["end_date"],
+        config=config
+    )
+    ma_tuner.process()
 
     # Determine operation mode
     if args.train:

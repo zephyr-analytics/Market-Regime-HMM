@@ -23,6 +23,7 @@ from hmm.train.models_training_processor import ModelsTrainingProcessor
 
 logger = logging.getLogger(__name__)
 
+
 def process_ticker(config: dict, data: pd.DataFrame, ticker: str) -> bool:
     """
     Helper method to process model training and inferencing.
@@ -168,7 +169,7 @@ class TestRunner(BaseRunner):
         full_path_returns = os.path.join(file_path, filename_returns)
         pd.DataFrame(results).to_csv(full_path_returns, index=False)
 
-        processor = FinalResultsPortfolio(results=results)
+        processor = FinalResultsPortfolio(results=results, config=self.config)
         processor.process()
         logger.info("Saved test results to portfolio_test_results.csv")
 

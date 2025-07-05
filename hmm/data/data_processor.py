@@ -30,24 +30,53 @@ class DataProcessor:
 
     def process(self):
         """
-        Processes historical price data and appends FRED short rate data ("DFF").
+        Load market data along with FRED economic indicators over the specified time frame.
+        Adds the following FRED series:
+        - 'DFF' (short rate, daily)
+        - 'A191RP1Q027SBEA' (quarterly, GDP-related)
+        - 'CORESTICKM679SFRBATL' (monthly, core CPI-related)
 
         Returns
         -------
         pd.DataFrame
-            Combined dataset of market prices and interest rates.
+            DataFrame with market and FRED series aligned.
         """
         start_date = self.config["current_start"]
+        end_date = self.get_latest_trading_day()
 
+        # market tickers
+        tickers = self.config["tickers"] + [self.config["Cash_Ticker"]]
         data = self.pull_data(
-            tickers=self.config["tickers"],
+            tickers=tickers,
             file_path=self.config["data_file_path"],
             start_date=start_date
         )
 
-        end_date = self.get_latest_trading_day()
-        fred_data = self.load_short_rates(series="DFF", start_date=start_date, end_date=end_date)
-        data = data.join(fred_data, how="left")
+        # add short rates (daily)
+        fred_dff = self.load_short_rates(
+            series="DFF",
+            start_date=start_date,
+            end_date=end_date
+        )
+        data = data.join(fred_dff, how="left")
+
+        # add quarterly GDP-related series
+        fred_gdp = self.load_fred_series(
+            series="A191RP1Q027SBEA",
+            freq="Q",
+            start_date=start_date,
+            end_date=end_date
+        )
+        data = data.join(fred_gdp, how="left")
+
+        # add monthly core CPI-related series
+        fred_core_cpi = self.load_fred_series(
+            series="CORESTICKM679SFRBATL",
+            freq="M",
+            start_date=start_date,
+            end_date=end_date
+        )
+        data = data.join(fred_core_cpi, how="left")
 
         return data
 
@@ -155,3 +184,35 @@ class DataProcessor:
         except Exception as e:
             print(f"Warning: Failed to load FRED series '{series}': {e}")
             return pd.DataFrame()
+
+    def load_fred_series(self, series: str, freq: str, start_date: str, end_date: str) -> pd.DataFrame:
+        """
+        Load a FRED time series and align it to daily dates.
+
+        Parameters
+        ----------
+        series : str
+            FRED series code.
+        freq : str
+            Frequency of the FRED series: 'D', 'M', or 'Q'.
+        start_date : str
+            Start date in 'YYYY-MM-DD' format.
+        end_date : str
+            End date in 'YYYY-MM-DD' format.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with the series aligned to daily index, forward-filled.
+        """
+        import pandas_datareader.data as web
+        import pandas as pd
+
+        # load raw series
+        s = web.DataReader(series, "fred", start=start_date, end=end_date)
+
+        # reindex to daily and forward-fill
+        daily_index = pd.date_range(start=start_date, end=end_date, freq="B")
+        s = s.reindex(daily_index, method="ffill")
+        s.columns = [series]
+        return s

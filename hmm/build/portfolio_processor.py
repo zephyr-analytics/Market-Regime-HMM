@@ -5,6 +5,7 @@ Module for building portfolio.
 import glob
 import logging
 import os
+import json
 import pickle
 
 import numpy as np
@@ -49,8 +50,8 @@ class PortfolioProcessor:
 
         clusters = results["clusters"]
         clustering.clusters = clusters
-        constructor = PortfolioConstructor()
-        portfolio = constructor.process(clustering=clustering)
+        constructor = PortfolioConstructor(clustering=clustering, config=self.config)
+        portfolio = constructor.process()
 
         if self.persist:
             results_process = PortfolioResultsProcessor(
@@ -59,6 +60,7 @@ class PortfolioProcessor:
                 portfolio=portfolio
             )
             results_process.process()
+
             return portfolio
 
         else:
@@ -83,7 +85,6 @@ class PortfolioProcessor:
         clustering.max_clusters = config["max_clusters"]
         clustering.start_date = config["current_start"]
         clustering.end_date = config["current_end"]
-        clustering.moving_average = config["moving_average"]
         clustering.risk_lookback = config["risk_lookback"]
         clustering.price_data = data
 
@@ -101,11 +102,6 @@ class PortfolioProcessor:
             String representing the file path.
         tickers : list
             List of str ticker symbols.
-
-        Returns
-        -------
-        parsed_objects : dict
-            Dictionary of loaded pickle files representing persisted inference files.
         """
         parsed_objects = {}
         for ticker in tickers:
@@ -157,28 +153,33 @@ class PortfolioProcessor:
     @staticmethod
     def moving_average_check(clustering: PortfolioClustering):
         """
-        Method to moving average filter assets.
+        Method to apply moving average filter using per-ticker lookbacks from config.
 
         Parameters
         ----------
         clustering : PortfolioClustering
             PortfolioClustering instance.
         """
-        lookback = clustering.moving_average
+        config_path = os.path.join(os.getcwd(), "configs", "ma_config.json")
+
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Config file not found: {config_path}")
+
+        with open(config_path, "r") as f:
+            ma_config = json.load(f)
+
         data = clustering.price_data.copy()
         state_data = clustering.state_data.copy()
 
         valid_tickers = []
 
         for ticker in state_data:
-            if ticker not in data.columns:
-                continue
-
             prices = data[ticker].dropna()
+            lookback = ma_config[ticker]["length"]
 
             ma = prices.rolling(window=lookback).mean()
 
-            if prices.iloc[-1] >= ma.iloc[-1]:
+            if prices.iloc[-1] > ma.iloc[-1]:
                 valid_tickers.append(ticker)
 
         state_data = {t: state_data[t] for t in valid_tickers}
@@ -245,7 +246,7 @@ class PortfolioProcessor:
 
         clustering.forecast_data = forecast_data
 
-# TODO this needs to be condensed down to handle usage of clustering instance.
+
     @staticmethod
     def cluster_sequences(clustering: PortfolioClustering):
         """

@@ -28,7 +28,7 @@ class PortfolioConstructor:
         self.forecast_data = clustering.forecast_data
         self.price_data = clustering.price_data.copy()
         self.sma_lookback = clustering.moving_average
-        self.max_assets_per_cluster = self.config["max_assets_per_cluster"]
+        self.max_assets_per_cluster = config["max_assets_per_cluster"]
         self.config = config
 
     def process(self) -> dict:

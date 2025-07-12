@@ -5,6 +5,7 @@ Module for training models.
 import joblib
 import logging
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -192,7 +193,7 @@ class ModelsTrainingProcessor:
         """
         # Features (X) — only the specified predictors
         X_train = training.train_data[["Momentum", "Volatility", "Short_Rates"]].copy()
-        X_train = sm.add_constant(X_train)
+        # X_train = sm.add_constant(X_train)
 
         # Dependent variable (Y)
         if target_column is None:
@@ -212,9 +213,13 @@ class ModelsTrainingProcessor:
         output_path = os.path.join(os.getcwd(), "artifacts", "regression_analysis")
         os.makedirs(output_path, exist_ok=True)
         file_name = os.path.join(output_path, f"{training.ticker}_regression_output.txt")
-
         with open(file_name, "w") as f:
             f.write(model.summary().as_text())
+
+        model_path = os.path.join(os.getcwd(), "artifacts", "regression_models")
+        os.makedirs(model_path, exist_ok=True)
+        with open(os.path.join(model_path, f"{training.ticker}.pkl"), 'wb') as f:
+            pickle.dump(model, f)
 
         # print(f"\n📄 Regression summary saved to: {output_path()}")
 

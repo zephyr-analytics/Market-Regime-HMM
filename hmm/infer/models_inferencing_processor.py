@@ -149,5 +149,5 @@ class ModelsInferenceProcessor:
             inferencing.state_labels.get(i, f"State {i}"): round(prob, 4)
             for i, prob in enumerate(pi_t_forward)
         }
-        print(labeled_distribution)
+
         inferencing.forecast_distribution = labeled_distribution

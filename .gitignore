@@ -5,12 +5,14 @@
 *.pdf
 *.log
 *.csv
-
+*_output.txt
 # Directories
 */__pycache__
 */logs
 */configs
 */artifacts
+*/artifacts/regression_analysis
+*/artifacts/regression_models
 
 # Files
 portfolio_test_results.csv

@@ -33,6 +33,7 @@ class PortfolioProcessor:
         self.persist = config["persist"]
         self.data = data.loc[self.start_date:self.end_date]
 
+
     def process(self):
         """
         Method for processing through the pipeline.
@@ -42,6 +43,7 @@ class PortfolioProcessor:
         self.load_models_inference(clustering=clustering, directory=file_path, tickers=self.config["tickers"])
         self.extract_states(clustering=clustering)
         self.moving_average_check(clustering=clustering)
+        # self.load_r_squared_results(clustering=clustering, tickers=self.config["tickers"])
         # TODO sequence lookback needs to be set properly.
         self.prepare_state_sequences(clustering=clustering, lookback=self.config["sequence_lookback"])
         self.extract_forecast_distributions(clustering=clustering)
@@ -187,6 +189,68 @@ class PortfolioProcessor:
             state_data = {"SHV": 1}
 
         clustering.state_data = state_data
+
+
+    # @staticmethod
+    # def load_r_squared_results(clustering: "PortfolioClustering", tickers: list):
+    #     """
+    #     Load persisted regression model(s) for each ticker, extract R² values,
+    #     and store them in `clustering.r_squared_results`.
+
+    #     Parameters
+    #     ----------
+    #     clustering : PortfolioClustering
+    #         The instance to attach the R² results to.
+    #     directory : str
+    #         Directory containing the pickled model files.
+    #     tickers : list of str
+    #         List of ticker symbols to load.
+    #     """
+    #     r_squared_results = {}
+    #     directory = os.path.join(os.getcwd(), "artifacts", "regression_models")
+    #     for ticker in tickers:
+    #         pattern = os.path.join(directory, f"{ticker}.pkl")
+    #         matched_files = glob.glob(pattern)
+
+    #         r2_values = []
+    #         for file_path in matched_files:
+    #             with open(file_path, "rb") as f:
+    #                 model = pickle.load(f)
+
+    #                 # Assuming model is a statsmodels results object
+    #                 if hasattr(model, "rsquared"):
+    #                     r2 = model.rsquared
+    #                 else:
+    #                     try:
+    #                         summary = model.summary().as_text()
+    #                         r2_line = next(line for line in summary.splitlines() if "R-squared" in line)
+    #                         r2 = float(r2_line.split()[-1])
+    #                     except Exception:
+    #                         r2 = None
+
+    #                 if r2 is not None:
+    #                     r2_values.append(r2)
+
+    #         if r2_values:
+    #             r_squared_results[ticker] = r2_values[0] if len(r2_values) == 1 else r2_values
+
+    #     # clustering.r_squared_results = r_squared_results
+
+    #     # 🔷 Filter tickers based on R² > 0.5
+    #     valid_r2_tickers = []
+    #     for ticker, r2 in r_squared_results.items():
+    #         # if single value, wrap in list for consistency
+    #         r2_list = r2 if isinstance(r2, list) else [r2]
+    #         if any(val > 0.5 for val in r2_list):
+    #             valid_r2_tickers.append(ticker)
+
+    #     # Now update clustering.state_data to include only tickers with R² > 0.5
+    #     clustering.state_data = {
+    #         t: clustering.state_data[t] for t in valid_r2_tickers if t in clustering.state_data
+    #     }
+
+    #     if not clustering.state_data:
+    #         clustering.state_data = {"SHV": 1}
 
 
     @staticmethod

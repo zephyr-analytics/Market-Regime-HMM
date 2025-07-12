@@ -62,7 +62,7 @@ class ModelsTrainingProcessor:
                 break
 
         self._save_model(training=training)
-        self.run_multiple_regression(training=training, raw_data=self.data, target_column=self.ticker, output_path=f"regression_{self.ticker}.csv")
+        # self.run_multiple_regression(training=training, raw_data=self.data, target_column=self.ticker, output_path=f"regression_{self.ticker}.csv")
         if self.persist:
             results = TrainingResultsProcessor(training=training)
             results.process()
@@ -133,8 +133,6 @@ class ModelsTrainingProcessor:
         """
         training_data = training.data.copy()
         short_rate = data["DFF"].replace(0, 1e-6)
-        inflation = data["CORESTICKM679SFRBATL"].replace(0, 1e-6)
-        gdp = data["A191RP1Q027SBEA"].replace(0, 1e-6)
 
         returns = [
             utilities.compound_return(
@@ -145,8 +143,8 @@ class ModelsTrainingProcessor:
 
         rolling_vol_1 = training_data.pct_change().rolling(window=volatility_interval).std()
 
-        features = pd.concat([momentum, rolling_vol_1, short_rate, inflation], axis=1).dropna()
-        features.columns = ["Momentum", "Volatility", "Short_Rates", "Inflation"]
+        features = pd.concat([momentum, rolling_vol_1, short_rate], axis=1).dropna()
+        features.columns = ["Momentum", "Volatility", "Short_Rates"]
 
         scaler = StandardScaler()
         scaled_part = scaler.fit_transform(features[["Momentum", "Volatility"]])
@@ -155,8 +153,6 @@ class ModelsTrainingProcessor:
         )
 
         scaled_features["Short_Rates"] = features["Short_Rates"]
-        scaled_features["Inflation"] = features["Inflation"]
-        # scaled_features["GDP"] = features["GDP"]
 
         split_index = int(len(scaled_features) * split)
         training.train_data = scaled_features.iloc[:split_index]
@@ -196,7 +192,7 @@ class ModelsTrainingProcessor:
             The fitted regression model from statsmodels.
         """
         # Features (X) — only the specified predictors
-        X_train = training.train_data[["Momentum", "Volatility", "Short_Rates", "Inflation"]].copy()
+        X_train = training.train_data[["Momentum", "Volatility", "Short_Rates"]].copy()
         X_train = sm.add_constant(X_train)
 
         # Dependent variable (Y)
@@ -239,7 +235,7 @@ class ModelsTrainingProcessor:
         max_retries : int
             Number of retries to train the model.
         """
-        X = training.train_data[["Momentum", "Volatility", "Short_Rates", "Inflation"]].values.copy()
+        X = training.train_data[["Momentum", "Volatility", "Short_Rates"]].values.copy()
         # TODO possibly create a state object that stores current state of asset. 
         # NOTE I am not certain the impact of this as HMM strives to focus on each new state
         # being an indepentent event, but the initial guesses from KMeans is lacking.

@@ -31,11 +31,15 @@ class FinalResultsPortfolio:
         returns.index.name = 'Date'
         returns.name = 'Return'
         portfolio_value = utilities.compute_portfolio_value(returns=returns)
-        print(portfolio_value[-1])
+        logger.info(f"Final Portfolio Value: ${portfolio_value[-1]:.2f}")
+
         var, cvar = utilities.calculate_var_cvar(returns=returns)
-        print(var, cvar)
+        logger.info(f"VaR: {var * 100:.2f}")
+        logger.info(f"CVaR: {cvar * 100:.2f}")
+
         average_annual_return = utilities.calculate_average_annual_return(returns=returns)
         logger.info(f"Average Annual Return: {average_annual_return * 100:.2f}%")
+
         max_drawdown = utilities.calculate_max_drawdown(portfolio_value=portfolio_value)
         logger.info(f"Max Drawdown: {max_drawdown * 100:.2f}%")
 

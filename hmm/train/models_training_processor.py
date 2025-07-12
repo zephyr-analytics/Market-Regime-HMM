@@ -45,7 +45,7 @@ class ModelsTrainingProcessor:
         )
         self._load_data(training=training, data=self.data)
 
-        for attempt in range(1, self.max_retries + 1):
+        for _ in range(1, self.max_retries + 1):
             self._prepare_data(
                 training=training,
                 momentum_intervals=self.momentum_intervals,
@@ -62,7 +62,7 @@ class ModelsTrainingProcessor:
                 break
 
         self._save_model(training=training)
-        # self.run_multiple_regression(training=training, raw_data=self.data, target_column=self.ticker, output_path=f"regression_{self.ticker}.csv")
+        self.run_multiple_regression(training=training, raw_data=self.data, target_column=self.ticker)
         if self.persist:
             results = TrainingResultsProcessor(training=training)
             results.process()
@@ -162,10 +162,9 @@ class ModelsTrainingProcessor:
 
     @staticmethod
     def run_multiple_regression(
-        training, 
+        training: ModelsTraining, 
         raw_data: pd.DataFrame, 
-        target_column: str = None, 
-        output_path: str = "regression_output.txt"
+        target_column: str = None
     ):
         """
         Run a multiple regression of future returns on Momentum, Volatility, and Short_Rates
@@ -209,11 +208,12 @@ class ModelsTrainingProcessor:
         model = sm.OLS(y_train, X_train).fit()
 
         # Print results to console
-        print(model.summary())
+        # print(model.summary())
+        output_path = os.path.join(os.getcwd(), "artifacts", "regression_analysis")
+        os.makedirs(output_path, exist_ok=True)
+        file_name = os.path.join(output_path, f"{training.ticker}_regression_output.txt")
 
-        # Write results to file
-        output_path = os.path.join(output_path)
-        with open(output_path, "w") as f:
+        with open(file_name, "w") as f:
             f.write(model.summary().as_text())
 
         # print(f"\n📄 Regression summary saved to: {output_path()}")

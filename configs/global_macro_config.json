@@ -6,7 +6,7 @@
         "IEF", "TLT",
         "HYG", "HYXU", "EMHY",
         "VNQ", "VNQI",
-        "DBB", "DBE", "DBA", "IAU", 
+        "PDBC", "IAU", 
         "IEI", "UUP",
         "IWM", "SCZ", "EEMS",
         "IXN", "RXI", "IXP", "IXG", "EXI", "MXI", "IXC", "IXJ", "KXI", "JXI",
@@ -56,6 +56,6 @@
     },
     "ma_tuning": {
         "start_date": "2013-08-01",
-        "end_date": "2025-06-25"
+        "end_date": "2025-07-11"
     }
 }
